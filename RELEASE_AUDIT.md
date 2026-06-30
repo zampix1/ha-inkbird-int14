@@ -4,8 +4,8 @@
 
 - Intended repository: `ha-inkbird-int14`
 - Domain: `inkbird_int14`
-- Publication status: not published.
-- Current recommendation: publishable as a private/test release candidate, not yet recommended as a public HACS community release until hardware validation and final metadata review are complete.
+- Publication status: public repository prepared.
+- Current recommendation: publishable as a public test release candidate, not yet recommended as a mature HACS default until broader hardware validation is complete.
 
 ## Public Positioning
 
@@ -19,11 +19,13 @@ This is a hybrid/local-first integration, not a cloud-control integration.
 - Workflows: `.github/workflows/validate.yml`, `.github/workflows/hassfest.yml`, `.github/workflows/tests.yml`.
 - Component: `custom_components/inkbird_int14`.
 - Docs: `docs/bluetooth_proxy.md`, `docs/lan_setup.md`, `docs/cloud_history_experimental.md`.
-- Tests: `tests/test_static_release.py`.
+- Tests: `tests/test_static_release.py`, `tests/test_auth.py`.
+- Third-party notices: `THIRD_PARTY_NOTICES.md` for MIT-licensed BLE authentication helper attribution.
 
 ## Architecture
 
 - BLE direct mode for snapshots and supported local commands.
+- BLE challenge/response authentication is performed locally before snapshots and command readback.
 - Tuya LAN mode through `tinytuya` for local Wi-Fi station polling and mapped writes when the user supplies host, device ID and local key.
 - Optional read-only cloud history polling for DP109.
 - No cloud live subscription support.
@@ -36,8 +38,8 @@ This is a hybrid/local-first integration, not a cloud-control integration.
 - `config_flow`: `true`
 - `integration_type`: `device`
 - `codeowners`: present
-- `documentation`: future `ha-inkbird-int14` repository URL
-- `issue_tracker`: future `ha-inkbird-int14` repository URL
+- `documentation`: `ha-inkbird-int14` repository URL
+- `issue_tracker`: `ha-inkbird-int14` repository URL
 
 ## Config Flow
 
@@ -82,15 +84,13 @@ Documented only as an optional Home Assistant Bluetooth radio placement aid. It 
 
 - `ruff format --check .`: passed.
 - `ruff check --no-cache .`: passed.
-- `pytest -q .`: passed, 5 tests.
+- `pytest -q .`: passed, 8 tests.
 - `python -m compileall -q .`: passed with bytecode cache outside the candidate directory.
 - Cache audit: no `.pytest_cache`, `.ruff_cache`, `__pycache__`, `*.pyc` or `*.pyo` left in the candidate directory after cleanup.
 - Manual privacy audit: no private local path, real BLE address, private LAN IP, real MAC or private analysis artifacts found in public files. Only field names and placeholder examples remain.
 - `gitleaks detect --no-git -s .`: passed, no leaks found.
-- `trufflehog filesystem . --no-update --fail`: passed, 0 verified and 0 unverified findings.
-- `detect-secrets scan .`: passed with an empty result set.
-- `detect-secrets scan --all-files .`: reported only unverified keyword false positives on cloud credential field labels and constant names, with no secret values.
-- `detect-secrets scan --all-files` with a narrow line exclude for those field-label strings: passed with an empty result set.
+- `trufflehog filesystem . --no-update --fail --no-verification`: passed, 0 verified and 0 unverified findings.
+- `detect-secrets scan --all-files` with a narrow line exclude for documented cloud credential field labels: passed with an empty result set.
 
 ## Testable With Hardware
 

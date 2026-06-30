@@ -554,6 +554,12 @@ def parse_notification(raw: bytes) -> dict[str, Any]:
             if calibration:
                 item["name"] = "calibration_candidate"
                 item.update(calibration)
+        elif opcode == 0xFB:
+            item["name"] = "auth_challenge"
+            item["challenge_len"] = len(payload)
+        elif opcode == 0xFC:
+            item["name"] = "auth_ack"
+            item["ok"] = payload[0] == 0 if payload else None
         elif opcode == 0xFE:
             item["name"] = "init_ack_or_error"
             item["status"] = payload[0] if payload else None

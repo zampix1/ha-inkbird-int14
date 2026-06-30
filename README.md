@@ -83,6 +83,8 @@ Cloud history is disabled by default. It is read-only and only polls Inkbird his
 
 `BLE only` uses Home Assistant Bluetooth for local snapshots and supported BLE commands.
 
+BLE sessions perform the local challenge/response authentication before snapshots and command readback. The auth helper is adapted from the MIT-licensed [`paul43210/inkbird-bw-ble`](https://github.com/paul43210/inkbird-bw-ble) work, while this integration remains a native Home Assistant custom integration with Tuya LAN and optional history support.
+
 `BLE only` can be selected explicitly even while the station remains connected to Wi-Fi. This is useful for one-shot GATT snapshots or local BLE writes without changing the station's network setup. Switch back to `Auto` for steady-state LAN polling.
 
 `Wi-Fi LAN only` uses the local Tuya protocol through `tinytuya`. It requires host, device ID and local key supplied by the user.
@@ -103,7 +105,7 @@ Main entities are enabled by default:
 
 Noisy raw diagnostics and fragile fields that are often unknown are marked diagnostic and many are disabled by default.
 
-Battery values remain numeric when a fresh INT-14 battery snapshot exists. Repeated 100% probe reports are flagged through `Battery Report Quality` and suspect binary sensors instead of hiding the battery value.
+Battery values remain numeric when a fresh INT-14 battery snapshot exists. Repeated 100% probe reports are flagged through `Battery Report Quality` and suspect binary sensors instead of hiding the battery value. Local testing showed that the station can still report all probe batteries as 100% after successful BLE authentication, so those values should be treated as station-reported rather than independently verified probe fuel gauges.
 
 ## Writes
 
@@ -135,6 +137,8 @@ See `custom_components/inkbird_int14/services.yaml`.
 The repository must not contain real BLE addresses, local keys, device IDs, cloud API credentials, LAN IP addresses, screenshots, local paths or Home Assistant entity IDs.
 
 Diagnostics redact common credential and identifier keys.
+
+BLE authentication code includes MIT-licensed portions adapted from [`paul43210/inkbird-bw-ble`](https://github.com/paul43210/inkbird-bw-ble). See `THIRD_PARTY_NOTICES.md`.
 
 When opening public issues, replace private values with placeholders such as:
 

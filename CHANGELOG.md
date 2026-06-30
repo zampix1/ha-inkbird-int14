@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- Add local BLE challenge/response authentication before INT-14 snapshots and BLE writes.
+- Expose lightweight BLE authentication diagnostics for troubleshooting local sessions.
+- Fix request-init-on-connect to reuse the active BLE client instead of re-entering the connection lock.
+
 ## 0.1.1
 
 - Fix Home Assistant Hassfest metadata for Bluetooth dependency and config-entry-only setup.

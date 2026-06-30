@@ -12,6 +12,7 @@ from bleak_retry_connector import establish_connection
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from .auth import AUTH_CHALLENGE_REQUEST, auth_ack_ok, auth_challenge_from_frame, build_auth_response
 from .cloud import CloudHistoryConfig, fetch_history_dps
 from .const import (
     BATTERY_UUID,
@@ -51,7 +52,7 @@ READ_ON_CONNECT_UUIDS = (LIVE_UUID, WRITE_UUID, STATE_UUID, BATTERY_UUID)
 SESSION_SECONDS = 20
 RECONNECT_DELAY_SECONDS = 25
 WRITE_RETRY_DELAY_SECONDS = 1.0
-VERIFY_REQUEST = bytes.fromhex("01fd")
+AUTH_TIMEOUT_SECONDS = 3.0
 BATTERY_STALE_SECONDS = 6 * 60 * 60
 
 
@@ -78,6 +79,8 @@ class Int14Runtime:
         self._client: BleakClient | None = None
         self._connection_lock = asyncio.Lock()
         self._mode_changed = asyncio.Event()
+        self._auth_challenge_event = asyncio.Event()
+        self._auth_ack_event = asyncio.Event()
         self._refresh_transport_state(notify=False)
 
     def add_listener(self, callback: Callable[[], None]) -> Callable[[], None]:
@@ -225,7 +228,7 @@ class Int14Runtime:
                         self._set_ble_connected(True)
                         await self._subscribe(client)
                         if self.request_init_on_connect:
-                            await self.request_init()
+                            await self._request_init_on_client(client)
                         await self._listen(client)
                     finally:
                         if client.is_connected:
@@ -297,6 +300,8 @@ class Int14Runtime:
                     _LOGGER.debug("INT14 notify skipped for %s: %s", char.uuid, exc)
 
         await self._read_initial_values(client)
+        await self._request_auth(client)
+        await self._read_initial_values(client)
 
     async def _read_initial_values(self, client: BleakClient) -> None:
         for uuid in READ_ON_CONNECT_UUIDS:
@@ -320,12 +325,53 @@ class Int14Runtime:
             await self._request_init_with_fresh_connection()
 
     async def _request_init_on_client(self, client: BleakClient) -> None:
-        for payload in (VERIFY_REQUEST, *init_command_chunks()):
+        await self._request_auth(client)
+        for payload in init_command_chunks():
             if not await self._write_command(payload):
                 break
             await asyncio.sleep(0.3)
         await asyncio.sleep(1)
         await self._read_initial_values(client)
+
+    async def _request_auth(self, client: BleakClient) -> None:
+        if self._client is None:
+            self._client = client
+        self._auth_challenge_event.clear()
+        self._auth_ack_event.clear()
+        self.data["ble_auth_ok"] = False
+        self.data["last_ble_auth_error"] = None
+        if not await self._write_command(AUTH_CHALLENGE_REQUEST):
+            self.data["last_ble_auth_error"] = "challenge_request_failed"
+            return
+        self.data["last_ble_auth_request_epoch_s"] = int(time.time())
+        try:
+            await asyncio.wait_for(self._auth_ack_event.wait(), timeout=AUTH_TIMEOUT_SECONDS)
+        except TimeoutError:
+            self.data["last_ble_auth_error"] = "auth_ack_timeout"
+
+    async def _send_auth_response(self, response: bytes) -> None:
+        if self._client is None or not self._client.is_connected:
+            self.data["last_ble_auth_error"] = "not_connected"
+            self._notify_listeners()
+            return
+        try:
+            await self._client.write_gatt_char(WRITE_UUID, response, response=True)
+        except Exception as response_exc:  # noqa: BLE001
+            try:
+                await self._client.write_gatt_char(WRITE_UUID, response, response=False)
+            except Exception as command_exc:  # noqa: BLE001
+                self.data["last_ble_auth_error"] = str(command_exc)[:200]
+                _LOGGER.debug(
+                    "INT14 auth response write failed: response=%s command=%s",
+                    response_exc,
+                    command_exc,
+                )
+                self._notify_listeners()
+                return
+        self.data["last_ble_auth_response_epoch_s"] = int(time.time())
+        self.data["last_ble_auth_response_len"] = len(response)
+        self.data["last_ble_auth_error"] = None
+        self._notify_listeners()
 
     async def _request_init_with_fresh_connection(self) -> None:
         client = None
@@ -572,6 +618,21 @@ class Int14Runtime:
     def _notification(self, sender: int | str, data: bytearray) -> None:
         self.data["last_ble_update_epoch_s"] = int(time.time())
         self._record_raw(sender, data)
+        raw = bytes(data)
+        if challenge := auth_challenge_from_frame(raw):
+            response = build_auth_response(challenge)
+            self.data["last_ble_auth_challenge_epoch_s"] = int(time.time())
+            self.data["last_ble_auth_challenge_len"] = len(challenge)
+            self.data["last_ble_auth_response_len"] = len(response)
+            self._auth_challenge_event.set()
+            self.hass.async_create_task(self._send_auth_response(response))
+        if (ok := auth_ack_ok(raw)) is not None:
+            self.data["ble_auth_ok"] = ok
+            self.data["last_ble_auth_ack_epoch_s"] = int(time.time())
+            self.data["last_ble_auth_ack_hex"] = raw.hex()
+            if ok:
+                self.data["last_ble_auth_error"] = None
+            self._auth_ack_event.set()
         parsed = parse_notification(bytes(data))
         self.data["last_raw_hex"] = parsed["raw_hex"]
         for frame in parsed["frames"]:
