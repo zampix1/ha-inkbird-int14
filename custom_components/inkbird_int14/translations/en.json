@@ -1,0 +1,61 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Inkbird INT-14",
+        "description": "Add an Inkbird INT-14 station. BLE is local. Tuya LAN is local and requires host, device ID and local key supplied by you. Cloud history is configured later from options and is experimental read-only.",
+        "data": {
+          "address": "BLE address",
+          "name": "Device name",
+          "request_init_on_connect": "Request BLE snapshot on connect",
+          "transport_mode": "Transport mode",
+          "lan_host": "Tuya LAN host or IP",
+          "lan_device_id": "Tuya LAN device ID",
+          "lan_local_key": "Tuya LAN local key",
+          "lan_version": "Tuya LAN protocol version",
+          "lan_port": "Tuya LAN port",
+          "lan_poll_seconds": "Tuya LAN poll interval",
+          "lan_test_on_setup": "Test Tuya LAN connection before saving"
+        }
+      }
+    },
+    "error": {
+      "lan_incomplete": "To test Tuya LAN, host, device ID and local key are required.",
+      "lan_connect_failed": "Tuya LAN test failed. Check host, device ID, local key, protocol version and network reachability."
+    },
+    "abort": {
+      "already_configured": "This Inkbird INT-14 is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Inkbird INT-14 options",
+        "description": "Cloud history is experimental, read-only and disabled by default. It does not support live cloud updates or cloud writes.",
+        "data": {
+          "request_init_on_connect": "Request BLE snapshot on connect",
+          "transport_mode": "Transport mode",
+          "lan_host": "Tuya LAN host or IP",
+          "lan_device_id": "Tuya LAN device ID",
+          "lan_local_key": "Tuya LAN local key",
+          "lan_version": "Tuya LAN protocol version",
+          "lan_port": "Tuya LAN port",
+          "lan_poll_seconds": "Tuya LAN poll interval",
+          "lan_test_on_setup": "Test Tuya LAN connection before saving",
+          "cloud_history_enabled": "Enable experimental read-only cloud history",
+          "cloud_api_key": "Cloud history API key",
+          "cloud_api_secret": "Cloud history API secret",
+          "cloud_product_id": "Cloud history product ID",
+          "cloud_dev_id": "Cloud history device ID",
+          "cloud_country_code": "Cloud history country code",
+          "cloud_base_url": "Cloud history base URL",
+          "cloud_poll_seconds": "Cloud history poll interval"
+        }
+      }
+    },
+    "error": {
+      "lan_incomplete": "To test Tuya LAN, host, device ID and local key are required.",
+      "lan_connect_failed": "Tuya LAN test failed. Check host, device ID, local key, protocol version and network reachability."
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Inkbird INT-14",
+        "description": "Aggiungi una station Inkbird INT-14. BLE e' locale. Tuya LAN e' locale e richiede host, device ID e local key forniti dall'utente. Lo storico cloud si configura dopo dalle opzioni ed e' sperimentale in sola lettura.",
+        "data": {
+          "address": "Indirizzo BLE",
+          "name": "Nome dispositivo",
+          "request_init_on_connect": "Richiedi snapshot BLE alla connessione",
+          "transport_mode": "Modalita trasporto",
+          "lan_host": "Host o IP Tuya LAN",
+          "lan_device_id": "Device ID Tuya LAN",
+          "lan_local_key": "Local key Tuya LAN",
+          "lan_version": "Versione protocollo Tuya LAN",
+          "lan_port": "Porta Tuya LAN",
+          "lan_poll_seconds": "Intervallo polling Tuya LAN",
+          "lan_test_on_setup": "Testa connessione Tuya LAN prima di salvare"
+        }
+      }
+    },
+    "error": {
+      "lan_incomplete": "Per testare Tuya LAN servono host, device ID e local key.",
+      "lan_connect_failed": "Test Tuya LAN fallito. Controlla host, device ID, local key, versione protocollo e rete."
+    },
+    "abort": {
+      "already_configured": "Questo Inkbird INT-14 e' gia configurato."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opzioni Inkbird INT-14",
+        "description": "Lo storico cloud e' sperimentale, in sola lettura e disabilitato di default. Non supporta aggiornamenti live cloud o scritture cloud.",
+        "data": {
+          "request_init_on_connect": "Richiedi snapshot BLE alla connessione",
+          "transport_mode": "Modalita trasporto",
+          "lan_host": "Host o IP Tuya LAN",
+          "lan_device_id": "Device ID Tuya LAN",
+          "lan_local_key": "Local key Tuya LAN",
+          "lan_version": "Versione protocollo Tuya LAN",
+          "lan_port": "Porta Tuya LAN",
+          "lan_poll_seconds": "Intervallo polling Tuya LAN",
+          "lan_test_on_setup": "Testa connessione Tuya LAN prima di salvare",
+          "cloud_history_enabled": "Abilita storico cloud sperimentale in sola lettura",
+          "cloud_api_key": "API key storico cloud",
+          "cloud_api_secret": "API secret storico cloud",
+          "cloud_product_id": "Product ID storico cloud",
+          "cloud_dev_id": "Device ID storico cloud",
+          "cloud_country_code": "Country code storico cloud",
+          "cloud_base_url": "Base URL storico cloud",
+          "cloud_poll_seconds": "Intervallo polling storico cloud"
+        }
+      }
+    },
+    "error": {
+      "lan_incomplete": "Per testare Tuya LAN servono host, device ID e local key.",
+      "lan_connect_failed": "Test Tuya LAN fallito. Controlla host, device ID, local key, versione protocollo e rete."
+    }
+  }
+}

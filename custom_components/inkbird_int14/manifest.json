@@ -1,0 +1,18 @@
+{
+  "domain": "inkbird_int14",
+  "name": "Inkbird INT-14",
+  "codeowners": [
+    "@zampix1"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/zampix1/ha-inkbird-int14",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/zampix1/ha-inkbird-int14/issues",
+  "requirements": [
+    "bleak>=0.22.0",
+    "bleak-retry-connector>=3.6.0",
+    "tinytuya==1.18.1"
+  ],
+  "version": "0.1.0"
+}

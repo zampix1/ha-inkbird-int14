@@ -1,0 +1,392 @@
+set_unit:
+  fields:
+    address:
+      required: false
+      selector:
+        text:
+    unit:
+      required: true
+      selector:
+        select:
+          options:
+            - C
+            - F
+
+set_display_light:
+  fields:
+    address:
+      required: false
+      selector:
+        text:
+    value:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+
+set_target:
+  fields:
+    address:
+      required: false
+      selector:
+        text:
+    probe:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+    mode:
+      required: true
+      selector:
+        select:
+          options:
+            - "01"
+            - "10"
+            - "11"
+    high_tenths:
+      default: 0
+      selector:
+        number:
+          mode: box
+    low_tenths:
+      default: 0
+      selector:
+        number:
+          mode: box
+    degree_index:
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 5
+          mode: box
+    food_index:
+      default: -1
+      selector:
+        number:
+          min: -1
+          max: 255
+          mode: box
+
+set_pre_alarm:
+  fields:
+    address:
+      required: false
+      selector:
+        text:
+    probe:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+    advance_values:
+      required: true
+      selector:
+        object:
+
+set_timer:
+  fields:
+    address:
+      required: false
+      selector:
+        text:
+    probe:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+    start_epoch_s:
+      required: true
+      selector:
+        number:
+          mode: box
+    end_epoch_s:
+      required: true
+      selector:
+        number:
+          mode: box
+    count_down:
+      default: true
+      selector:
+        boolean:
+
+reset_timer:
+  fields:
+    address:
+      required: false
+      selector:
+        text:
+    probe:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+
+set_calibration:
+  fields:
+    address:
+      required: false
+      selector:
+        text:
+    probe:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+    channel:
+      required: true
+      selector:
+        select:
+          options:
+            - internal
+            - ambient
+    c_value:
+      required: true
+      selector:
+        number:
+          step: 0.1
+          mode: box
+
+set_unit_ble:
+  fields:
+    address:
+      required: true
+      selector:
+        text:
+    unit:
+      required: true
+      selector:
+        select:
+          options:
+            - C
+            - F
+    request_readback:
+      default: true
+      selector:
+        boolean:
+
+set_display_light_ble:
+  fields:
+    address:
+      required: true
+      selector:
+        text:
+    value:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+    request_readback:
+      default: true
+      selector:
+        boolean:
+
+set_target_ble:
+  fields:
+    address:
+      required: true
+      selector:
+        text:
+    probe:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+    mode:
+      required: true
+      selector:
+        select:
+          options:
+            - "01"
+            - "10"
+            - "11"
+    high_tenths:
+      default: 0
+      selector:
+        number:
+          mode: box
+    low_tenths:
+      default: 0
+      selector:
+        number:
+          mode: box
+    degree_index:
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 5
+          mode: box
+    food_index:
+      default: -1
+      selector:
+        number:
+          min: -1
+          max: 255
+          mode: box
+    request_readback:
+      default: true
+      selector:
+        boolean:
+
+set_pre_alarm_ble:
+  fields:
+    address:
+      required: true
+      selector:
+        text:
+    probe:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+    advance_values:
+      required: true
+      selector:
+        object:
+    request_readback:
+      default: true
+      selector:
+        boolean:
+
+set_timer_ble:
+  fields:
+    address:
+      required: true
+      selector:
+        text:
+    probe:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+    start_epoch_s:
+      required: true
+      selector:
+        number:
+          mode: box
+    end_epoch_s:
+      required: true
+      selector:
+        number:
+          mode: box
+    count_down:
+      default: true
+      selector:
+        boolean:
+    request_readback:
+      default: true
+      selector:
+        boolean:
+
+reset_timer_ble:
+  fields:
+    address:
+      required: true
+      selector:
+        text:
+    probe:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+    request_readback:
+      default: true
+      selector:
+        boolean:
+
+set_calibration_ble:
+  fields:
+    address:
+      required: true
+      selector:
+        text:
+    probe:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+    channel:
+      required: true
+      selector:
+        select:
+          options:
+            - internal
+            - ambient
+    c_value:
+      required: true
+      selector:
+        number:
+          step: 0.1
+          mode: box
+    request_readback:
+      default: true
+      selector:
+        boolean:
+
+start_probe_pair_ble:
+  fields:
+    address:
+      required: true
+      selector:
+        text:
+    probe:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+    rssi_threshold:
+      default: -80
+      selector:
+        number:
+          min: -128
+          max: 127
+          mode: box
+    request_readback:
+      default: true
+      selector:
+        boolean:
+
+cancel_probe_pair_ble:
+  fields:
+    address:
+      required: true
+      selector:
+        text:
+    rssi_threshold:
+      default: -80
+      selector:
+        number:
+          min: -128
+          max: 127
+          mode: box
+    request_readback:
+      default: true
+      selector:
+        boolean:
