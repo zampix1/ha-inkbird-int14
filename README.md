@@ -4,9 +4,18 @@ Home Assistant custom integration for Inkbird INT-14 with local BLE, local Tuya 
 
 This project is not affiliated with, endorsed by or supported by Inkbird.
 
+<p align="center">
+  <img src="docs/images/int14-product.jpg" alt="Inkbird INT-14 station and wireless probes" width="360">
+  <img src="docs/images/int14-ha-card.png" alt="Home Assistant card preview for Inkbird INT-14" width="460">
+</p>
+
+Product image is included only as a device reference. Inkbird names, logos and trademarks belong to their respective owners.
+
 ## Status
 
-This is a future HACS candidate, not a published release. The intended repository name is:
+This is an early public HACS custom repository release. Hardware coverage is still beta-quality and documented in the known limits below.
+
+Repository:
 
 ```text
 https://github.com/zampix1/ha-inkbird-int14
@@ -32,16 +41,27 @@ Cloud live updates and cloud writes are not supported.
 - Optional cloud history credentials supplied by the user for read-only DP109 history.
 - Optional ESPHome Bluetooth Proxy when the Home Assistant Bluetooth adapter is far from the station.
 
-## Installation
+## Installation With HACS
 
-Manual test installation:
+1. Open HACS.
+2. Add this repository as a custom repository.
+3. Select category `Integration`.
+4. Install the integration.
+5. Restart Home Assistant.
+6. Add `Inkbird INT-14` from **Settings > Devices & services**.
+
+Repository URL:
+
+```text
+https://github.com/zampix1/ha-inkbird-int14
+```
+
+## Manual Installation
 
 1. Copy `custom_components/inkbird_int14` into the Home Assistant `custom_components/` directory.
 2. Restart Home Assistant.
 3. Go to `Settings -> Devices & services -> Add integration`.
 4. Search for `Inkbird INT-14`.
-
-Do not add this repository to HACS until a maintainer has completed the release audit and created an actual GitHub repository.
 
 ## Configuration
 
