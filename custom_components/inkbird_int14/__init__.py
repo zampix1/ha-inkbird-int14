@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -30,6 +31,7 @@ from .protocol import (
 from .runtime import Int14Runtime
 
 PLATFORMS = ["sensor", "binary_sensor", "button", "select", "number"]
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 SERVICE_SET_UNIT = "set_unit"
 SERVICE_SET_DISPLAY_LIGHT = "set_display_light"
 SERVICE_SET_TARGET = "set_target"

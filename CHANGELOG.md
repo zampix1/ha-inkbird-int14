@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Fix Home Assistant Hassfest metadata for Bluetooth dependency and config-entry-only setup.
+
 ## 0.1.0
 
 - Prepare `ha-inkbird-int14` candidate as hybrid/local-first.

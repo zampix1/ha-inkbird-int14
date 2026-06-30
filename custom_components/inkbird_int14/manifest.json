@@ -5,6 +5,9 @@
     "@zampix1"
   ],
   "config_flow": true,
+  "dependencies": [
+    "bluetooth"
+  ],
   "documentation": "https://github.com/zampix1/ha-inkbird-int14",
   "integration_type": "device",
   "iot_class": "local_polling",
@@ -14,5 +17,5 @@
     "bleak-retry-connector>=3.6.0",
     "tinytuya==1.18.1"
   ],
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
