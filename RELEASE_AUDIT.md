@@ -9,7 +9,7 @@
 
 ## Public Positioning
 
-Home Assistant custom integration for modern Inkbird INT food thermometers with local BLE, local Tuya LAN and optional experimental read-only cloud history.
+Home Assistant custom integration for the modern Inkbird INT food thermometer family. INT-14-BW is the tested baseline; related INT-14, INT-12 and selected INT-11 profiles are exposed as experimental until validated by real hardware reports.
 
 This is a hybrid/local-first integration, not a cloud-control integration.
 

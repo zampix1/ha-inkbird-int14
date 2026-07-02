@@ -1,6 +1,8 @@
 # Inkbird INT for Home Assistant
 
-Home Assistant custom integration for modern Inkbird INT food thermometers with local BLE, local Tuya LAN and optional experimental read-only cloud history.
+Home Assistant custom integration for the modern Inkbird INT food thermometer family.
+
+INT-14-BW is the tested baseline. Related INT-14, INT-12 and selected INT-11 profiles are exposed as experimental until validated by real hardware reports.
 
 [![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=zampix1&repository=ha-inkbird-int14&category=integration)
 
@@ -15,7 +17,7 @@ Product image is included only as a device reference. Inkbird names, logos and t
 
 ## What Works
 
-- Tested with an Inkbird INT-14 station.
+- Tested with an Inkbird INT-14-BW station as the baseline device.
 - Includes experimental profiles for related INT-14, INT-12 and INT-11 family models.
 - Installable as a HACS custom repository or by manual copy.
 - Local BLE is used for discovery, snapshots and explicit BLE commands.
@@ -33,6 +35,12 @@ Repository:
 https://github.com/zampix1/ha-inkbird-int14
 ```
 
+## Repository Name
+
+The repository is still named `ha-inkbird-int14` for continuity with the original INT-14-BW implementation, existing links, HACS custom repository installs and public discussions.
+
+The public integration name is now `Inkbird INT`, because the codebase has been extended with model profiles for related modern INT food thermometer models.
+
 The integration is hybrid/local-first:
 
 - Local BLE for discovery, snapshots and explicit BLE commands.
@@ -44,7 +52,7 @@ Cloud live updates and cloud writes are not supported.
 ## Requirements
 
 - Home Assistant with Bluetooth enabled for BLE mode and BLE snapshots.
-- Inkbird INT-14-BW, or a related model profile listed in `docs/model_profiles.md`.
+- Inkbird INT-14-BW as tested baseline, or a related experimental INT model profile listed in `docs/model_profiles.md`.
 - Optional Tuya LAN credentials supplied by the user:
   - station host or IP;
   - device ID;
@@ -60,7 +68,7 @@ Cloud live updates and cloud writes are not supported.
 3. Select category `Integration`.
 4. Install the integration.
 5. Restart Home Assistant.
-6. Add `Inkbird INT` from **Settings > Devices & services**.
+6. Add `Inkbird INT` from **Settings > Devices & services**, then select the model profile that matches your device.
 
 Repository URL:
 
