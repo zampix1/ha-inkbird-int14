@@ -99,6 +99,36 @@ Advanced options include the same LAN fields plus optional experimental cloud hi
 
 Cloud history is disabled by default. It is read-only and only polls Inkbird history DP109.
 
+## Simple Wi-Fi LAN Setup
+
+For local Wi-Fi polling, the station must already be connected to your network. Then provide these values in the integration setup or options:
+
+| Field | What to enter |
+| --- | --- |
+| Host or IP | The station address on your LAN. A fixed DHCP reservation is recommended. |
+| Device ID | The Tuya device ID for your own station. This is not the model name. |
+| Local key | The per-device Tuya local key. This is not your Wi-Fi password and not your Inkbird password. |
+| Protocol version | Usually `3.5` for the tested INT-14-BW station. |
+| Poll interval | Start with `10` seconds unless you have a reason to change it. |
+
+This integration does not retrieve the local key for you. Use a Tuya/local-key method you trust for your own device, then paste the resulting device ID and local key into Home Assistant. If you already use LocalTuya, TinyTuya or another Tuya LAN tool for the same station, these are the same kind of values. If the station is reset or re-paired, the local key may change.
+
+After saving, keep transport mode on `Auto` for normal operation. Use `Wi-Fi LAN only` only for troubleshooting. Useful LAN diagnostics are `Local LAN Configured`, `Local LAN Available`, `Local LAN Status OK`, `Local LAN Update OK` and `Last LAN Update Epoch`.
+
+### Getting Device ID And Local Key
+
+This integration does not collect Tuya cloud credentials. It only needs the final local values for your own station.
+
+Practical routes:
+
+- If the station is already configured in LocalTuya, Tuya Local or another Tuya LAN tool, reuse the same IP/host, device ID, local key and protocol version.
+- TinyTuya can scan the LAN and run `python -m tinytuya wizard`; the generated `devices.json` contains fields such as `id`, `key`, `ip` and `version`.
+- The Tuya IoT developer portal can expose the same values after linking the app account that owns the device, then using API Explorer device details queries.
+
+Do not upload `devices.json`, Tuya API credentials, device IDs or local keys to public issues. Use placeholders when asking for help.
+
+More detail: `docs/lan_setup.md`.
+
 ## Transport Modes
 
 `Auto` prefers Tuya LAN when a complete LAN configuration is available. It avoids keeping BLE connected continuously when LAN is working.
