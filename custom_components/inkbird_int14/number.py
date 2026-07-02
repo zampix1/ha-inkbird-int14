@@ -26,8 +26,12 @@ async def async_setup_entry(
 ) -> None:
     runtime = hass.data[DOMAIN][entry.entry_id]
     base_name = entry.data[CONF_NAME]
+    if runtime.profile.write_support == "not_supported" or not runtime.profile.has_live_runtime_data:
+        async_add_entities([])
+        return
     entities: list[NumberEntity] = [Int14DisplayLightNumber(runtime, base_name)]
-    for probe in range(1, runtime.probe_count + 1):
+    for probe_layout in runtime.profile.probe_layout:
+        probe = probe_layout.index
         entities.append(Int14TargetHighNumber(runtime, base_name, probe))
         entities.append(Int14CalibrationNumber(runtime, base_name, probe, "internal"))
         entities.append(Int14CalibrationNumber(runtime, base_name, probe, "ambient"))

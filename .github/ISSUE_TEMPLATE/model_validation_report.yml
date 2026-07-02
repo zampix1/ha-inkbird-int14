@@ -55,6 +55,46 @@ body:
       required: true
 
   - type: input
+    id: physical-probes-app
+    attributes:
+      label: Physical probes shown by the Inkbird app
+      description: Count probe bodies/sticks, not individual temperature readings.
+      placeholder: "1 / 2 / 3 / 4"
+    validations:
+      required: true
+
+  - type: input
+    id: temperature-channels-app
+    attributes:
+      label: Temperature channels shown by the Inkbird app
+      description: Count each separate food/ambient temperature shown by the app.
+      placeholder: "5"
+    validations:
+      required: true
+
+  - type: textarea
+    id: probe-heat-map
+    attributes:
+      label: Which channel changes when each probe section is heated
+      description: Describe tip, middle/body and ambient response. Keep screenshots redacted if you attach them.
+      placeholder: |
+        Tip heated:
+        Middle/body heated:
+        Ambient/air section heated:
+        Channels that did not move:
+    validations:
+      required: false
+
+  - type: textarea
+    id: redacted-app-screens
+    attributes:
+      label: Redacted app screenshots
+      description: Attach or describe redacted screenshots of the Inkbird app probe screen. Remove private names, locations, account details and network identifiers.
+      placeholder: "Attached redacted probe screen, or not available."
+    validations:
+      required: false
+
+  - type: input
     id: home-assistant-version
     attributes:
       label: Home Assistant version
@@ -170,6 +210,9 @@ body:
         Transport: Auto
         Active path: Tuya LAN
         Model support status: experimental
+        Physical probes:
+        Expected temperature channels:
+        Mapped live temperature channels:
         Last error: <redacted>
     validations:
       required: false

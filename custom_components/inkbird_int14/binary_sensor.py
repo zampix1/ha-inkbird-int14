@@ -68,9 +68,10 @@ async def async_setup_entry(
     runtime = hass.data[DOMAIN][entry.entry_id]
     base_name = entry.data[CONF_NAME]
     entities: list[BinarySensorEntity] = []
-    for probe in range(1, runtime.probe_count + 1):
-        for description in PROBE_STATES:
-            entities.append(Int14ProbeStateBinarySensor(runtime, base_name, probe, description))
+    if runtime.profile.has_live_runtime_data:
+        for probe_layout in runtime.profile.probe_layout:
+            for description in PROBE_STATES:
+                entities.append(Int14ProbeStateBinarySensor(runtime, base_name, probe_layout.index, description))
     for description in BASE_STATES:
         entities.append(Int14BaseStateBinarySensor(runtime, base_name, description))
     async_add_entities(entities)

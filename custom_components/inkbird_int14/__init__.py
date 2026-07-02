@@ -79,7 +79,7 @@ async def _write_runtime(awaitable, action: str) -> None:
 
 def _ensure_probe(runtime: Int14Runtime, probe: int) -> None:
     if probe < 1 or probe > runtime.probe_count:
-        raise HomeAssistantError(f"Probe {probe} is outside the configured {runtime.profile.display_name} range")
+        raise HomeAssistantError(f"Physical probe {probe} is outside the configured {runtime.profile.display_name} range")
 
 
 async def _write_ble(hass: HomeAssistant, call: ServiceCall, payload: bytes) -> None:

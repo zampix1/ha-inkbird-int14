@@ -7,7 +7,7 @@
         "data": {
           "address": "BLE address",
           "name": "Device name",
-          "model": "Model profile",
+          "model": "Model profile (physical probes / temperature channels)",
           "request_init_on_connect": "Request BLE snapshot on connect",
           "transport_mode": "Transport mode",
           "lan_host": "Tuya LAN host or IP",
@@ -34,7 +34,7 @@
         "title": "Inkbird INT options",
         "description": "INT-14 is tested; other model profiles are experimental or cataloged. Cloud history is read-only and disabled by default. It does not support live cloud updates or cloud writes.",
         "data": {
-          "model": "Model profile",
+          "model": "Model profile (physical probes / temperature channels)",
           "request_init_on_connect": "Request BLE snapshot on connect",
           "transport_mode": "Transport mode",
           "lan_host": "Tuya LAN host or IP",

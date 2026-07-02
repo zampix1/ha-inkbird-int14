@@ -23,7 +23,8 @@ Product image is included only as a device reference. Inkbird names, logos and t
 - Local BLE is used for discovery, snapshots and explicit BLE commands.
 - Local Tuya LAN is used for station polling and supported writes when the user supplies their own host, device ID and local key.
 - Optional cloud history is read-only and limited to DP109 temperature history.
-- Exposes probe temperatures, station temperature, target values, transport status, local availability and selected battery/state indicators.
+- Exposes mapped probe temperatures, station temperature, target values, transport status, local availability and selected battery/state indicators for supported profiles.
+- Models with multi-sensor probes are represented with their expected physical-probe and temperature-channel layout, but live entities are created only for channels mapped by the current parser.
 
 ## Status
 
@@ -116,7 +117,7 @@ BLE sessions perform the local challenge/response authentication before snapshot
 
 Main entities are enabled by default:
 
-- probe internal and ambient temperatures for the configured model profile;
+- mapped probe temperature channels for the configured model profile;
 - base station temperature;
 - target high/low values when available;
 - display light and temperature unit;
@@ -125,6 +126,8 @@ Main entities are enabled by default:
 - selected battery/state indicators.
 
 Noisy raw diagnostics and fragile fields that are often unknown are marked diagnostic and many are disabled by default.
+
+The profile diagnostics include physical probe count, expected temperature channel count and mapped live temperature channel count. Cataloged profiles with no validated parser mapping do not create placeholder temperature entities for every expected channel.
 
 Battery values remain numeric when a fresh INT-14 battery snapshot exists. Repeated 100% probe reports are flagged through `Battery Report Quality` and suspect binary sensors instead of hiding the battery value. Local testing showed that the station can still report all probe batteries as 100% after successful BLE authentication, so those values should be treated as station-reported rather than independently verified probe fuel gauges.
 
@@ -138,6 +141,8 @@ If you test a related INT model, start with a sanitized GitHub Discussion unless
 - Issue form: <https://github.com/zampix1/ha-inkbird-int14/issues/new?template=model_validation_report.yml>
 
 The templates ask for model/profile, transport path, readings, writes and redacted diagnostics. Do not include real BLE addresses, LAN IPs, device IDs, local keys, tokens, Wi-Fi names, screenshots with private data or Home Assistant entity IDs.
+
+For multi-sensor probes, include how many physical probes the app shows, how many temperature channels it shows and which app channel changes when you heat the tip, middle and ambient section of a probe.
 
 For ordinary setup questions use Discussions. For reproducible integration bugs use Issues:
 
@@ -196,7 +201,8 @@ example-local-key
 - Battery percentage is the value reported by the station. Use the diagnostic quality/suspect entities when the station reports repeated 100% probe values.
 - Cloud history covers DP109 temperature history only.
 - Cloud live data, cloud battery/state and cloud writes are not supported.
-- Non-INT-14 profiles are experimental or cataloged until hardware captures confirm their parser and write behavior.
+- Non-INT-14 and multi-sensor profiles are experimental or cataloged until hardware captures confirm their parser and write behavior.
+- Cataloged multi-sensor profiles may show an expected channel layout without exposing live temperature entities.
 
 ## Alternatives
 

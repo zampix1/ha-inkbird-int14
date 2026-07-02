@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Add cataloged INT-11S-B, INT-31-BW and INT-33-BW model profiles without enabling unvalidated live transports or writes.
+- Add physical-probe and temperature-channel layouts for modern multi-sensor INT profiles.
+- Keep cataloged multi-sensor profiles read-only/non-live until their BLE frames, Tuya LAN DPs and write behavior are validated.
+- Clarify that `probe_count` means physical probes; expected temperature channels are tracked separately.
 
 ## 0.2.0
 

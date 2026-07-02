@@ -91,6 +91,14 @@ class Int14Runtime:
         return self.profile.probe_count
 
     @property
+    def physical_probe_count(self) -> int:
+        return self.profile.physical_probe_count
+
+    @property
+    def temperature_channel_count(self) -> int:
+        return self.profile.temperature_channel_count
+
+    @property
     def device_model(self) -> str:
         return self.profile.display_name
 
@@ -100,6 +108,9 @@ class Int14Runtime:
         self.data["model_profile"] = self.profile.key
         self.data["model_support_status"] = self.profile.support_status
         self.data["probe_count"] = self.profile.probe_count
+        self.data["temperature_channel_count"] = self.profile.temperature_channel_count
+        self.data["live_temperature_channel_count"] = self.profile.live_temperature_channel_count
+        self.data["probe_layout_summary"] = self.profile.probe_layout_summary
 
     def add_listener(self, callback: Callable[[], None]) -> Callable[[], None]:
         self._listeners.append(callback)
@@ -428,6 +439,8 @@ class Int14Runtime:
             self._notify_listeners()
 
     async def write_ble_command(self, payload: bytes, *, request_readback: bool = True) -> bool:
+        if self.profile.write_support == "not_supported":
+            raise ValueError(f"INT14 writes are not implemented for {self.profile.display_name}")
         if not self.ble_enabled:
             raise ValueError(f"INT14 BLE writes are disabled in transport mode {self.transport_mode}")
         async with self._connection_lock:
@@ -452,6 +465,8 @@ class Int14Runtime:
             return ok
 
     async def write_dps_or_ble(self, dps: dict[str, Any], ble_payload: bytes, *, request_readback: bool = True) -> bool:
+        if self.profile.write_support == "not_supported":
+            raise ValueError(f"INT14 writes are not implemented for {self.profile.display_name}")
         if self.lan_enabled and self.lan_config is not None and self.lan_config.is_complete:
             try:
                 result = await self.hass.async_add_executor_job(set_lan_dps, self.lan_config, dps)
@@ -851,6 +866,9 @@ class Int14Runtime:
             "model_profile": self.profile.key,
             "model_support_status": self.profile.support_status,
             "probe_count": self.profile.probe_count,
+            "temperature_channel_count": self.profile.temperature_channel_count,
+            "live_temperature_channel_count": self.profile.live_temperature_channel_count,
+            "probe_layout_summary": self.profile.probe_layout_summary,
             "transport_mode": self.transport_mode,
             "ble_enabled": self.ble_enabled,
             "local_lan_enabled": self.lan_config is not None and self.lan_enabled,
@@ -870,6 +888,8 @@ class Int14Runtime:
             self._notify_listeners()
 
     def _active_transport(self, ble_connected: bool) -> str:
+        if not self.profile.has_live_runtime_data:
+            return "profile_cataloged_only"
         if self.transport_mode == TRANSPORT_MODE_WIFI_LAN_ONLY:
             return "wifi_lan_selected" if self.data.get("local_lan_available") else "wifi_lan_pending"
         if self.transport_mode == TRANSPORT_MODE_AUTO and self.data.get("local_lan_available"):
@@ -887,7 +907,7 @@ class Int14Runtime:
 
     def _ensure_probe(self, probe: int) -> None:
         if probe < 1 or probe > self.probe_count:
-            raise ValueError(f"probe must be 1..{self.probe_count} for {self.profile.display_name}")
+            raise ValueError(f"physical probe must be 1..{self.probe_count} for {self.profile.display_name}")
 
     def _notify_listeners(self) -> None:
         for callback in list(self._listeners):

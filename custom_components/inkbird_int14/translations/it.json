@@ -7,7 +7,7 @@
         "data": {
           "address": "Indirizzo BLE",
           "name": "Nome dispositivo",
-          "model": "Profilo modello",
+          "model": "Profilo modello (sonde fisiche / canali temperatura)",
           "request_init_on_connect": "Richiedi snapshot BLE alla connessione",
           "transport_mode": "Modalita trasporto",
           "lan_host": "Host o IP Tuya LAN",
@@ -34,7 +34,7 @@
         "title": "Opzioni Inkbird INT",
         "description": "INT-14 e' testato; gli altri profili modello sono sperimentali o catalogati. Lo storico cloud e' in sola lettura e disabilitato di default. Non supporta aggiornamenti live cloud o scritture cloud.",
         "data": {
-          "model": "Profilo modello",
+          "model": "Profilo modello (sonde fisiche / canali temperatura)",
           "request_init_on_connect": "Richiedi snapshot BLE alla connessione",
           "transport_mode": "Modalita trasporto",
           "lan_host": "Host o IP Tuya LAN",

@@ -43,9 +43,14 @@ def test_default_model_is_tested_int14() -> None:
     profile = models.model_profile(None)
     assert profile.key == "int14_bw"
     assert profile.probe_count == 4
+    assert profile.physical_probe_count == 4
+    assert profile.temperature_channel_count == 8
+    assert profile.live_temperature_channel_count == 8
     assert profile.support_status == "tested"
     assert profile.supports_ble_snapshot is True
     assert profile.supports_lan is True
+    assert [channel.key for channel in profile.probe_layout[0].channels] == ["food", "ambient"]
+    assert [channel.data_key for channel in profile.probe_layout[0].live_temperature_channels] == ["internal", "ambient"]
 
 
 def test_probe_counts_match_profile_family() -> None:
@@ -60,6 +65,40 @@ def test_probe_counts_match_profile_family() -> None:
     assert models.model_profile("int33_bw").probe_count == 3
 
 
+def test_modern_multi_sensor_layouts_match_app_model_family() -> None:
+    models = _load_models_module()
+    cases = {
+        "int31_bw": (1, 5, 0),
+        "int14s_bw": (4, 20, 0),
+        "int12e_bw": (2, 10, 0),
+        "int33_bw": (3, 13, 0),
+        "int11s_b": (1, 5, 0),
+        "int14_bw": (4, 8, 8),
+    }
+    for profile_key, (physical_probes, expected_channels, mapped_channels) in cases.items():
+        profile = models.model_profile(profile_key)
+        assert profile.physical_probe_count == physical_probes
+        assert profile.temperature_channel_count == expected_channels
+        assert profile.live_temperature_channel_count == mapped_channels
+
+
+def test_cataloged_profiles_do_not_expose_live_channels() -> None:
+    models = _load_models_module()
+    for profile_key in ("int14s_bw", "int12e_bw", "int11s_b", "int31_bw", "int33_bw"):
+        profile = models.model_profile(profile_key)
+        assert profile.support_status == "cataloged"
+        assert profile.has_live_runtime_data is False
+        assert profile.live_temperature_channel_count == 0
+        assert all(channel.parser_key is None for probe_layout in profile.probe_layout for channel in probe_layout.channels)
+
+
+def test_int33_expected_layout_has_two_long_probes_and_one_mini_probe() -> None:
+    models = _load_models_module()
+    profile = models.model_profile("int33_bw")
+    assert [probe.temperature_channel_count for probe in profile.probe_layout] == [5, 5, 3]
+    assert "Probe 3 mini" in profile.probe_layout_summary
+
+
 def test_transport_capabilities_are_not_overstated() -> None:
     models = _load_models_module()
     assert models.model_profile("int14_bw").supports_lan is True
@@ -67,7 +106,7 @@ def test_transport_capabilities_are_not_overstated() -> None:
     assert models.model_profile("int11i_b").supports_lan is False
     assert models.model_profile("int11i_b").supports_cloud_history is False
     assert models.model_profile("int11p_b").write_support == "not_supported"
-    for profile_key in ("int11s_b", "int31_bw", "int33_bw"):
+    for profile_key in ("int14s_bw", "int12e_bw", "int11s_b", "int31_bw", "int33_bw"):
         profile = models.model_profile(profile_key)
         assert profile.support_status == "cataloged"
         assert profile.supports_ble_snapshot is False

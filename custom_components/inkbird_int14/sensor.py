@@ -11,6 +11,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import CONF_NAME, DOMAIN
+from .models import TemperatureChannel
 
 BATTERY_STALE_SECONDS = 6 * 60 * 60
 
@@ -23,23 +24,25 @@ async def async_setup_entry(
     runtime = hass.data[DOMAIN][entry.entry_id]
     base_name = entry.data[CONF_NAME]
     entities: list[SensorEntity] = []
-    for probe in range(1, runtime.probe_count + 1):
-        entities.append(Int14TempSensor(runtime, base_name, probe, "internal"))
-        entities.append(Int14TempSensor(runtime, base_name, probe, "ambient"))
-        entities.append(Int14TargetTempSensor(runtime, base_name, probe, "high"))
-        entities.append(Int14TargetTempSensor(runtime, base_name, probe, "low"))
-        entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_mode"]))
-        entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_food_index"]))
-        entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_degree_code"]))
-        entities.append(Int14BatterySensor(runtime, base_name, probe))
-        entities.append(Int14AdvanceValueSensor(runtime, base_name, probe))
-        entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_cd_mode"]))
-        entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_start_epoch_s"]))
-        entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_end_epoch_s"]))
-        entities.append(Int14CalibrationSensor(runtime, base_name, probe, "internal"))
-        entities.append(Int14CalibrationSensor(runtime, base_name, probe, "ambient"))
-    entities.append(Int14BaseTempSensor(runtime, base_name))
-    entities.append(Int14BaseBatterySensor(runtime, base_name))
+    if runtime.profile.has_live_runtime_data:
+        for probe_layout in runtime.profile.probe_layout:
+            probe = probe_layout.index
+            for channel in probe_layout.live_temperature_channels:
+                entities.append(Int14TempSensor(runtime, base_name, probe, channel))
+            entities.append(Int14TargetTempSensor(runtime, base_name, probe, "high"))
+            entities.append(Int14TargetTempSensor(runtime, base_name, probe, "low"))
+            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_mode"]))
+            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_food_index"]))
+            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_degree_code"]))
+            entities.append(Int14BatterySensor(runtime, base_name, probe))
+            entities.append(Int14AdvanceValueSensor(runtime, base_name, probe))
+            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_cd_mode"]))
+            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_start_epoch_s"]))
+            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_end_epoch_s"]))
+            for channel in probe_layout.live_temperature_channels:
+                entities.append(Int14CalibrationSensor(runtime, base_name, probe, channel.data_key, channel.live_entity_name))
+        entities.append(Int14BaseTempSensor(runtime, base_name))
+        entities.append(Int14BaseBatterySensor(runtime, base_name))
     for description in BASE_DIAGNOSTIC_DESCRIPTIONS:
         entities.append(Int14BaseDiagnosticValueSensor(runtime, base_name, description))
     async_add_entities(entities)
@@ -79,17 +82,19 @@ class Int14TempSensor(Int14SensorBase):
     _attr_native_unit_of_measurement = UnitOfTemperature.FAHRENHEIT
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, runtime, base_name: str, probe: int, kind: str) -> None:
+    def __init__(self, runtime, base_name: str, probe: int, channel: TemperatureChannel) -> None:
         super().__init__(runtime, base_name)
         self.probe = probe
-        self.kind = kind
-        self._attr_translation_key = f"probe_{probe}_{kind}_temperature"
-        self._attr_unique_id = f"{runtime.address}_probe_{probe}_{kind}_temp"
-        self._attr_name = f"Probe {probe} {kind.title()} Temperature"
+        self.channel = channel
+        self.data_key = channel.data_key
+        entity_key = channel.live_entity_key
+        self._attr_translation_key = f"probe_{probe}_{entity_key}_temperature"
+        self._attr_unique_id = f"{runtime.address}_probe_{probe}_{entity_key}_temp"
+        self._attr_name = f"Probe {probe} {channel.live_entity_name} Temperature"
 
     @property
     def native_value(self):
-        value = self.runtime.data.get(f"probe_{self.probe}_{self.kind}_f_tenths")
+        value = self.runtime.data.get(f"probe_{self.probe}_{self.data_key}_f_tenths")
         if value in {None, 32766, 32767, 32768}:
             return None
         return value / 10
@@ -199,7 +204,20 @@ BASE_DIAGNOSTIC_DESCRIPTIONS = [
     DiagnosticDescription("model", "Configured Model", enabled_default=True),
     DiagnosticDescription("model_profile", "Configured Model Profile"),
     DiagnosticDescription("model_support_status", "Model Support Status", enabled_default=True),
-    DiagnosticDescription("probe_count", "Probe Count", state_class=SensorStateClass.MEASUREMENT, enabled_default=True),
+    DiagnosticDescription("probe_count", "Physical Probe Count", state_class=SensorStateClass.MEASUREMENT, enabled_default=True),
+    DiagnosticDescription(
+        "temperature_channel_count",
+        "Expected Temperature Channel Count",
+        state_class=SensorStateClass.MEASUREMENT,
+        enabled_default=True,
+    ),
+    DiagnosticDescription(
+        "live_temperature_channel_count",
+        "Mapped Live Temperature Channel Count",
+        state_class=SensorStateClass.MEASUREMENT,
+        enabled_default=True,
+    ),
+    DiagnosticDescription("probe_layout_summary", "Probe Layout", enabled_default=True),
     DiagnosticDescription("active_transport", "Active Transport", enabled_default=True),
     DiagnosticDescription("local_lan_configured", "Local LAN Configured", enabled_default=True),
     DiagnosticDescription("local_lan_enabled", "Local LAN Enabled", enabled_default=True),
@@ -372,12 +390,12 @@ class Int14CalibrationSensor(Int14SensorBase):
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, runtime, base_name: str, probe: int, kind: str) -> None:
+    def __init__(self, runtime, base_name: str, probe: int, kind: str, channel_name: str | None = None) -> None:
         super().__init__(runtime, base_name)
         self.probe = probe
         self.kind = kind
         self._attr_unique_id = f"{runtime.address}_probe_{probe}_{kind}_calibration"
-        self._attr_name = f"Probe {probe} {kind.title()} Calibration"
+        self._attr_name = f"Probe {probe} {channel_name or kind.title()} Calibration"
 
     @property
     def native_value(self):

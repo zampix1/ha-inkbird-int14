@@ -30,6 +30,7 @@ This is a hybrid/local-first integration, not a cloud-control integration.
 - Tuya LAN mode through `tinytuya` for local Wi-Fi station polling and mapped writes when the user supplies host, device ID and local key.
 - Optional read-only cloud history polling for DP109.
 - Profile-aware probe counts for INT-14, INT-12, INT-31, INT-33 and selected INT-11 family targets.
+- Model profiles distinguish physical probes from expected temperature channels so modern multi-sensor probes can be cataloged without pretending their live parser is implemented.
 - No cloud live subscription support.
 - No cloud write support.
 - No raw BLE payload service in the public service surface.
@@ -62,7 +63,7 @@ Primary readings and controls remain enabled. Raw diagnostics and fragile fields
 
 Battery readings remain numeric when a fresh INT-14 battery snapshot exists. Suspicious repeated 100% reports are surfaced through diagnostic quality and suspect entities instead of making the battery sensors unavailable.
 
-INT-14-BW is the validated profile. Other model profiles are experimental or cataloged as documented in `docs/model_profiles.md`. Cataloged profiles such as INT-11S-B, INT-31-BW and INT-33-BW are selectable for validation intake, but their live transports and writes stay disabled until hardware captures confirm the parser and DP maps.
+INT-14-BW is the validated profile. Other model profiles are experimental or cataloged as documented in `docs/model_profiles.md`. Cataloged profiles such as INT-14S-BW, INT-12E-BW, INT-11S-B, INT-31-BW and INT-33-BW are selectable for validation intake and expose expected layout diagnostics, but their live transports and writes stay disabled until hardware captures confirm the parser and DP maps.
 
 Hardware validation also confirmed that selecting `BLE only` can force a BLE snapshot/write while the station remains connected to Wi-Fi, and returning to `Auto` restores LAN-first polling.
 
@@ -90,15 +91,15 @@ Documented only as an optional Home Assistant Bluetooth radio placement aid. It 
 
 ## Current Check Results
 
-- `ruff format --check .`: passed.
-- `ruff check --no-cache .`: passed.
-- `pytest -q .`: passed, 12 tests.
+- `py -3 -m ruff format --check .`: passed.
+- `py -3 -m ruff check --no-cache .`: passed.
+- `py -3 -m pytest -q .`: passed, 15 tests.
 - `py -3 -m compileall -q .`: passed with bytecode cache outside the candidate directory.
 - Cache audit: no `.pytest_cache`, `.ruff_cache`, `__pycache__`, `*.pyc` or `*.pyo` left in the candidate directory after cleanup.
 - Manual privacy audit: no private local path, real BLE address, private LAN IP, real MAC or private analysis artifacts found in public files. Only field names and placeholder examples remain.
 - `gitleaks detect --no-git -s .`: passed, no leaks found.
-- `detect-secrets scan --all-files` with a narrow line exclude for documented cloud credential field labels: passed with an empty result set.
-- `trufflehog filesystem . --no-update --fail --no-verification`: passed, 0 verified and 0 unverified findings.
+- `py -3 -m detect_secrets scan --all-files` with a narrow line exclude for documented cloud credential field labels: passed with an empty result set.
+- `trufflehog filesystem . --no-update --fail --no-verification`: passed through the local `trufflehog.exe`, 0 verified and 0 unverified findings.
 
 ## Testable With Hardware
 
