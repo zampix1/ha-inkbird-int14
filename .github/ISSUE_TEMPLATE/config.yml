@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Model validation discussion
+    url: https://github.com/zampix1/ha-inkbird-int14/discussions/new?category=q-a
+    about: Use this when testing a related INT model and you are not sure whether it is a bug yet.
+  - name: Wiki
+    url: https://github.com/zampix1/ha-inkbird-int14/wiki
+    about: Read setup notes, model profile notes and the community validation guide.

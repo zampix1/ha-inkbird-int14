@@ -37,7 +37,15 @@ The vendor app also contains modern INT-22, INT-31, INT-33, INT-54, ING22 and GB
 
 ## Reporting Test Results
 
-When opening issues for experimental profiles, include:
+For early results or "does this profile fit my model?" reports, open a GitHub Discussion with the model validation form:
+
+<https://github.com/zampix1/ha-inkbird-int14/discussions/new?category=q-a>
+
+For reproducible failures, open the model validation issue form:
+
+<https://github.com/zampix1/ha-inkbird-int14/issues/new?template=model_validation_report.yml>
+
+Include:
 
 - profile key;
 - Home Assistant version;

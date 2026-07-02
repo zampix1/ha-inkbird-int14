@@ -122,6 +122,15 @@ Battery values remain numeric when a fresh INT-14 battery snapshot exists. Repea
 
 See `docs/model_profiles.md` for the tested or experimental status of each profile.
 
+## Model Validation Reports
+
+If you test a related INT model, start with a sanitized GitHub Discussion unless you already have a reproducible bug:
+
+- Discussion: <https://github.com/zampix1/ha-inkbird-int14/discussions/new?category=q-a>
+- Issue form: <https://github.com/zampix1/ha-inkbird-int14/issues/new?template=model_validation_report.yml>
+
+The templates ask for model/profile, transport path, readings, writes and redacted diagnostics. Do not include real BLE addresses, LAN IPs, device IDs, local keys, tokens, Wi-Fi names, screenshots with private data or Home Assistant entity IDs.
+
 ## Writes
 
 Supported local writes use Tuya LAN when configured and fall back to BLE only when the selected transport allows BLE:

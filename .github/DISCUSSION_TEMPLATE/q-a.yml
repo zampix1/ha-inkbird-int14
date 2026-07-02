@@ -1,0 +1,116 @@
+title: "[Model validation] <model> with <profile>"
+labels: ["model validation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this discussion to share early results for a related Inkbird INT model before opening a bug.
+
+        Keep the report useful but sanitized. Do not post real BLE addresses, LAN IPs, device IDs, local keys, cloud credentials, Wi-Fi names, private screenshots or Home Assistant entity IDs.
+
+        Safe placeholders:
+
+        - `AA:BB:CC:DD:EE:FF`
+        - `192.0.2.10`
+        - `example-device-id`
+        - `example-local-key`
+
+  - type: input
+    id: exact-model
+    attributes:
+      label: Exact model
+      placeholder: "INT-12-BW"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: selected-profile
+    attributes:
+      label: Profile used
+      options:
+        - int14_bw
+        - int14_bw_wh
+        - ing14
+        - int14s_bw
+        - int14p_bw
+        - int12_bw
+        - int12i_bw
+        - int12e_bw
+        - int11i_b
+        - int11p_b
+        - Other / not listed
+    validations:
+      required: true
+
+  - type: dropdown
+    id: transport-tested
+    attributes:
+      label: Transport tested
+      multiple: true
+      options:
+        - Auto
+        - BLE only with local adapter
+        - BLE only through ESPHome Bluetooth Proxy
+        - Tuya LAN
+        - Wi-Fi cloud history
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Test environment
+      description: Home Assistant version, integration version, install method, adapter/proxy type and approximate distance. No private identifiers.
+      placeholder: |
+        Home Assistant:
+        Integration:
+        Install method:
+        Bluetooth path:
+        Distance:
+    validations:
+      required: true
+
+  - type: textarea
+    id: readings
+    attributes:
+      label: Readings and entities
+      description: Say which temperatures, battery/state fields and diagnostics populated.
+      placeholder: |
+        Probe temperatures:
+        Base/station temperature:
+        Battery/state:
+        Target values:
+        Unknown/unavailable entities:
+    validations:
+      required: true
+
+  - type: textarea
+    id: writes
+    attributes:
+      label: Writes or controls tested
+      description: List local writes tested, or say none tested.
+      placeholder: |
+        Unit:
+        Backlight:
+        Target:
+        Timer:
+        Calibration:
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything that helps profile the model, including repeated 100% battery values, missing probes or transport switching behavior.
+      placeholder: "Probe batteries stayed at 100% after a BLE snapshot, but temperatures updated normally."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: privacy-check
+    attributes:
+      label: Privacy check
+      options:
+        - label: I sanitized private addresses, IDs, keys, credentials, Wi-Fi names, screenshots and entity IDs.
+          required: true

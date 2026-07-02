@@ -1,0 +1,188 @@
+name: Model validation report
+description: Report sanitized results for a modern Inkbird INT model/profile.
+title: "[Model validation] <model> with <profile>"
+labels: ["model validation", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form when you tested a model profile and can say what works or fails.
+
+        Please do not paste private values. Replace real BLE addresses, LAN IPs, device IDs, local keys, cloud keys, Wi-Fi names, screenshots and Home Assistant entity IDs with placeholders such as:
+
+        - `AA:BB:CC:DD:EE:FF`
+        - `192.0.2.10`
+        - `example-device-id`
+        - `example-local-key`
+
+  - type: input
+    id: exact-model
+    attributes:
+      label: Exact model printed on the device or box
+      placeholder: "INT-12-BW"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: selected-profile
+    attributes:
+      label: Selected integration profile
+      options:
+        - int14_bw
+        - int14_bw_wh
+        - ing14
+        - int14s_bw
+        - int14p_bw
+        - int12_bw
+        - int12i_bw
+        - int12e_bw
+        - int11i_b
+        - int11p_b
+        - Other / not listed
+    validations:
+      required: true
+
+  - type: input
+    id: integration-version
+    attributes:
+      label: Integration version
+      description: Use the version shown by HACS or the installed custom component.
+      placeholder: "0.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: home-assistant-version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.6.4"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Install method
+      options:
+        - HACS custom repository
+        - Manual copy
+        - Development checkout
+    validations:
+      required: true
+
+  - type: dropdown
+    id: transport-tested
+    attributes:
+      label: Transport path tested
+      multiple: true
+      options:
+        - Auto
+        - BLE only with local adapter
+        - BLE only through ESPHome Bluetooth Proxy
+        - Tuya LAN
+        - Wi-Fi cloud history
+    validations:
+      required: true
+
+  - type: textarea
+    id: bluetooth-setup
+    attributes:
+      label: Bluetooth setup
+      description: Keep it high level. Do not include a real BLE address.
+      placeholder: |
+        Adapter/proxy: USB Bluetooth adapter near the grill / ESPHome Bluetooth Proxy
+        Approximate distance: same room / one floor away
+        BLE address shown as: AA:BB:CC:DD:EE:FF
+    validations:
+      required: false
+
+  - type: textarea
+    id: lan-setup
+    attributes:
+      label: Tuya LAN setup
+      description: Only use placeholders. Do not include your real host, device ID or local key.
+      placeholder: |
+        LAN configured: yes/no
+        Protocol version: 3.5
+        Host placeholder: 192.0.2.10
+        Device ID placeholder: example-device-id
+        Local key placeholder: example-local-key
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: readings
+    attributes:
+      label: Readings observed
+      options:
+        - label: Probe temperatures populate
+        - label: Base/station temperature populates
+        - label: Battery/state indicators populate
+        - label: Target temperatures populate
+        - label: Transport status is accurate
+        - label: Cloud history DP109 populates
+
+  - type: checkboxes
+    id: writes
+    attributes:
+      label: Writes tested
+      options:
+        - label: Temperature unit
+        - label: Display/backlight
+        - label: Target temperature
+        - label: Pre-alarm
+        - label: Timer or timer reset
+        - label: Calibration
+        - label: No writes tested
+
+  - type: textarea
+    id: works
+    attributes:
+      label: What works
+      description: Describe the successful reads/writes and how stable they were.
+      placeholder: |
+        Probe 1/2 temperatures update every poll over LAN.
+        BLE snapshot succeeds when forced to BLE only.
+    validations:
+      required: true
+
+  - type: textarea
+    id: fails
+    attributes:
+      label: What fails or looks suspicious
+      description: Include repeated 100% battery reports, unavailable probes, unknown entities or failed writes.
+      placeholder: |
+        Probe batteries stay at 100% for hours.
+        Calibration write fails for probe 2.
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Redacted diagnostics and logs
+      description: Paste only sanitized snippets. Remove addresses, IDs, keys, tokens, private URLs and entity IDs.
+      render: shell
+      placeholder: |
+        Transport: Auto
+        Active path: Tuya LAN
+        Model support status: experimental
+        Last error: <redacted>
+    validations:
+      required: false
+
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware or app version, if visible
+      placeholder: "unknown"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: privacy-check
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed or replaced real BLE addresses, LAN IPs, device IDs, local keys, tokens, cloud credentials, Wi-Fi names, screenshots with private data and Home Assistant entity IDs.
+          required: true

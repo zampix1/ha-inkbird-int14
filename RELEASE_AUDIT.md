@@ -17,6 +17,7 @@ This is a hybrid/local-first integration, not a cloud-control integration.
 
 - Root metadata: `README.md`, `hacs.json`, `LICENSE`, `CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`.
 - Workflows: `.github/workflows/validate.yml`, `.github/workflows/hassfest.yml`, `.github/workflows/tests.yml`.
+- Community templates: `.github/ISSUE_TEMPLATE/model_validation_report.yml`, `.github/DISCUSSION_TEMPLATE/q-a.yml`.
 - Component: `custom_components/inkbird_int14`.
 - Docs: `docs/bluetooth_proxy.md`, `docs/lan_setup.md`, `docs/cloud_history_experimental.md`, `docs/model_profiles.md`.
 - Tests: `tests/test_static_release.py`, `tests/test_auth.py`, `tests/test_model_profiles.py`.
@@ -64,6 +65,10 @@ Battery readings remain numeric when a fresh INT-14 battery snapshot exists. Sus
 INT-14-BW is the validated profile. Other model profiles are experimental or cataloged as documented in `docs/model_profiles.md`.
 
 Hardware validation also confirmed that selecting `BLE only` can force a BLE snapshot/write while the station remains connected to Wi-Fi, and returning to `Auto` restores LAN-first polling.
+
+## Community Intake
+
+GitHub Issues and Discussions include a model validation report form. The Discussion form is attached to the `Q&A` category for early model reports; the Issue form is for reproducible validation findings. Both forms require explicit privacy confirmation before submission.
 
 ## Privacy Risks
 

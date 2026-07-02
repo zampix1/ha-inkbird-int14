@@ -42,6 +42,8 @@ def test_no_private_artifact_directories() -> None:
 def test_required_public_files_exist() -> None:
     for name in ("README.md", "CHANGELOG.md", "LICENSE", "hacs.json", "SECURITY.md", "CONTRIBUTING.md", "RELEASE_AUDIT.md"):
         assert (ROOT / name).is_file(), name
+    assert (ROOT / ".github" / "ISSUE_TEMPLATE" / "model_validation_report.yml").is_file()
+    assert (ROOT / ".github" / "DISCUSSION_TEMPLATE" / "q-a.yml").is_file()
     component = next((ROOT / "custom_components").iterdir())
     assert (component / "diagnostics.py").is_file()
     assert (component / "translations" / "en.json").is_file()
