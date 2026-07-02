@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add cataloged INT-11S-B, INT-31-BW and INT-33-BW model profiles without enabling unvalidated live transports or writes.
+
 ## 0.2.0
 
 - Add model profiles for the modern INT-14, INT-12 and INT-11 family targets.

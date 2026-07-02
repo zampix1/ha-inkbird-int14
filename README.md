@@ -2,7 +2,7 @@
 
 Home Assistant custom integration for the modern Inkbird INT food thermometer family.
 
-INT-14-BW is the tested baseline. Related INT-14, INT-12 and selected INT-11 profiles are exposed as experimental until validated by real hardware reports.
+INT-14-BW is the tested baseline. Related INT-14, INT-12, INT-31, INT-33 and selected INT-11 profiles are exposed as experimental or cataloged until validated by real hardware reports.
 
 [![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=zampix1&repository=ha-inkbird-int14&category=integration)
 
@@ -18,7 +18,7 @@ Product image is included only as a device reference. Inkbird names, logos and t
 ## What Works
 
 - Tested with an Inkbird INT-14-BW station as the baseline device.
-- Includes experimental profiles for related INT-14, INT-12 and INT-11 family models.
+- Includes experimental and cataloged profiles for related INT-14, INT-12, INT-31, INT-33 and INT-11 family models.
 - Installable as a HACS custom repository or by manual copy.
 - Local BLE is used for discovery, snapshots and explicit BLE commands.
 - Local Tuya LAN is used for station polling and supported writes when the user supplies their own host, device ID and local key.
@@ -27,7 +27,7 @@ Product image is included only as a device reference. Inkbird names, logos and t
 
 ## Status
 
-Public HACS custom repository release for testers with INT family hardware. INT-14-BW is validated; other profiles are experimental and need hardware feedback.
+Public HACS custom repository release for testers with INT family hardware. INT-14-BW is validated; other profiles are experimental or cataloged and need hardware feedback.
 
 Repository:
 
@@ -52,7 +52,7 @@ Cloud live updates and cloud writes are not supported.
 ## Requirements
 
 - Home Assistant with Bluetooth enabled for BLE mode and BLE snapshots.
-- Inkbird INT-14-BW as tested baseline, or a related experimental INT model profile listed in `docs/model_profiles.md`.
+- Inkbird INT-14-BW as tested baseline, or a related experimental/cataloged INT model profile listed in `docs/model_profiles.md`.
 - Optional Tuya LAN credentials supplied by the user:
   - station host or IP;
   - device ID;
@@ -196,7 +196,7 @@ example-local-key
 - Battery percentage is the value reported by the station. Use the diagnostic quality/suspect entities when the station reports repeated 100% probe values.
 - Cloud history covers DP109 temperature history only.
 - Cloud live data, cloud battery/state and cloud writes are not supported.
-- Non-INT-14 profiles are experimental until hardware captures confirm their parser and write behavior.
+- Non-INT-14 profiles are experimental or cataloged until hardware captures confirm their parser and write behavior.
 
 ## Alternatives
 

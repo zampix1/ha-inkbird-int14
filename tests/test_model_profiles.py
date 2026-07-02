@@ -31,6 +31,9 @@ def test_model_profiles_cover_target_modern_family() -> None:
         "int12e_bw",
         "int11i_b",
         "int11p_b",
+        "int11s_b",
+        "int31_bw",
+        "int33_bw",
     }
     assert expected <= set(models.MODEL_PROFILES)
 
@@ -52,6 +55,9 @@ def test_probe_counts_match_profile_family() -> None:
     assert models.model_profile("int12e_bw").probe_count == 2
     assert models.model_profile("int11i_b").probe_count == 1
     assert models.model_profile("int11p_b").supports_ble_snapshot is False
+    assert models.model_profile("int11s_b").probe_count == 1
+    assert models.model_profile("int31_bw").probe_count == 1
+    assert models.model_profile("int33_bw").probe_count == 3
 
 
 def test_transport_capabilities_are_not_overstated() -> None:
@@ -61,3 +67,10 @@ def test_transport_capabilities_are_not_overstated() -> None:
     assert models.model_profile("int11i_b").supports_lan is False
     assert models.model_profile("int11i_b").supports_cloud_history is False
     assert models.model_profile("int11p_b").write_support == "not_supported"
+    for profile_key in ("int11s_b", "int31_bw", "int33_bw"):
+        profile = models.model_profile(profile_key)
+        assert profile.support_status == "cataloged"
+        assert profile.supports_ble_snapshot is False
+        assert profile.supports_lan is False
+        assert profile.supports_cloud_history is False
+        assert profile.write_support == "not_supported"

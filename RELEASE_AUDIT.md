@@ -9,7 +9,7 @@
 
 ## Public Positioning
 
-Home Assistant custom integration for the modern Inkbird INT food thermometer family. INT-14-BW is the tested baseline; related INT-14, INT-12 and selected INT-11 profiles are exposed as experimental until validated by real hardware reports.
+Home Assistant custom integration for the modern Inkbird INT food thermometer family. INT-14-BW is the tested baseline; related INT-14, INT-12, INT-31, INT-33 and selected INT-11 profiles are exposed as experimental or cataloged until validated by real hardware reports.
 
 This is a hybrid/local-first integration, not a cloud-control integration.
 
@@ -29,7 +29,7 @@ This is a hybrid/local-first integration, not a cloud-control integration.
 - BLE challenge/response authentication is performed locally before snapshots and command readback.
 - Tuya LAN mode through `tinytuya` for local Wi-Fi station polling and mapped writes when the user supplies host, device ID and local key.
 - Optional read-only cloud history polling for DP109.
-- Profile-aware probe counts for INT-14, INT-12 and selected INT-11 family targets.
+- Profile-aware probe counts for INT-14, INT-12, INT-31, INT-33 and selected INT-11 family targets.
 - No cloud live subscription support.
 - No cloud write support.
 - No raw BLE payload service in the public service surface.
@@ -62,7 +62,7 @@ Primary readings and controls remain enabled. Raw diagnostics and fragile fields
 
 Battery readings remain numeric when a fresh INT-14 battery snapshot exists. Suspicious repeated 100% reports are surfaced through diagnostic quality and suspect entities instead of making the battery sensors unavailable.
 
-INT-14-BW is the validated profile. Other model profiles are experimental or cataloged as documented in `docs/model_profiles.md`.
+INT-14-BW is the validated profile. Other model profiles are experimental or cataloged as documented in `docs/model_profiles.md`. Cataloged profiles such as INT-11S-B, INT-31-BW and INT-33-BW are selectable for validation intake, but their live transports and writes stay disabled until hardware captures confirm the parser and DP maps.
 
 Hardware validation also confirmed that selecting `BLE only` can force a BLE snapshot/write while the station remains connected to Wi-Fi, and returning to `Auto` restores LAN-first polling.
 

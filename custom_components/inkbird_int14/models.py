@@ -12,6 +12,9 @@ MODEL_INT12I_BW = "int12i_bw"
 MODEL_INT12E_BW = "int12e_bw"
 MODEL_INT11I_B = "int11i_b"
 MODEL_INT11P_B = "int11p_b"
+MODEL_INT11S_B = "int11s_b"
+MODEL_INT31_BW = "int31_bw"
+MODEL_INT33_BW = "int33_bw"
 
 DEFAULT_MODEL = MODEL_INT14_BW
 AUTH_MODE_BW = "bw_challenge"
@@ -189,6 +192,51 @@ MODEL_PROFILES: dict[str, InkbirdIntModelProfile] = {
         write_support="not_supported",
         support_status="cataloged",
         notes="The app pairs this model by scan/save; it is cataloged but not yet implemented for live reads here.",
+    ),
+    MODEL_INT11S_B: InkbirdIntModelProfile(
+        key=MODEL_INT11S_B,
+        display_name="Inkbird INT-11S-B",
+        app_model="INT-11S-B",
+        product_id=None,
+        probe_count=1,
+        asset_family="int11sb",
+        ble_auth_mode=AUTH_MODE_SCAN_ONLY,
+        supports_ble_snapshot=False,
+        supports_lan=False,
+        supports_cloud_history=False,
+        write_support="not_supported",
+        support_status="cataloged",
+        notes="CTI-certified Bluetooth-only multi-sensor probe; app has a dedicated INT11s route and parser is not implemented here yet.",
+    ),
+    MODEL_INT31_BW: InkbirdIntModelProfile(
+        key=MODEL_INT31_BW,
+        display_name="Inkbird INT-31-BW",
+        app_model="INT-31-BW",
+        product_id="xszt4p66qhevkvy2",
+        probe_count=1,
+        asset_family="int31bw",
+        ble_auth_mode=AUTH_MODE_SCAN_ONLY,
+        supports_ble_snapshot=False,
+        supports_lan=False,
+        supports_cloud_history=False,
+        write_support="not_supported",
+        support_status="cataloged",
+        notes="Wi-Fi/BLE one-probe family with dedicated app storage; live frame and DP maps are not implemented here yet.",
+    ),
+    MODEL_INT33_BW: InkbirdIntModelProfile(
+        key=MODEL_INT33_BW,
+        display_name="Inkbird INT-33-BW",
+        app_model="INT-33-BW",
+        product_id="zvjymfsg50n92qr5",
+        probe_count=3,
+        asset_family="int33bw",
+        ble_auth_mode=AUTH_MODE_SCAN_ONLY,
+        supports_ble_snapshot=False,
+        supports_lan=False,
+        supports_cloud_history=False,
+        write_support="not_supported",
+        support_status="cataloged",
+        notes="Wi-Fi/BLE three-probe family with dedicated app storage; live frame and DP maps are not implemented here yet.",
     ),
 }
 

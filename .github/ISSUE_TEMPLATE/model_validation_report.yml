@@ -38,6 +38,9 @@ body:
         - int12e_bw
         - int11i_b
         - int11p_b
+        - int11s_b
+        - int31_bw
+        - int33_bw
         - Other / not listed
     validations:
       required: true
