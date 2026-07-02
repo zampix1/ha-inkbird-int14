@@ -2,6 +2,8 @@
 
 Home Assistant custom integration for Inkbird INT-14 with local BLE, local Tuya LAN and optional experimental read-only cloud history.
 
+[![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=zampix1&repository=ha-inkbird-int14&category=integration)
+
 This project is not affiliated with, endorsed by or supported by Inkbird.
 
 <p align="center">
@@ -11,9 +13,18 @@ This project is not affiliated with, endorsed by or supported by Inkbird.
 
 Product image is included only as a device reference. Inkbird names, logos and trademarks belong to their respective owners.
 
+## What Works
+
+- Tested with an Inkbird INT-14 station.
+- Installable as a HACS custom repository or by manual copy.
+- Local BLE is used for discovery, snapshots and explicit BLE commands.
+- Local Tuya LAN is used for station polling and supported writes when the user supplies their own host, device ID and local key.
+- Optional cloud history is read-only and limited to DP109 temperature history.
+- Exposes probe temperatures, station temperature, target values, transport status, local availability and selected battery/state indicators.
+
 ## Status
 
-This is an early public HACS custom repository release. Hardware coverage is still beta-quality and documented in the known limits below.
+Public HACS custom repository release for testers with INT-14 hardware. Hardware coverage is still being expanded and the limits are documented below.
 
 Repository:
 
