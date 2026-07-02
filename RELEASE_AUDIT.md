@@ -93,7 +93,7 @@ Documented only as an optional Home Assistant Bluetooth radio placement aid. It 
 - Manual privacy audit: no private local path, real BLE address, private LAN IP, real MAC or private analysis artifacts found in public files. Only field names and placeholder examples remain.
 - `gitleaks detect --no-git -s .`: passed, no leaks found.
 - `detect-secrets scan --all-files` with a narrow line exclude for documented cloud credential field labels: passed with an empty result set.
-- `trufflehog`: not available in the current PATH during this run.
+- `trufflehog filesystem . --no-update --fail --no-verification`: passed, 0 verified and 0 unverified findings.
 
 ## Testable With Hardware
 
