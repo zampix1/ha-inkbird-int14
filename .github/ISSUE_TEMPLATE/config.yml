@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Setup/support discussion
+    url: https://github.com/zampix1/ha-inkbird-int14/discussions/new?category=general
+    about: Use this for install help, setup questions and unclear behavior that is not a reproducible bug.
   - name: Model validation discussion
     url: https://github.com/zampix1/ha-inkbird-int14/discussions/new?category=q-a
     about: Use this when testing a related INT model and you are not sure whether it is a bug yet.

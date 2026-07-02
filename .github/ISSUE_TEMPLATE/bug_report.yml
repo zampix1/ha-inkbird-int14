@@ -1,0 +1,87 @@
+name: Bug report
+description: Report a reproducible integration bug with sanitized details.
+title: "[Bug] <short description>"
+labels: ["bug", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for reproducible bugs in the integration. If you are mainly testing whether a new model profile works, use the model validation report instead.
+
+        Do not paste real BLE addresses, LAN IPs, device IDs, local keys, cloud credentials, Wi-Fi names, screenshots with private data or Home Assistant entity IDs. Replace them with placeholders.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happened, and what did you expect instead?
+      placeholder: "The integration reports probe 2 as unavailable after switching from BLE only back to Auto."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Configure profile ...
+        2. Select transport ...
+        3. Press ...
+    validations:
+      required: true
+
+  - type: input
+    id: integration-version
+    attributes:
+      label: Integration version
+      placeholder: "0.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.6.4"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Transport mode
+      options:
+        - Auto
+        - BLE only
+        - Wi-Fi LAN only
+        - Wi-Fi cloud only
+        - Unknown / not relevant
+    validations:
+      required: true
+
+  - type: input
+    id: model-profile
+    attributes:
+      label: Model/profile
+      placeholder: "INT-14-BW / int14_bw"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted logs
+      description: Paste only sanitized snippets. Remove addresses, IDs, keys, tokens, private URLs and entity IDs.
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I checked the README, known limits and model profile notes.
+          required: true
+        - label: I removed private addresses, IDs, keys, credentials, Wi-Fi names, screenshots and entity IDs.
+          required: true

@@ -5,6 +5,7 @@
 - Add model profiles for the modern INT-14, INT-12 and INT-11 family targets.
 - Make probe entity creation, diagnostics and service validation profile-aware.
 - Document tested versus experimental model support.
+- Add sanitized GitHub templates for model validation, bug reports, feature requests and support discussions.
 
 ## 0.1.2
 

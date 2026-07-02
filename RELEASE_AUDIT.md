@@ -17,7 +17,7 @@ This is a hybrid/local-first integration, not a cloud-control integration.
 
 - Root metadata: `README.md`, `hacs.json`, `LICENSE`, `CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`.
 - Workflows: `.github/workflows/validate.yml`, `.github/workflows/hassfest.yml`, `.github/workflows/tests.yml`.
-- Community templates: `.github/ISSUE_TEMPLATE/model_validation_report.yml`, `.github/DISCUSSION_TEMPLATE/q-a.yml`.
+- Community templates: model validation report, bug report, feature request and support/setup discussion forms.
 - Component: `custom_components/inkbird_int14`.
 - Docs: `docs/bluetooth_proxy.md`, `docs/lan_setup.md`, `docs/cloud_history_experimental.md`, `docs/model_profiles.md`.
 - Tests: `tests/test_static_release.py`, `tests/test_auth.py`, `tests/test_model_profiles.py`.

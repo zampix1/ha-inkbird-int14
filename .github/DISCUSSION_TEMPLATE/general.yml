@@ -1,0 +1,74 @@
+title: "[Support] <short question>"
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for setup questions, install problems and "is this expected?" discussions.
+
+        If you are validating a different Inkbird INT model, use the Q&A model validation form instead.
+
+        Do not post real BLE addresses, LAN IPs, device IDs, local keys, cloud credentials, Wi-Fi names, private screenshots or Home Assistant entity IDs.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      placeholder: "I installed the integration through HACS, but..."
+    validations:
+      required: true
+
+  - type: input
+    id: integration-version
+    attributes:
+      label: Integration version
+      placeholder: "0.2.0"
+    validations:
+      required: false
+
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.6.4"
+    validations:
+      required: false
+
+  - type: input
+    id: model-profile
+    attributes:
+      label: Model/profile, if relevant
+      placeholder: "INT-14-BW / int14_bw"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Transport path, if relevant
+      options:
+        - Auto
+        - BLE only
+        - BLE through ESPHome Bluetooth Proxy
+        - Tuya LAN
+        - Wi-Fi cloud history
+        - Not relevant
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Add sanitized setup details or logs if they help.
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: privacy-check
+    attributes:
+      label: Privacy check
+      options:
+        - label: I sanitized private addresses, IDs, keys, credentials, Wi-Fi names, screenshots and entity IDs.
+          required: true

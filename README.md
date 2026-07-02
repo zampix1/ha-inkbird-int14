@@ -131,6 +131,12 @@ If you test a related INT model, start with a sanitized GitHub Discussion unless
 
 The templates ask for model/profile, transport path, readings, writes and redacted diagnostics. Do not include real BLE addresses, LAN IPs, device IDs, local keys, tokens, Wi-Fi names, screenshots with private data or Home Assistant entity IDs.
 
+For ordinary setup questions use Discussions. For reproducible integration bugs use Issues:
+
+- Support/setup: <https://github.com/zampix1/ha-inkbird-int14/discussions/new?category=general>
+- Bug report: <https://github.com/zampix1/ha-inkbird-int14/issues/new?template=bug_report.yml>
+- Feature request: <https://github.com/zampix1/ha-inkbird-int14/issues/new?template=feature_request.yml>
+
 ## Writes
 
 Supported local writes use Tuya LAN when configured and fall back to BLE only when the selected transport allows BLE:

@@ -1,0 +1,51 @@
+name: Feature request
+description: Suggest a focused integration improvement.
+title: "[Feature] <short description>"
+labels: ["enhancement", "needs triage"]
+body:
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What workflow or device behavior would this improve?
+      placeholder: "I want to expose a missing preset because..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the Home Assistant behavior you would expect.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - Local BLE
+        - Tuya LAN
+        - Cloud history read-only
+        - Entity naming or diagnostics
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Model/profile, if relevant
+      placeholder: "INT-12-BW / int12_bw"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: privacy-check
+    attributes:
+      label: Privacy check
+      options:
+        - label: I did not include real BLE addresses, LAN IPs, device IDs, local keys, credentials, Wi-Fi names, screenshots with private data or Home Assistant entity IDs.
+          required: true
