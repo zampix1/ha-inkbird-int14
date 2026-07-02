@@ -23,6 +23,7 @@ from .const import (
     CONF_LAN_PORT,
     CONF_LAN_TEST_ON_SETUP,
     CONF_LAN_VERSION,
+    CONF_MODEL,
     CONF_NAME,
     CONF_REQUEST_INIT_ON_CONNECT,
     CONF_TRANSPORT_MODE,
@@ -37,6 +38,7 @@ from .const import (
     TRANSPORT_MODES,
 )
 from .lan import TuyaLanConfig, fetch_lan_dps
+from .models import DEFAULT_MODEL, model_options
 
 
 def _stripped(data: dict[str, Any], key: str) -> str:
@@ -68,6 +70,7 @@ def _base_schema(defaults: dict[str, Any]) -> vol.Schema:
         {
             vol.Required(CONF_ADDRESS, default=defaults.get(CONF_ADDRESS, "")): str,
             vol.Optional(CONF_NAME, default=defaults.get(CONF_NAME, DEFAULT_NAME)): str,
+            vol.Optional(CONF_MODEL, default=defaults.get(CONF_MODEL, DEFAULT_MODEL)): vol.In(model_options()),
             vol.Optional(
                 CONF_REQUEST_INIT_ON_CONNECT,
                 default=defaults.get(CONF_REQUEST_INIT_ON_CONNECT, True),
@@ -99,6 +102,10 @@ def _base_schema(defaults: dict[str, Any]) -> vol.Schema:
 def _advanced_schema(defaults: dict[str, Any]) -> vol.Schema:
     return vol.Schema(
         {
+            vol.Optional(
+                CONF_MODEL,
+                default=defaults.get(CONF_MODEL, DEFAULT_MODEL),
+            ): vol.In(model_options()),
             vol.Optional(
                 CONF_REQUEST_INIT_ON_CONNECT,
                 default=defaults.get(CONF_REQUEST_INIT_ON_CONNECT, True),
@@ -176,6 +183,7 @@ class InkbirdInt14ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data = {
                     CONF_ADDRESS: user_input[CONF_ADDRESS],
                     CONF_NAME: user_input.get(CONF_NAME) or DEFAULT_NAME,
+                    CONF_MODEL: user_input.get(CONF_MODEL, DEFAULT_MODEL),
                     CONF_REQUEST_INIT_ON_CONNECT: user_input.get(CONF_REQUEST_INIT_ON_CONNECT, True),
                     CONF_TRANSPORT_MODE: user_input.get(CONF_TRANSPORT_MODE, TRANSPORT_MODE_AUTO),
                     CONF_LAN_HOST: _stripped(user_input, CONF_LAN_HOST),

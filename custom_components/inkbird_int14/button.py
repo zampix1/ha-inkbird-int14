@@ -34,7 +34,7 @@ class Int14RequestInitButton(ButtonEntity):
             "identifiers": {(DOMAIN, self.runtime.address.upper())},
             "name": self._base_name,
             "manufacturer": "Inkbird",
-            "model": "INT-14-BW",
+            "model": self.runtime.device_model,
         }
 
     async def async_press(self) -> None:

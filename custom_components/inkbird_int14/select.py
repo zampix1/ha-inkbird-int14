@@ -44,7 +44,7 @@ class Int14TransportModeSelect(SelectEntity):
             "identifiers": {(DOMAIN, self.runtime.address.upper())},
             "name": self._base_name,
             "manufacturer": "Inkbird",
-            "model": "INT-14-BW",
+            "model": self.runtime.device_model,
         }
 
     @property

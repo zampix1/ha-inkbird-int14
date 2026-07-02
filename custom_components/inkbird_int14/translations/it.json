@@ -2,11 +2,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Inkbird INT-14",
-        "description": "Aggiungi una station Inkbird INT-14. BLE e' locale. Tuya LAN e' locale e richiede host, device ID e local key forniti dall'utente. Lo storico cloud si configura dopo dalle opzioni ed e' sperimentale in sola lettura.",
+        "title": "Inkbird INT",
+        "description": "Aggiungi un termometro food Inkbird INT. INT-14 e' testato; gli altri profili modello sono sperimentali. BLE e' locale. Tuya LAN e' locale e richiede host, device ID e local key forniti dall'utente. Lo storico cloud si configura dopo dalle opzioni ed e' sperimentale in sola lettura.",
         "data": {
           "address": "Indirizzo BLE",
           "name": "Nome dispositivo",
+          "model": "Profilo modello",
           "request_init_on_connect": "Richiedi snapshot BLE alla connessione",
           "transport_mode": "Modalita trasporto",
           "lan_host": "Host o IP Tuya LAN",
@@ -30,9 +31,10 @@
   "options": {
     "step": {
       "init": {
-        "title": "Opzioni Inkbird INT-14",
-        "description": "Lo storico cloud e' sperimentale, in sola lettura e disabilitato di default. Non supporta aggiornamenti live cloud o scritture cloud.",
+        "title": "Opzioni Inkbird INT",
+        "description": "INT-14 e' testato; gli altri profili modello sono sperimentali. Lo storico cloud e' in sola lettura e disabilitato di default. Non supporta aggiornamenti live cloud o scritture cloud.",
         "data": {
+          "model": "Profilo modello",
           "request_init_on_connect": "Richiedi snapshot BLE alla connessione",
           "transport_mode": "Modalita trasporto",
           "lan_host": "Host o IP Tuya LAN",

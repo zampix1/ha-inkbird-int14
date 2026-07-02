@@ -1,6 +1,6 @@
 {
   "domain": "inkbird_int14",
-  "name": "Inkbird INT-14",
+  "name": "Inkbird INT",
   "codeowners": [
     "@zampix1"
   ],
@@ -17,5 +17,5 @@
     "bleak-retry-connector>=3.6.0",
     "tinytuya==1.18.1"
   ],
-  "version": "0.1.2"
+  "version": "0.2.0"
 }

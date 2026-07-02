@@ -26,6 +26,7 @@ from .const import (
     WRITE_UUID,
 )
 from .lan import TuyaLanConfig, fetch_lan_dps, set_lan_dps
+from .models import AUTH_MODE_SCAN_ONLY, DEFAULT_MODEL, InkbirdIntModelProfile, model_profile
 from .protocol import (
     build_calibration_command,
     build_calibration_dp_value,
@@ -64,9 +65,11 @@ class Int14Runtime:
         transport_mode: str = TRANSPORT_MODE_AUTO,
         cloud_history_config: CloudHistoryConfig | None = None,
         lan_config: TuyaLanConfig | None = None,
+        model: str = DEFAULT_MODEL,
     ) -> None:
         self.hass = hass
         self.address = address
+        self.profile: InkbirdIntModelProfile = model_profile(model)
         self.transport_mode = transport_mode if transport_mode in TRANSPORT_MODES else TRANSPORT_MODE_AUTO
         self.cloud_history_config = cloud_history_config
         self.lan_config = lan_config
@@ -82,6 +85,21 @@ class Int14Runtime:
         self._auth_challenge_event = asyncio.Event()
         self._auth_ack_event = asyncio.Event()
         self._refresh_transport_state(notify=False)
+
+    @property
+    def probe_count(self) -> int:
+        return self.profile.probe_count
+
+    @property
+    def device_model(self) -> str:
+        return self.profile.display_name
+
+    def set_model(self, model: str | None) -> None:
+        self.profile = model_profile(model)
+        self.data["model"] = self.profile.app_model
+        self.data["model_profile"] = self.profile.key
+        self.data["model_support_status"] = self.profile.support_status
+        self.data["probe_count"] = self.profile.probe_count
 
     def add_listener(self, callback: Callable[[], None]) -> Callable[[], None]:
         self._listeners.append(callback)
@@ -246,22 +264,25 @@ class Int14Runtime:
 
     @property
     def ble_enabled(self) -> bool:
+        if not self.profile.supports_ble_snapshot:
+            return False
         if self.transport_mode == TRANSPORT_MODE_BLE_ONLY:
             return True
         if self.transport_mode != TRANSPORT_MODE_AUTO:
             return False
-        return not (self.lan_config is not None and self.lan_config.is_complete)
+        return not (self.profile.supports_lan and self.lan_config is not None and self.lan_config.is_complete)
 
     @property
     def lan_enabled(self) -> bool:
-        return self.transport_mode in {TRANSPORT_MODE_AUTO, TRANSPORT_MODE_WIFI_LAN_ONLY}
+        return self.profile.supports_lan and self.transport_mode in {TRANSPORT_MODE_AUTO, TRANSPORT_MODE_WIFI_LAN_ONLY}
 
     @property
     def cloud_enabled(self) -> bool:
-        return self.cloud_history_config is not None and self.transport_mode in {
-            TRANSPORT_MODE_AUTO,
-            TRANSPORT_MODE_WIFI_CLOUD_ONLY,
-        }
+        return (
+            self.profile.supports_cloud_history
+            and self.cloud_history_config is not None
+            and self.transport_mode in {TRANSPORT_MODE_AUTO, TRANSPORT_MODE_WIFI_CLOUD_ONLY}
+        )
 
     async def _sleep_or_mode_change(self, seconds: int) -> None:
         try:
@@ -275,8 +296,8 @@ class Int14Runtime:
 
         device = bluetooth.async_ble_device_from_address(self.hass, self.address, connectable=True)
         if device is None:
-            device = BLEDevice(self.address, "INT-14-BW", {})
-        return await establish_connection(BleakClient, device, "INT-14-BW", max_attempts=4, timeout=20.0)
+            device = BLEDevice(self.address, self.profile.app_model, {})
+        return await establish_connection(BleakClient, device, self.profile.app_model, max_attempts=4, timeout=20.0)
 
     async def _listen(self, client: BleakClient) -> None:
         deadline = asyncio.get_running_loop().time() + SESSION_SECONDS
@@ -325,6 +346,10 @@ class Int14Runtime:
             await self._request_init_with_fresh_connection()
 
     async def _request_init_on_client(self, client: BleakClient) -> None:
+        if not self.profile.supports_ble_snapshot:
+            self.data["last_ble_error"] = f"BLE snapshot not implemented for {self.profile.display_name}"
+            self._notify_listeners()
+            return
         await self._request_auth(client)
         for payload in init_command_chunks():
             if not await self._write_command(payload):
@@ -334,6 +359,11 @@ class Int14Runtime:
         await self._read_initial_values(client)
 
     async def _request_auth(self, client: BleakClient) -> None:
+        if self.profile.ble_auth_mode == AUTH_MODE_SCAN_ONLY:
+            self.data["ble_auth_ok"] = None
+            self.data["last_ble_auth_error"] = "auth not implemented for scan-only model profile"
+            self._notify_listeners()
+            return
         if self._client is None:
             self._client = client
         self._auth_challenge_event.clear()
@@ -474,6 +504,7 @@ class Int14Runtime:
         degree_index: int = 0,
         food_index: int = -1,
     ) -> bool:
+        self._ensure_probe(probe)
         ble_payload = build_target_command(
             probe=probe,
             mode=mode,
@@ -504,16 +535,19 @@ class Int14Runtime:
         )
 
     async def write_calibration(self, *, probe: int, channel: str, c_value: float) -> bool:
+        self._ensure_probe(probe)
         ble_payload = build_calibration_command(probe=probe, channel=channel, c_value=c_value)
         dp_value = build_calibration_dp_value(probe=probe, channel=channel, c_value=c_value)
         return await self.write_dps_or_ble({"110": dp_value}, ble_payload)
 
     async def write_pre_alarm(self, probe: int, advance_values: list[int]) -> bool:
+        self._ensure_probe(probe)
         ble_payload = build_pre_alarm_command(probe, advance_values)
         dp_value = build_pre_alarm_dp_value(probe, advance_values)
         return await self.write_dps_or_ble({"116": dp_value}, ble_payload)
 
     async def write_timer(self, *, probe: int, start_epoch_s: int, end_epoch_s: int, count_down: bool = True) -> bool:
+        self._ensure_probe(probe)
         ble_payload = build_timer_command(probe, start_epoch_s, end_epoch_s, count_down=count_down)
         dp_value = build_timer_dp_value(probe, start_epoch_s, end_epoch_s, count_down=count_down)
         ok = await self.write_dps_or_ble({str(125 + probe): dp_value}, ble_payload)
@@ -523,6 +557,7 @@ class Int14Runtime:
         return ok
 
     async def reset_timer(self, probe: int) -> bool:
+        self._ensure_probe(probe)
         ble_payload = build_timer_reset_command(probe)
         dp_value = build_timer_reset_dp_value(probe)
         ok = await self.write_dps_or_ble({str(125 + probe): dp_value}, ble_payload)
@@ -648,6 +683,8 @@ class Int14Runtime:
             self.data["base_temp_f_tenths"] = frame.get("base_temp_f_tenths")
             for probe in frame["probes"]:
                 idx = probe["probe"]
+                if idx > self.probe_count:
+                    continue
                 self.data[f"probe_{idx}_internal_f_tenths"] = probe["internal_f_tenths"]
                 self.data[f"probe_{idx}_ambient_f_tenths"] = probe["ambient_f_tenths"]
         elif frame.get("name") == "battery_candidate":
@@ -660,6 +697,8 @@ class Int14Runtime:
                 self.data["last_battery_len"] = len(str(frame["raw_hex"])) // 2
             self.data["base_power"] = frame["base_power"]
             for idx, value in frame["probe_battery"].items():
+                if idx > self.probe_count:
+                    continue
                 self.data[f"probe_{idx}_battery"] = value
             self._classify_battery_report()
         elif frame.get("name") == "state_candidate":
@@ -672,6 +711,8 @@ class Int14Runtime:
             self.data["device_over_low_temp_alarm"] = frame.get("device_over_low_temp_alarm")
             for probe in frame["probes"]:
                 idx = probe["probe"]
+                if idx > self.probe_count:
+                    continue
                 for key, value in probe.items():
                     if key != "probe":
                         self.data[f"probe_{idx}_{key}"] = value
@@ -680,7 +721,7 @@ class Int14Runtime:
         elif frame.get("name") == "target_candidate":
             self.data["last_transport"] = frame.get("transport")
             idx = frame.get("probe")
-            if idx is not None:
+            if idx is not None and idx <= self.probe_count:
                 self.data[f"probe_{idx}_target_high_f_tenths"] = frame.get("target_high_f_tenths")
                 self.data[f"probe_{idx}_target_low_f_tenths"] = frame.get("target_low_f_tenths")
                 self.data[f"probe_{idx}_target_mode"] = frame.get("mode_name")
@@ -689,11 +730,13 @@ class Int14Runtime:
         elif frame.get("name") == "pre_alarm_candidate":
             self.data["last_transport"] = frame.get("transport")
             for idx, value in enumerate(frame.get("advance_values", []), start=1):
+                if idx > self.probe_count:
+                    continue
                 self.data[f"probe_{idx}_advance_value"] = value
         elif frame.get("name") == "timer_candidate":
             self.data["last_transport"] = frame.get("transport")
             idx = frame.get("probe")
-            if idx is not None:
+            if idx is not None and idx <= self.probe_count:
                 if not timer_epoch_values_plausible(
                     frame.get("start_epoch_s"),
                     frame.get("end_epoch_s"),
@@ -708,9 +751,13 @@ class Int14Runtime:
         elif frame.get("name") == "calibration_candidate":
             self.data["last_transport"] = frame.get("transport")
             for idx, value in frame.get("internal", {}).items():
+                if idx > self.probe_count:
+                    continue
                 self.data[f"probe_{idx}_internal_calibration_c"] = value.get("c_value")
                 self.data[f"probe_{idx}_internal_calibration_raw_f_tenths"] = value.get("raw_f_tenths")
             for idx, value in frame.get("ambient", {}).items():
+                if idx > self.probe_count:
+                    continue
                 self.data[f"probe_{idx}_ambient_calibration_c"] = value.get("c_value")
                 self.data[f"probe_{idx}_ambient_calibration_raw_f_tenths"] = value.get("raw_f_tenths")
         elif frame.get("name") == "unit_candidate":
@@ -747,15 +794,17 @@ class Int14Runtime:
 
     def _classify_battery_report(self) -> None:
         raw_hex = str(self.data.get("last_battery_prefix") or "").lower()
-        probe_values = [value for value in (self.data.get(f"probe_{idx}_battery") for idx in range(1, 5)) if value is not None]
-        raw_all_100 = raw_hex.startswith("6464646464")
-        probe_100_plateau = len(probe_values) >= 4 and all(value == 100 for value in probe_values)
+        probes = range(1, self.probe_count + 1)
+        probe_values = [value for value in (self.data.get(f"probe_{idx}_battery") for idx in probes) if value is not None]
+        expected_100_len = 1 + self.probe_count
+        raw_all_100 = raw_hex.startswith("64" * expected_100_len)
+        probe_100_plateau = len(probe_values) >= self.probe_count and all(value == 100 for value in probe_values)
 
         base_charging = self.data.get("base_charging") is True
-        all_probe_charging = all(self.data.get(f"probe_{idx}_charging") is True for idx in range(1, 5))
+        all_probe_charging = all(self.data.get(f"probe_{idx}_charging") is True for idx in range(1, self.probe_count + 1))
         base_suspect = raw_all_100 and not base_charging
         probe_suspects = {}
-        for idx in range(1, 5):
+        for idx in range(1, self.probe_count + 1):
             value = self.data.get(f"probe_{idx}_battery")
             charging = self.data.get(f"probe_{idx}_charging") is True
             suspect = (raw_all_100 or (probe_100_plateau and value == 100)) and not charging
@@ -798,6 +847,10 @@ class Int14Runtime:
             battery_age = max(0, int(time.time()) - int(last_battery))
             battery_data_stale = battery_age > BATTERY_STALE_SECONDS
         updates = {
+            "model": self.profile.app_model,
+            "model_profile": self.profile.key,
+            "model_support_status": self.profile.support_status,
+            "probe_count": self.profile.probe_count,
             "transport_mode": self.transport_mode,
             "ble_enabled": self.ble_enabled,
             "local_lan_enabled": self.lan_config is not None and self.lan_enabled,
@@ -831,6 +884,10 @@ class Int14Runtime:
         if wifi_online:
             return "wifi_cloud_available"
         return "ble_waiting"
+
+    def _ensure_probe(self, probe: int) -> None:
+        if probe < 1 or probe > self.probe_count:
+            raise ValueError(f"probe must be 1..{self.probe_count} for {self.profile.display_name}")
 
     def _notify_listeners(self) -> None:
         for callback in list(self._listeners):

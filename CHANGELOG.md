@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- Add model profiles for the modern INT-14, INT-12 and INT-11 family targets.
+- Make probe entity creation, diagnostics and service validation profile-aware.
+- Document tested versus experimental model support.
+
 ## 0.1.2
 
 - Add local BLE challenge/response authentication before INT-14 snapshots and BLE writes.

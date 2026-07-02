@@ -9,6 +9,7 @@ BATTERY_UUID = "00002a19-0000-1000-8000-00805f9b34fb"
 
 CONF_ADDRESS = "address"
 CONF_NAME = "name"
+CONF_MODEL = "model"
 CONF_REQUEST_INIT_ON_CONNECT = "request_init_on_connect"
 CONF_TRANSPORT_MODE = "transport_mode"
 CONF_LAN_HOST = "lan_host"

@@ -27,7 +27,7 @@ async def async_setup_entry(
     runtime = hass.data[DOMAIN][entry.entry_id]
     base_name = entry.data[CONF_NAME]
     entities: list[NumberEntity] = [Int14DisplayLightNumber(runtime, base_name)]
-    for probe in range(1, 5):
+    for probe in range(1, runtime.probe_count + 1):
         entities.append(Int14TargetHighNumber(runtime, base_name, probe))
         entities.append(Int14CalibrationNumber(runtime, base_name, probe, "internal"))
         entities.append(Int14CalibrationNumber(runtime, base_name, probe, "ambient"))
@@ -57,7 +57,7 @@ class Int14NumberBase(NumberEntity):
             "identifiers": {(DOMAIN, self.runtime.address.upper())},
             "name": self._base_name,
             "manufacturer": "Inkbird",
-            "model": "INT-14-BW",
+            "model": self.runtime.device_model,
         }
 
     @callback
@@ -161,7 +161,7 @@ class Int14PreAlarmNumber(Int14NumberBase):
 
     async def async_set_native_value(self, value: float) -> None:
         values = []
-        for index in range(1, 5):
+        for index in range(1, self.runtime.probe_count + 1):
             current = self.runtime.data.get(f"probe_{index}_advance_value")
             fallback = DEFAULT_PRE_ALARM_VALUES[index - 1]
             values.append(round(value) if index == self.probe else int(current if current is not None else fallback))

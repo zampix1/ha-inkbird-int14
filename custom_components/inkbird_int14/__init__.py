@@ -9,6 +9,7 @@ from homeassistant.exceptions import HomeAssistantError
 from .cloud import build_cloud_history_config_from_sources
 from .const import (
     CONF_ADDRESS,
+    CONF_MODEL,
     CONF_REQUEST_INIT_ON_CONNECT,
     CONF_TRANSPORT_MODE,
     DEFAULT_CLOUD_BASE_URL,
@@ -76,6 +77,11 @@ async def _write_runtime(awaitable, action: str) -> None:
         raise HomeAssistantError(f"INT-14 {action} failed")
 
 
+def _ensure_probe(runtime: Int14Runtime, probe: int) -> None:
+    if probe < 1 or probe > runtime.probe_count:
+        raise HomeAssistantError(f"Probe {probe} is outside the configured {runtime.profile.display_name} range")
+
+
 async def _write_ble(hass: HomeAssistant, call: ServiceCall, payload: bytes) -> None:
     runtime = _runtime_for_address(hass, call.data[CONF_ADDRESS])
     try:
@@ -115,6 +121,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
     async def handle_set_target(call: ServiceCall) -> None:
         runtime = _runtime_for_optional_address(hass, call.data.get(CONF_ADDRESS))
+        _ensure_probe(runtime, call.data["probe"])
         await _write_runtime(
             runtime.write_target(
                 probe=call.data["probe"],
@@ -129,6 +136,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
     async def handle_set_pre_alarm(call: ServiceCall) -> None:
         runtime = _runtime_for_optional_address(hass, call.data.get(CONF_ADDRESS))
+        _ensure_probe(runtime, call.data["probe"])
         await _write_runtime(
             runtime.write_pre_alarm(call.data["probe"], list(call.data["advance_values"])),
             "pre-alarm write",
@@ -136,6 +144,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
     async def handle_set_timer(call: ServiceCall) -> None:
         runtime = _runtime_for_optional_address(hass, call.data.get(CONF_ADDRESS))
+        _ensure_probe(runtime, call.data["probe"])
         await _write_runtime(
             runtime.write_timer(
                 probe=call.data["probe"],
@@ -148,10 +157,12 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
     async def handle_reset_timer(call: ServiceCall) -> None:
         runtime = _runtime_for_optional_address(hass, call.data.get(CONF_ADDRESS))
+        _ensure_probe(runtime, call.data["probe"])
         await _write_runtime(runtime.reset_timer(call.data["probe"]), "timer reset")
 
     async def handle_set_calibration(call: ServiceCall) -> None:
         runtime = _runtime_for_optional_address(hass, call.data.get(CONF_ADDRESS))
+        _ensure_probe(runtime, call.data["probe"])
         await _write_runtime(
             runtime.write_calibration(
                 probe=call.data["probe"],
@@ -162,6 +173,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         )
 
     async def handle_set_target_ble(call: ServiceCall) -> None:
+        runtime = _runtime_for_address(hass, call.data[CONF_ADDRESS])
+        _ensure_probe(runtime, call.data["probe"])
         await _write_ble(
             hass,
             call,
@@ -176,9 +189,13 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         )
 
     async def handle_set_pre_alarm_ble(call: ServiceCall) -> None:
+        runtime = _runtime_for_address(hass, call.data[CONF_ADDRESS])
+        _ensure_probe(runtime, call.data["probe"])
         await _write_ble(hass, call, build_pre_alarm_command(call.data["probe"], list(call.data["advance_values"])))
 
     async def handle_set_timer_ble(call: ServiceCall) -> None:
+        runtime = _runtime_for_address(hass, call.data[CONF_ADDRESS])
+        _ensure_probe(runtime, call.data["probe"])
         await _write_ble(
             hass,
             call,
@@ -191,9 +208,13 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         )
 
     async def handle_reset_timer_ble(call: ServiceCall) -> None:
+        runtime = _runtime_for_address(hass, call.data[CONF_ADDRESS])
+        _ensure_probe(runtime, call.data["probe"])
         await _write_ble(hass, call, build_timer_reset_command(call.data["probe"]))
 
     async def handle_set_calibration_ble(call: ServiceCall) -> None:
+        runtime = _runtime_for_address(hass, call.data[CONF_ADDRESS])
+        _ensure_probe(runtime, call.data["probe"])
         await _write_ble(
             hass,
             call,
@@ -205,6 +226,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         )
 
     async def handle_start_probe_pair_ble(call: ServiceCall) -> None:
+        runtime = _runtime_for_address(hass, call.data[CONF_ADDRESS])
+        _ensure_probe(runtime, call.data["probe"])
         await _write_ble(
             hass,
             call,
@@ -413,6 +436,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     lan_config = build_lan_config_from_sources(entry.data, entry.options)
     runtime = Int14Runtime(hass, entry.data[CONF_ADDRESS], transport_mode, cloud_history_config, lan_config)
+    runtime.set_model(entry.options.get(CONF_MODEL, entry.data.get(CONF_MODEL)))
     runtime.request_init_on_connect = entry.options.get(
         CONF_REQUEST_INIT_ON_CONNECT,
         entry.data.get(CONF_REQUEST_INIT_ON_CONNECT, True),

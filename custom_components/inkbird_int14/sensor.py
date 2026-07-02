@@ -23,7 +23,7 @@ async def async_setup_entry(
     runtime = hass.data[DOMAIN][entry.entry_id]
     base_name = entry.data[CONF_NAME]
     entities: list[SensorEntity] = []
-    for probe in range(1, 5):
+    for probe in range(1, runtime.probe_count + 1):
         entities.append(Int14TempSensor(runtime, base_name, probe, "internal"))
         entities.append(Int14TempSensor(runtime, base_name, probe, "ambient"))
         entities.append(Int14TargetTempSensor(runtime, base_name, probe, "high"))
@@ -66,7 +66,7 @@ class Int14SensorBase(SensorEntity):
             "identifiers": {(DOMAIN, self.runtime.address.upper())},
             "name": self._base_name,
             "manufacturer": "Inkbird",
-            "model": "INT-14-BW",
+            "model": self.runtime.device_model,
         }
 
     @callback
@@ -196,6 +196,10 @@ DIAGNOSTIC_DESCRIPTIONS = {
 
 BASE_DIAGNOSTIC_DESCRIPTIONS = [
     DiagnosticDescription("transport_mode", "Transport Mode State", enabled_default=True),
+    DiagnosticDescription("model", "Configured Model", enabled_default=True),
+    DiagnosticDescription("model_profile", "Configured Model Profile"),
+    DiagnosticDescription("model_support_status", "Model Support Status", enabled_default=True),
+    DiagnosticDescription("probe_count", "Probe Count", state_class=SensorStateClass.MEASUREMENT, enabled_default=True),
     DiagnosticDescription("active_transport", "Active Transport", enabled_default=True),
     DiagnosticDescription("local_lan_configured", "Local LAN Configured", enabled_default=True),
     DiagnosticDescription("local_lan_enabled", "Local LAN Enabled", enabled_default=True),

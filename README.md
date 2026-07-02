@@ -1,6 +1,6 @@
-# Inkbird INT-14 for Home Assistant
+# Inkbird INT for Home Assistant
 
-Home Assistant custom integration for Inkbird INT-14 with local BLE, local Tuya LAN and optional experimental read-only cloud history.
+Home Assistant custom integration for modern Inkbird INT food thermometers with local BLE, local Tuya LAN and optional experimental read-only cloud history.
 
 [![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=zampix1&repository=ha-inkbird-int14&category=integration)
 
@@ -16,6 +16,7 @@ Product image is included only as a device reference. Inkbird names, logos and t
 ## What Works
 
 - Tested with an Inkbird INT-14 station.
+- Includes experimental profiles for related INT-14, INT-12 and INT-11 family models.
 - Installable as a HACS custom repository or by manual copy.
 - Local BLE is used for discovery, snapshots and explicit BLE commands.
 - Local Tuya LAN is used for station polling and supported writes when the user supplies their own host, device ID and local key.
@@ -24,7 +25,7 @@ Product image is included only as a device reference. Inkbird names, logos and t
 
 ## Status
 
-Public HACS custom repository release for testers with INT-14 hardware. Hardware coverage is still being expanded and the limits are documented below.
+Public HACS custom repository release for testers with INT family hardware. INT-14-BW is validated; other profiles are experimental and need hardware feedback.
 
 Repository:
 
@@ -43,7 +44,7 @@ Cloud live updates and cloud writes are not supported.
 ## Requirements
 
 - Home Assistant with Bluetooth enabled for BLE mode and BLE snapshots.
-- Inkbird INT-14-BW or a compatible INT-14 station.
+- Inkbird INT-14-BW, or a related model profile listed in `docs/model_profiles.md`.
 - Optional Tuya LAN credentials supplied by the user:
   - station host or IP;
   - device ID;
@@ -59,7 +60,7 @@ Cloud live updates and cloud writes are not supported.
 3. Select category `Integration`.
 4. Install the integration.
 5. Restart Home Assistant.
-6. Add `Inkbird INT-14` from **Settings > Devices & services**.
+6. Add `Inkbird INT` from **Settings > Devices & services**.
 
 Repository URL:
 
@@ -72,7 +73,7 @@ https://github.com/zampix1/ha-inkbird-int14
 1. Copy `custom_components/inkbird_int14` into the Home Assistant `custom_components/` directory.
 2. Restart Home Assistant.
 3. Go to `Settings -> Devices & services -> Add integration`.
-4. Search for `Inkbird INT-14`.
+4. Search for `Inkbird INT`.
 
 ## Configuration
 
@@ -80,6 +81,7 @@ The config flow asks for:
 
 - BLE address of the INT-14 station;
 - display name;
+- model profile;
 - transport mode;
 - optional Tuya LAN host, device ID, local key, protocol version, port and poll interval;
 - optional Tuya LAN test before saving.
@@ -106,7 +108,7 @@ BLE sessions perform the local challenge/response authentication before snapshot
 
 Main entities are enabled by default:
 
-- probe 1-4 internal and ambient temperatures;
+- probe internal and ambient temperatures for the configured model profile;
 - base station temperature;
 - target high/low values when available;
 - display light and temperature unit;
@@ -117,6 +119,8 @@ Main entities are enabled by default:
 Noisy raw diagnostics and fragile fields that are often unknown are marked diagnostic and many are disabled by default.
 
 Battery values remain numeric when a fresh INT-14 battery snapshot exists. Repeated 100% probe reports are flagged through `Battery Report Quality` and suspect binary sensors instead of hiding the battery value. Local testing showed that the station can still report all probe batteries as 100% after successful BLE authentication, so those values should be treated as station-reported rather than independently verified probe fuel gauges.
+
+See `docs/model_profiles.md` for the tested or experimental status of each profile.
 
 ## Writes
 
@@ -140,6 +144,7 @@ See `custom_components/inkbird_int14/services.yaml`.
 ## Documentation
 
 - `docs/lan_setup.md`
+- `docs/model_profiles.md`
 - `docs/cloud_history_experimental.md`
 - `docs/bluetooth_proxy.md`
 
@@ -168,6 +173,7 @@ example-local-key
 - Battery percentage is the value reported by the station. Use the diagnostic quality/suspect entities when the station reports repeated 100% probe values.
 - Cloud history covers DP109 temperature history only.
 - Cloud live data, cloud battery/state and cloud writes are not supported.
+- Non-INT-14 profiles are experimental until hardware captures confirm their parser and write behavior.
 
 ## Alternatives
 

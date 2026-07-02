@@ -68,7 +68,7 @@ async def async_setup_entry(
     runtime = hass.data[DOMAIN][entry.entry_id]
     base_name = entry.data[CONF_NAME]
     entities: list[BinarySensorEntity] = []
-    for probe in range(1, 5):
+    for probe in range(1, runtime.probe_count + 1):
         for description in PROBE_STATES:
             entities.append(Int14ProbeStateBinarySensor(runtime, base_name, probe, description))
     for description in BASE_STATES:
@@ -101,7 +101,7 @@ class Int14BinarySensorBase(BinarySensorEntity):
             "identifiers": {(DOMAIN, self.runtime.address.upper())},
             "name": self._base_name,
             "manufacturer": "Inkbird",
-            "model": "INT-14-BW",
+            "model": self.runtime.device_model,
         }
 
     def _state_from_data(self, key: str) -> bool | None:
