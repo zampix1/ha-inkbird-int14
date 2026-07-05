@@ -40,6 +40,18 @@ from .const import (
 from .lan import TuyaLanConfig, fetch_lan_dps
 from .models import DEFAULT_MODEL, model_options
 
+RECONFIGURE_OPTION_KEYS = {
+    CONF_MODEL,
+    CONF_REQUEST_INIT_ON_CONNECT,
+    CONF_TRANSPORT_MODE,
+    CONF_LAN_HOST,
+    CONF_LAN_DEVICE_ID,
+    CONF_LAN_LOCAL_KEY,
+    CONF_LAN_VERSION,
+    CONF_LAN_PORT,
+    CONF_LAN_POLL_SECONDS,
+}
+
 
 def _stripped(data: dict[str, Any], key: str) -> str:
     return str(data.get(key) or "").strip()
@@ -65,34 +77,81 @@ def _cloud_enabled(data: dict[str, Any]) -> bool:
     return bool(data.get(CONF_CLOUD_HISTORY_ENABLED, False))
 
 
+def _default_choice(defaults: dict[str, Any], key: str, fallback: str, allowed: tuple[str, ...] | dict[str, str]) -> str:
+    value = str(defaults.get(key) or fallback)
+    return value if value in allowed else fallback
+
+
+def _default_float(defaults: dict[str, Any], key: str, fallback: float) -> float:
+    value = defaults.get(key, fallback)
+    if value in (None, ""):
+        return fallback
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return fallback
+
+
+def _default_int(defaults: dict[str, Any], key: str, fallback: int) -> int:
+    value = defaults.get(key, fallback)
+    if value in (None, ""):
+        return fallback
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return fallback
+
+
+def _entry_data_from_input(user_input: dict[str, Any]) -> dict[str, Any]:
+    return {
+        CONF_ADDRESS: _stripped(user_input, CONF_ADDRESS),
+        CONF_NAME: _stripped(user_input, CONF_NAME) or DEFAULT_NAME,
+        CONF_MODEL: user_input.get(CONF_MODEL, DEFAULT_MODEL),
+        CONF_REQUEST_INIT_ON_CONNECT: user_input.get(CONF_REQUEST_INIT_ON_CONNECT, True),
+        CONF_TRANSPORT_MODE: user_input.get(CONF_TRANSPORT_MODE, TRANSPORT_MODE_AUTO),
+        CONF_LAN_HOST: _stripped(user_input, CONF_LAN_HOST),
+        CONF_LAN_DEVICE_ID: _stripped(user_input, CONF_LAN_DEVICE_ID),
+        CONF_LAN_LOCAL_KEY: _stripped(user_input, CONF_LAN_LOCAL_KEY),
+        CONF_LAN_VERSION: float(user_input.get(CONF_LAN_VERSION, DEFAULT_LAN_VERSION)),
+        CONF_LAN_PORT: int(user_input.get(CONF_LAN_PORT, DEFAULT_LAN_PORT)),
+        CONF_LAN_POLL_SECONDS: int(user_input.get(CONF_LAN_POLL_SECONDS, DEFAULT_LAN_POLL_SECONDS)),
+    }
+
+
+def _options_without_reconfigured_keys(options: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in options.items() if key not in RECONFIGURE_OPTION_KEYS}
+
+
 def _base_schema(defaults: dict[str, Any]) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_ADDRESS, default=defaults.get(CONF_ADDRESS, "")): str,
             vol.Optional(CONF_NAME, default=defaults.get(CONF_NAME, DEFAULT_NAME)): str,
-            vol.Optional(CONF_MODEL, default=defaults.get(CONF_MODEL, DEFAULT_MODEL)): vol.In(model_options()),
+            vol.Optional(CONF_MODEL, default=_default_choice(defaults, CONF_MODEL, DEFAULT_MODEL, model_options())): vol.In(
+                model_options()
+            ),
             vol.Optional(
                 CONF_REQUEST_INIT_ON_CONNECT,
                 default=defaults.get(CONF_REQUEST_INIT_ON_CONNECT, True),
             ): bool,
             vol.Optional(
                 CONF_TRANSPORT_MODE,
-                default=defaults.get(CONF_TRANSPORT_MODE, TRANSPORT_MODE_AUTO),
+                default=_default_choice(defaults, CONF_TRANSPORT_MODE, TRANSPORT_MODE_AUTO, TRANSPORT_MODES),
             ): vol.In(TRANSPORT_MODES),
             vol.Optional(CONF_LAN_HOST, default=defaults.get(CONF_LAN_HOST, "")): str,
             vol.Optional(CONF_LAN_DEVICE_ID, default=defaults.get(CONF_LAN_DEVICE_ID, "")): str,
             vol.Optional(CONF_LAN_LOCAL_KEY, default=defaults.get(CONF_LAN_LOCAL_KEY, "")): str,
             vol.Optional(
                 CONF_LAN_VERSION,
-                default=defaults.get(CONF_LAN_VERSION, DEFAULT_LAN_VERSION),
+                default=_default_float(defaults, CONF_LAN_VERSION, DEFAULT_LAN_VERSION),
             ): vol.All(vol.Coerce(float), vol.Range(min=3.1, max=3.5)),
             vol.Optional(
                 CONF_LAN_PORT,
-                default=defaults.get(CONF_LAN_PORT, DEFAULT_LAN_PORT),
+                default=_default_int(defaults, CONF_LAN_PORT, DEFAULT_LAN_PORT),
             ): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
             vol.Optional(
                 CONF_LAN_POLL_SECONDS,
-                default=defaults.get(CONF_LAN_POLL_SECONDS, DEFAULT_LAN_POLL_SECONDS),
+                default=_default_int(defaults, CONF_LAN_POLL_SECONDS, DEFAULT_LAN_POLL_SECONDS),
             ): vol.All(vol.Coerce(int), vol.Range(min=5, max=3600)),
             vol.Optional(CONF_LAN_TEST_ON_SETUP, default=False): bool,
         }
@@ -104,7 +163,7 @@ def _advanced_schema(defaults: dict[str, Any]) -> vol.Schema:
         {
             vol.Optional(
                 CONF_MODEL,
-                default=defaults.get(CONF_MODEL, DEFAULT_MODEL),
+                default=_default_choice(defaults, CONF_MODEL, DEFAULT_MODEL, model_options()),
             ): vol.In(model_options()),
             vol.Optional(
                 CONF_REQUEST_INIT_ON_CONNECT,
@@ -112,22 +171,22 @@ def _advanced_schema(defaults: dict[str, Any]) -> vol.Schema:
             ): bool,
             vol.Optional(
                 CONF_TRANSPORT_MODE,
-                default=defaults.get(CONF_TRANSPORT_MODE, TRANSPORT_MODE_AUTO),
+                default=_default_choice(defaults, CONF_TRANSPORT_MODE, TRANSPORT_MODE_AUTO, TRANSPORT_MODES),
             ): vol.In(TRANSPORT_MODES),
             vol.Optional(CONF_LAN_HOST, default=defaults.get(CONF_LAN_HOST, "")): str,
             vol.Optional(CONF_LAN_DEVICE_ID, default=defaults.get(CONF_LAN_DEVICE_ID, "")): str,
             vol.Optional(CONF_LAN_LOCAL_KEY, default=defaults.get(CONF_LAN_LOCAL_KEY, "")): str,
             vol.Optional(
                 CONF_LAN_VERSION,
-                default=defaults.get(CONF_LAN_VERSION, DEFAULT_LAN_VERSION),
+                default=_default_float(defaults, CONF_LAN_VERSION, DEFAULT_LAN_VERSION),
             ): vol.All(vol.Coerce(float), vol.Range(min=3.1, max=3.5)),
             vol.Optional(
                 CONF_LAN_PORT,
-                default=defaults.get(CONF_LAN_PORT, DEFAULT_LAN_PORT),
+                default=_default_int(defaults, CONF_LAN_PORT, DEFAULT_LAN_PORT),
             ): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
             vol.Optional(
                 CONF_LAN_POLL_SECONDS,
-                default=defaults.get(CONF_LAN_POLL_SECONDS, DEFAULT_LAN_POLL_SECONDS),
+                default=_default_int(defaults, CONF_LAN_POLL_SECONDS, DEFAULT_LAN_POLL_SECONDS),
             ): vol.All(vol.Coerce(int), vol.Range(min=5, max=3600)),
             vol.Optional(CONF_LAN_TEST_ON_SETUP, default=False): bool,
             vol.Optional(
@@ -145,7 +204,7 @@ def _advanced_schema(defaults: dict[str, Any]) -> vol.Schema:
             ): str,
             vol.Optional(
                 CONF_CLOUD_POLL_SECONDS,
-                default=defaults.get(CONF_CLOUD_POLL_SECONDS, DEFAULT_CLOUD_POLL_SECONDS),
+                default=_default_int(defaults, CONF_CLOUD_POLL_SECONDS, DEFAULT_CLOUD_POLL_SECONDS),
             ): vol.All(vol.Coerce(int), vol.Range(min=30, max=3600)),
         }
     )
@@ -180,24 +239,37 @@ class InkbirdInt14ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
             await self._async_test_lan_config(user_input, errors)
             if not errors:
-                data = {
-                    CONF_ADDRESS: user_input[CONF_ADDRESS],
-                    CONF_NAME: user_input.get(CONF_NAME) or DEFAULT_NAME,
-                    CONF_MODEL: user_input.get(CONF_MODEL, DEFAULT_MODEL),
-                    CONF_REQUEST_INIT_ON_CONNECT: user_input.get(CONF_REQUEST_INIT_ON_CONNECT, True),
-                    CONF_TRANSPORT_MODE: user_input.get(CONF_TRANSPORT_MODE, TRANSPORT_MODE_AUTO),
-                    CONF_LAN_HOST: _stripped(user_input, CONF_LAN_HOST),
-                    CONF_LAN_DEVICE_ID: _stripped(user_input, CONF_LAN_DEVICE_ID),
-                    CONF_LAN_LOCAL_KEY: _stripped(user_input, CONF_LAN_LOCAL_KEY),
-                    CONF_LAN_VERSION: float(user_input.get(CONF_LAN_VERSION, DEFAULT_LAN_VERSION)),
-                    CONF_LAN_PORT: int(user_input.get(CONF_LAN_PORT, DEFAULT_LAN_PORT)),
-                    CONF_LAN_POLL_SECONDS: int(user_input.get(CONF_LAN_POLL_SECONDS, DEFAULT_LAN_POLL_SECONDS)),
-                }
+                data = _entry_data_from_input(user_input)
                 return self.async_create_entry(title=data[CONF_NAME], data=data)
 
         return self.async_show_form(
             step_id="user",
             data_schema=_base_schema(user_input or {}),
+            errors=errors,
+        )
+
+    async def async_step_reconfigure(self, user_input: dict | None = None) -> FlowResult:
+        entry = self._get_reconfigure_entry()
+        defaults = {**entry.data, **entry.options}
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            await self.async_set_unique_id(_stripped(user_input, CONF_ADDRESS).upper())
+            self._abort_if_unique_id_mismatch()
+            await self._async_test_lan_config(user_input, errors)
+            if not errors:
+                data = _entry_data_from_input(user_input)
+                self.hass.config_entries.async_update_entry(
+                    entry,
+                    title=data[CONF_NAME],
+                    data={**entry.data, **data},
+                    options=_options_without_reconfigured_keys(dict(entry.options)),
+                )
+                await self.hass.config_entries.async_reload(entry.entry_id)
+                return self.async_abort(reason="reconfigure_successful")
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=_base_schema(user_input or defaults),
             errors=errors,
         )
 

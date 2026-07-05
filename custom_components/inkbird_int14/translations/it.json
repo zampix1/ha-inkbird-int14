@@ -18,6 +18,24 @@
           "lan_poll_seconds": "Intervallo polling Tuya LAN",
           "lan_test_on_setup": "Testa connessione Tuya LAN prima di salvare"
         }
+      },
+      "reconfigure": {
+        "title": "Riconfigura Inkbird INT",
+        "description": "Aggiorna impostazioni principali dell'integrazione. L'indirizzo BLE deve restare quello della configurazione esistente; per cambiare dispositivo rimuovi e riaggiungi l'integrazione.",
+        "data": {
+          "address": "Indirizzo BLE",
+          "name": "Nome dispositivo",
+          "model": "Profilo modello (sonde fisiche / canali temperatura)",
+          "request_init_on_connect": "Richiedi snapshot BLE alla connessione",
+          "transport_mode": "Modalita trasporto",
+          "lan_host": "Host o IP Tuya LAN",
+          "lan_device_id": "Device ID Tuya LAN",
+          "lan_local_key": "Local key Tuya LAN",
+          "lan_version": "Versione protocollo Tuya LAN",
+          "lan_port": "Porta Tuya LAN",
+          "lan_poll_seconds": "Intervallo polling Tuya LAN",
+          "lan_test_on_setup": "Testa connessione Tuya LAN prima di salvare"
+        }
       }
     },
     "error": {
@@ -25,7 +43,8 @@
       "lan_connect_failed": "Test Tuya LAN fallito. Controlla host, device ID, local key, versione protocollo e rete."
     },
     "abort": {
-      "already_configured": "Questo Inkbird INT-14 e' gia configurato."
+      "already_configured": "Questo Inkbird INT-14 e' gia configurato.",
+      "reconfigure_successful": "Riconfigurazione completata. L'integrazione e' stata ricaricata."
     }
   },
   "options": {

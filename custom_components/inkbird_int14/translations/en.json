@@ -18,6 +18,24 @@
           "lan_poll_seconds": "Tuya LAN poll interval",
           "lan_test_on_setup": "Test Tuya LAN connection before saving"
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Inkbird INT",
+        "description": "Update the main integration settings. The BLE address must remain the configured device address; remove and re-add the integration to switch devices.",
+        "data": {
+          "address": "BLE address",
+          "name": "Device name",
+          "model": "Model profile (physical probes / temperature channels)",
+          "request_init_on_connect": "Request BLE snapshot on connect",
+          "transport_mode": "Transport mode",
+          "lan_host": "Tuya LAN host or IP",
+          "lan_device_id": "Tuya LAN device ID",
+          "lan_local_key": "Tuya LAN local key",
+          "lan_version": "Tuya LAN protocol version",
+          "lan_port": "Tuya LAN port",
+          "lan_poll_seconds": "Tuya LAN poll interval",
+          "lan_test_on_setup": "Test Tuya LAN connection before saving"
+        }
       }
     },
     "error": {
@@ -25,7 +43,8 @@
       "lan_connect_failed": "Tuya LAN test failed. Check host, device ID, local key, protocol version and network reachability."
     },
     "abort": {
-      "already_configured": "This Inkbird INT-14 is already configured."
+      "already_configured": "This Inkbird INT-14 is already configured.",
+      "reconfigure_successful": "Reconfiguration complete. The integration was reloaded."
     }
   },
   "options": {
