@@ -59,6 +59,8 @@ def test_probe_counts_match_profile_family() -> None:
     assert models.model_profile("int12_bw").probe_count == 2
     assert models.model_profile("int12e_bw").probe_count == 2
     assert models.model_profile("int11i_b").probe_count == 1
+    assert models.model_profile("int11i_b").temperature_channel_count == 1
+    assert models.model_profile("int11i_b").live_temperature_channel_count == 1
     assert models.model_profile("int11p_b").supports_ble_snapshot is False
     assert models.model_profile("int11s_b").probe_count == 1
     assert models.model_profile("int31_bw").probe_count == 1
@@ -105,6 +107,9 @@ def test_transport_capabilities_are_not_overstated() -> None:
     assert models.model_profile("int14_bw").supports_cloud_history is True
     assert models.model_profile("int11i_b").supports_lan is False
     assert models.model_profile("int11i_b").supports_cloud_history is False
+    assert models.model_profile("int11i_b").supports_ble_snapshot is True
+    assert models.model_profile("int11i_b").write_support == "not_supported"
+    assert models.model_profile("int11i_b").supports_base_temperature is False
     assert models.model_profile("int11p_b").write_support == "not_supported"
     for profile_key in ("int14s_bw", "int12e_bw", "int11s_b", "int31_bw", "int33_bw"):
         profile = models.model_profile(profile_key)

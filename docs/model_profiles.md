@@ -16,7 +16,7 @@ Modern Inkbird probes are not always one probe equals one temperature. Some prob
 | `int12_bw` | `INT-12-BW` | 2 | 4 | 4 | yes | yes | DP109 read-only | experimental |
 | `int12i_bw` | `INT-12I-BW` | 2 | 4 | 4 | yes | yes | DP109 read-only | experimental |
 | `int12e_bw` | `INT-12E-BW` | 2 | 10 | 0 | no | no | no | cataloged |
-| `int11i_b` | `INT-11I-B` | 1 | 2 | 2 | yes | no | no | experimental |
+| `int11i_b` | `INT-11I-B` | 1 | 1 | 1 | yes | no | no | experimental |
 | `int11p_b` | `INT-11P-B` | 1 | 2 | 0 | no | no | no | cataloged |
 | `int11s_b` | `INT-11S-B` | 1 | 5 | 0 | no | no | no | cataloged |
 | `int31_bw` | `INT-31-BW` | 1 | 5 | 0 | no | no | no | cataloged |
@@ -57,6 +57,8 @@ Cloud live data and cloud writes are not supported for any profile. Cloud histor
 Cataloged profiles are selectable only so owners can report the exact model and so Home Assistant creates the right device identity while testing. They do not enable live BLE parsing, Tuya LAN, cloud history or writes yet.
 
 `INT-14S-BW`, `INT-12E-BW`, `INT-11S-B`, `INT-31-BW` and `INT-33-BW` are exposed in this conservative state because the vendor app contains dedicated product/model definitions for them. That is useful evidence for naming and expected channel layout, but not enough to reuse the INT-14 parser safely.
+
+`INT-11I-B` is different from the INT-14-BW station profile. A community report from Dmitry/dskudrin validated it as a connectable GATT-poll device: `ff01` exposes one probe temperature as little-endian Fahrenheit hundredths, and `2a19` exposes two battery bytes, base/booster first and probe second. Writes remain disabled for this profile until command behavior is validated on hardware.
 
 ## Seen In The App But Not Exposed Yet
 

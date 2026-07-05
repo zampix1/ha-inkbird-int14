@@ -29,19 +29,22 @@ async def async_setup_entry(
             probe = probe_layout.index
             for channel in probe_layout.live_temperature_channels:
                 entities.append(Int14TempSensor(runtime, base_name, probe, channel))
-            entities.append(Int14TargetTempSensor(runtime, base_name, probe, "high"))
-            entities.append(Int14TargetTempSensor(runtime, base_name, probe, "low"))
-            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_mode"]))
-            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_food_index"]))
-            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_degree_code"]))
+            if runtime.profile.write_support != "not_supported":
+                entities.append(Int14TargetTempSensor(runtime, base_name, probe, "high"))
+                entities.append(Int14TargetTempSensor(runtime, base_name, probe, "low"))
+                entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_mode"]))
+                entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_food_index"]))
+                entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["target_degree_code"]))
             entities.append(Int14BatterySensor(runtime, base_name, probe))
-            entities.append(Int14AdvanceValueSensor(runtime, base_name, probe))
-            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_cd_mode"]))
-            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_start_epoch_s"]))
-            entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_end_epoch_s"]))
-            for channel in probe_layout.live_temperature_channels:
-                entities.append(Int14CalibrationSensor(runtime, base_name, probe, channel.data_key, channel.live_entity_name))
-        entities.append(Int14BaseTempSensor(runtime, base_name))
+            if runtime.profile.write_support != "not_supported":
+                entities.append(Int14AdvanceValueSensor(runtime, base_name, probe))
+                entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_cd_mode"]))
+                entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_start_epoch_s"]))
+                entities.append(Int14DiagnosticValueSensor(runtime, base_name, probe, DIAGNOSTIC_DESCRIPTIONS["timer_end_epoch_s"]))
+                for channel in probe_layout.live_temperature_channels:
+                    entities.append(Int14CalibrationSensor(runtime, base_name, probe, channel.data_key, channel.live_entity_name))
+        if runtime.profile.supports_base_temperature:
+            entities.append(Int14BaseTempSensor(runtime, base_name))
         entities.append(Int14BaseBatterySensor(runtime, base_name))
     for description in BASE_DIAGNOSTIC_DESCRIPTIONS:
         entities.append(Int14BaseDiagnosticValueSensor(runtime, base_name, description))

@@ -24,6 +24,7 @@ Product image is included only as a device reference. Inkbird names, logos and t
 - Local Tuya LAN is used for station polling and supported writes when the user supplies their own host, device ID and local key.
 - Optional cloud history is read-only and limited to DP109 temperature history.
 - Exposes mapped probe temperatures, station temperature, target values, transport status, local availability and selected battery/state indicators for supported profiles.
+- INT-11I-B has experimental read-only BLE GATT-poll support for one probe temperature and base/probe battery from a community validation report.
 - Models with multi-sensor probes are represented with their expected physical-probe and temperature-channel layout, but live entities are created only for channels mapped by the current parser.
 
 ## Status

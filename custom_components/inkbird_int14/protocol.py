@@ -286,12 +286,42 @@ def parse_current_temp_payload(raw: bytes) -> dict[str, Any] | None:
     }
 
 
+def parse_int11i_temperature_payload(raw: bytes) -> dict[str, Any] | None:
+    if len(raw) < 2:
+        return None
+    raw_f_hundredths = int.from_bytes(raw[0:2], "little", signed=False)
+    if raw_f_hundredths in {0x7FFE, 0x7FFF, 0xFFFF}:
+        f_tenths = 32767
+    else:
+        f_tenths = half_up_int(raw_f_hundredths / 10)
+    return {
+        "probes": [
+            {
+                "probe": 1,
+                "internal_f_tenths": f_tenths,
+                "ambient_f_tenths": None,
+            }
+        ],
+        "base_temp_raw": None,
+        "base_temp_f_tenths": None,
+    }
+
+
 def parse_battery_payload(raw: bytes) -> dict[str, Any] | None:
     if len(raw) < 5:
         return None
     return {
         "base_power": None if raw[0] == 0x7F else raw[0],
         "probe_battery": {index: None if byte == 0x7F else min(byte, 100) for index, byte in enumerate(raw[1:5], start=1)},
+    }
+
+
+def parse_int11i_battery_payload(raw: bytes) -> dict[str, Any] | None:
+    if len(raw) < 2:
+        return None
+    return {
+        "base_power": None if raw[0] == 0x7F else min(raw[0], 100),
+        "probe_battery": {1: None if raw[1] == 0x7F else min(raw[1], 100)},
     }
 
 

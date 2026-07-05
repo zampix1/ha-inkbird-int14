@@ -18,6 +18,7 @@ MODEL_INT33_BW = "int33_bw"
 
 DEFAULT_MODEL = MODEL_INT14_BW
 AUTH_MODE_BW = "bw_challenge"
+AUTH_MODE_GATT_POLL = "gatt_poll"
 AUTH_MODE_SCAN_ONLY = "scan_only"
 
 
@@ -81,6 +82,7 @@ class InkbirdIntModelProfile:
     write_support: str
     support_status: str
     notes: str
+    supports_base_temperature: bool = True
 
     @property
     def is_tested(self) -> bool:
@@ -131,6 +133,10 @@ CHANNEL_AMBIENT_EXPECTED = TemperatureChannel("ambient", "Ambient")
 def _two_channel_layout(probe_count: int) -> tuple[ProbeLayout, ...]:
     channels = (CHANNEL_FOOD_MAPPED, CHANNEL_AMBIENT_MAPPED)
     return tuple(ProbeLayout(index=index, channels=channels) for index in range(1, probe_count + 1))
+
+
+def _single_food_layout(probe_count: int) -> tuple[ProbeLayout, ...]:
+    return tuple(ProbeLayout(index=index, channels=(CHANNEL_FOOD_MAPPED,)) for index in range(1, probe_count + 1))
 
 
 def _expected_multi_sensor_probe(sensor_count: int) -> tuple[TemperatureChannel, ...]:
@@ -278,15 +284,16 @@ MODEL_PROFILES: dict[str, InkbirdIntModelProfile] = {
         display_name="Inkbird INT-11I-B",
         app_model="INT-11I-B",
         product_id=None,
-        probe_layout=_two_channel_layout(1),
+        probe_layout=_single_food_layout(1),
         asset_family="int11ib",
-        ble_auth_mode=AUTH_MODE_BW,
+        ble_auth_mode=AUTH_MODE_GATT_POLL,
         supports_ble_snapshot=True,
         supports_lan=False,
         supports_cloud_history=False,
-        write_support="experimental",
+        write_support="not_supported",
         support_status="experimental",
-        notes="BLE config uses FF00/FF02 pairing; live payload coverage still needs hardware validation.",
+        notes="Community report validates connectable GATT reads: FF01 two-byte temperature and 2A19 two-byte base/probe battery. Writes are not enabled.",
+        supports_base_temperature=False,
     ),
     MODEL_INT11P_B: InkbirdIntModelProfile(
         key=MODEL_INT11P_B,

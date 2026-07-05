@@ -26,7 +26,7 @@ from .const import (
     WRITE_UUID,
 )
 from .lan import TuyaLanConfig, fetch_lan_dps, set_lan_dps
-from .models import AUTH_MODE_SCAN_ONLY, DEFAULT_MODEL, InkbirdIntModelProfile, model_profile
+from .models import AUTH_MODE_GATT_POLL, AUTH_MODE_SCAN_ONLY, DEFAULT_MODEL, MODEL_INT11I_B, InkbirdIntModelProfile, model_profile
 from .protocol import (
     build_calibration_command,
     build_calibration_dp_value,
@@ -42,6 +42,8 @@ from .protocol import (
     build_unit_command,
     init_command_chunks,
     parse_cloud_dps,
+    parse_int11i_battery_payload,
+    parse_int11i_temperature_payload,
     parse_notification,
     timer_epoch_values_plausible,
 )
@@ -361,6 +363,10 @@ class Int14Runtime:
             self.data["last_ble_error"] = f"BLE snapshot not implemented for {self.profile.display_name}"
             self._notify_listeners()
             return
+        if self.profile.ble_auth_mode == AUTH_MODE_GATT_POLL:
+            await self._read_initial_values(client)
+            self.data["last_ble_error"] = None
+            return
         await self._request_auth(client)
         for payload in init_command_chunks():
             if not await self._write_command(payload):
@@ -370,6 +376,11 @@ class Int14Runtime:
         await self._read_initial_values(client)
 
     async def _request_auth(self, client: BleakClient) -> None:
+        if self.profile.ble_auth_mode == AUTH_MODE_GATT_POLL:
+            self.data["ble_auth_ok"] = True
+            self.data["last_ble_auth_error"] = None
+            self._notify_listeners()
+            return
         if self.profile.ble_auth_mode == AUTH_MODE_SCAN_ONLY:
             self.data["ble_auth_ok"] = None
             self.data["last_ble_auth_error"] = "auth not implemented for scan-only model profile"
@@ -683,7 +694,16 @@ class Int14Runtime:
             if ok:
                 self.data["last_ble_auth_error"] = None
             self._auth_ack_event.set()
+        sender_text = str(getattr(sender, "uuid", None) or sender).lower()
         parsed = parse_notification(bytes(data))
+        if self.profile.key == MODEL_INT11I_B and "ff01" in sender_text:
+            current = parse_int11i_temperature_payload(raw)
+            if current:
+                parsed["frames"].append({"name": "current_temp_candidate", "transport": "raw_ff01_int11i", **current})
+        elif self.profile.key == MODEL_INT11I_B and "2a19" in sender_text:
+            battery = parse_int11i_battery_payload(raw)
+            if battery:
+                parsed["frames"].append({"name": "battery_candidate", "transport": "raw_2a19_int11i", "raw_hex": raw.hex(), **battery})
         self.data["last_raw_hex"] = parsed["raw_hex"]
         for frame in parsed["frames"]:
             self._apply_frame(frame, live_allowed=True)
