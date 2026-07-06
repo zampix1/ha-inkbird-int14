@@ -93,7 +93,7 @@ Documented only as an optional Home Assistant Bluetooth radio placement aid. It 
 
 - `py -3 -m ruff format --check .`: passed.
 - `py -3 -m ruff check --no-cache .`: passed.
-- `py -3 -m pytest -q .`: passed, 15 tests.
+- `py -3 -m pytest -q .`: passed, 18 tests.
 - `py -3 -m compileall -q .`: passed with bytecode cache outside the candidate directory.
 - Cache audit: no `.pytest_cache`, `.ruff_cache`, `__pycache__`, `*.pyc` or `*.pyo` left in the candidate directory after cleanup.
 - Manual privacy audit: no private local path, real BLE address, private LAN IP, real MAC or private analysis artifacts found in public files. Only field names and placeholder examples remain.

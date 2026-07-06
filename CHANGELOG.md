@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.2
+
 - Add INT-11I-B GATT-poll BLE parsing from community validation: FF01 temperature in Fahrenheit hundredths and 2A19 base/probe battery.
 - Treat INT-11I-B as read-only BLE for now: no Tuya LAN, no cloud history and no writes until hardware write behavior is validated.
 - Add a proper Home Assistant reconfigure flow and harden form defaults so older/partial entries do not open the config flow with a 500 error.
