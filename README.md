@@ -6,6 +6,14 @@ INT-14-BW is the tested baseline. Related INT-14, INT-12, INT-31, INT-33 and sel
 
 [![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=zampix1&repository=ha-inkbird-int14&category=integration)
 
+<p align="center">
+  <a href="https://www.buymeacoffee.com/zampix1">
+    <img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-support-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee">
+  </a>
+</p>
+
+If this project helps you, leaving a star or buying me a coffee is appreciated.
+
 This project is not affiliated with, endorsed by or supported by Inkbird.
 
 <p align="center">
