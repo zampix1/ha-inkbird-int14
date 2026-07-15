@@ -34,7 +34,7 @@ Product image is included only as a device reference. Inkbird names, logos and t
 - Exposes mapped probe temperatures, station temperature, target values, transport status, local availability and selected battery/state indicators for supported profiles.
 - INT-11I-B has experimental read-only BLE GATT-poll support for one probe temperature and base/probe battery from a community validation report.
 - INT-14S-BW has community-validated read-only BLE support for 20 mapped temperatures: four food sensors plus ambient on each of four physical probes.
-- INT-12E-BW has experimental read-only BLE support for 10 mapped temperatures: four food sensors plus ambient on each of two physical probes. Its direct GATT connection remains open and polls every 10 seconds by default.
+- INT-12E-BW has community-validated read-only BLE support for 10 mapped temperatures: four food sensors plus ambient on each of two physical probes. Notifications update entities immediately, while fallback direct GATT reads run every 10 seconds by default.
 - Models with multi-sensor probes are represented with their expected physical-probe and temperature-channel layout, but live entities are created only for channels mapped by the current parser.
 
 ## Status
@@ -248,7 +248,7 @@ example-local-key
 - Non-INT-14 and multi-sensor profiles are experimental or cataloged until hardware captures confirm their parser and write behavior.
 - Cataloged multi-sensor profiles may show an expected channel layout without exposing live temperature entities.
 - INT-14S-BW currently supports BLE temperature/battery readings only. Tuya LAN, cloud history, settings writes and protocol-state entities such as charging/paired/timer remain disabled until their model-specific frames are validated.
-- INT-12E-BW currently supports direct BLE temperature/battery reads only. Notification delivery may depend on the adapter or proxy, while persistent direct GATT polling is the validated path. The interval is configurable from 5 to 300 seconds in the integration options and defaults to 10 seconds. Tuya LAN, cloud, writes and protocol-state entities remain disabled.
+- INT-12E-BW currently supports read-only BLE temperature/battery updates. Valid notifications are applied immediately; fallback direct GATT reads run every 10 seconds by default and can be configured from 5 to 300 seconds. The station may end sessions after about 30 seconds, after which the integration reconnects automatically. Tuya LAN, cloud, writes and protocol-state entities remain disabled.
 
 ## Alternatives
 

@@ -125,11 +125,11 @@ def test_transport_capabilities_are_not_overstated() -> None:
     assert models.model_profile("int31_bw").supports_authenticated_ble_diagnostics is False
 
 
-def test_int12e_ble_read_path_is_experimental_and_write_blocked() -> None:
+def test_int12e_ble_read_path_is_community_validated_and_write_blocked() -> None:
     models = _load_models_module()
     profile = models.model_profile("int12e_bw")
 
-    assert profile.support_status == "experimental"
+    assert profile.support_status == "community_validated"
     assert profile.ble_auth_mode == models.AUTH_MODE_GATT_POLL
     assert profile.supports_ble_diagnostics is False
     assert profile.supports_authenticated_ble_diagnostics is False

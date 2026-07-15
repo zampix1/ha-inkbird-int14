@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Mark INT-12E-BW BLE temperature/battery transport as community validated after stable real-device notification, fallback-read and reconnect testing.
+- Rename the polling option to `BLE fallback direct-read interval`, clarifying that valid BLE notifications can update entities more frequently than the configured fallback cadence.
+
 ## 0.2.6-beta.5
 
 - Show `BLE direct-read interval` in initial setup, Reconfigure and Options instead of relying on the Options form alone.
