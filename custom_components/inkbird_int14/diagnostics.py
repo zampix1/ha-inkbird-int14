@@ -27,6 +27,9 @@ TO_REDACT = {
     "hashKey",
     "host",
     "ip",
+    "lan_device_id",
+    "lan_host",
+    "lan_local_key",
     "local_key",
     "localKey",
     "mac",
@@ -86,8 +89,4 @@ async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: ConfigE
             if key in RUNTIME_DIAGNOSTIC_KEYS or key.startswith("ble_debug_") or MULTISENSOR_RUNTIME_KEY_PATTERN.fullmatch(key)
         }
         payload["runtime"] = async_redact_data(_sanitize_runtime_value(runtime_data), TO_REDACT)
-        for attr in ("address", "session", "device", "config"):
-            value = getattr(runtime, attr, None)
-            if value is not None:
-                payload[attr] = async_redact_data(value if isinstance(value, dict) else str(value), TO_REDACT)
     return payload

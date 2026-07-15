@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.4
+
+- Fix diagnostics redaction for the actual Tuya LAN config-entry keys: `lan_host`, `lan_device_id` and `lan_local_key`.
+- Stop exporting the runtime BLE address as a bare top-level diagnostics string.
+- Add regression coverage tying the diagnostics redaction set to the LAN storage-key constants.
+- Users of v0.2.3 and earlier should not share diagnostics containing LAN configuration; remove previously shared files and rotate/re-provision exposed local keys where practical.
+
 ## 0.2.3
 
 - Add community-validated, read-only BLE support for INT-14S-BW: 4 physical probes and 20 live temperature channels (`Food 1-4` plus `Ambient` per probe).
