@@ -83,6 +83,7 @@ class InkbirdIntModelProfile:
     support_status: str
     notes: str
     supports_base_temperature: bool = True
+    allows_ble_diagnostics: bool = False
     allows_authenticated_ble_diagnostics: bool = False
     supports_protocol_state: bool = True
 
@@ -113,7 +114,7 @@ class InkbirdIntModelProfile:
     @property
     def supports_ble_diagnostics(self) -> bool:
         """Allow non-live GATT inspection without claiming model support."""
-        return self.support_status == "cataloged" or self.allows_authenticated_ble_diagnostics
+        return self.support_status == "cataloged" or self.allows_ble_diagnostics or self.allows_authenticated_ble_diagnostics
 
     @property
     def supports_authenticated_ble_diagnostics(self) -> bool:
@@ -289,15 +290,17 @@ MODEL_PROFILES: dict[str, InkbirdIntModelProfile] = {
         display_name="Inkbird INT-12E-BW",
         app_model="INT-12E-BW",
         product_id="xg7axqye8z3jpzi0",
-        probe_layout=_expected_multi_sensor_layout(2),
+        probe_layout=tuple(ProbeLayout(index=index, channels=_mapped_multi_sensor_probe(4)) for index in range(1, 3)),
         asset_family="int12ebw",
-        ble_auth_mode=AUTH_MODE_BW,
-        supports_ble_snapshot=False,
+        ble_auth_mode=AUTH_MODE_GATT_POLL,
+        supports_ble_snapshot=True,
         supports_lan=False,
         supports_cloud_history=False,
         write_support="not_supported",
-        support_status="cataloged",
-        notes="Expected two physical probes with four food sensors plus ambient per probe; live frame and DP maps are not implemented here yet.",
+        support_status="experimental",
+        notes="Community capture validates read-only direct GATT polling: two 13-byte FF01 probe blocks plus station temperature and three-byte 2A19 battery data. Writes, LAN and cloud remain disabled.",
+        allows_ble_diagnostics=True,
+        supports_protocol_state=False,
     ),
     MODEL_INT11I_B: InkbirdIntModelProfile(
         key=MODEL_INT11I_B,

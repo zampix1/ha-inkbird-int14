@@ -123,6 +123,29 @@ def test_multisensor_ff01_rejects_unexpected_length() -> None:
     assert protocol.parse_multisensor_temperature_payload(bytes(18), 4) is None
 
 
+def test_int12e_capture_decodes_two_multisensor_probe_blocks() -> None:
+    protocol = _load_protocol_module()
+    raw = bytes.fromhex("3f1da71d3f1d811d021edf0219311d921d311d6d1d441ee5021aee02")
+
+    parsed = protocol.parse_multisensor_temperature_payload(raw, 2)
+
+    assert parsed["base_temp_f_tenths"] == 750
+    assert parsed["probes"][0]["food_f_tenths"] == [759, 749, 755, 768]
+    assert parsed["probes"][0]["ambient_f_tenths"] == 735
+    assert parsed["probes"][0]["status"] == 0x19
+    assert parsed["probes"][1]["food_f_tenths"] == [757, 747, 753, 775]
+    assert parsed["probes"][1]["ambient_f_tenths"] == 741
+    assert parsed["probes"][1]["status"] == 0x1A
+
+
+def test_int12e_capture_decodes_station_and_two_probe_batteries() -> None:
+    protocol = _load_protocol_module()
+
+    parsed = protocol.parse_battery_payload(bytes.fromhex("526464"), probe_count=2)
+
+    assert parsed == {"base_power": 82, "probe_battery": {1: 100, 2: 100}}
+
+
 def test_diagnostic_snapshot_queries_exclude_clock_sync_and_settings() -> None:
     protocol = _load_protocol_module()
 

@@ -31,6 +31,7 @@ from .models import (
     AUTH_MODE_SCAN_ONLY,
     DEFAULT_MODEL,
     MODEL_INT11I_B,
+    MODEL_INT12E_BW,
     MODEL_INT14S_BW,
     InkbirdIntModelProfile,
     model_profile,
@@ -50,6 +51,7 @@ from .protocol import (
     build_unit_command,
     diagnostic_snapshot_query_chunks,
     init_command_chunks,
+    parse_battery_payload,
     parse_cloud_dps,
     parse_int11i_battery_payload,
     parse_int11i_temperature_payload,
@@ -1117,14 +1119,25 @@ class Int14Runtime:
                 self.data["last_ble_auth_error"] = None
             self._auth_ack_event.set()
         parsed = parse_notification(bytes(data))
-        if self.profile.key == MODEL_INT14S_BW and "ff01" in sender_text:
+        if self.profile.key in {MODEL_INT12E_BW, MODEL_INT14S_BW} and "ff01" in sender_text:
             current = parse_multisensor_temperature_payload(raw, self.profile.physical_probe_count)
             if current:
                 parsed["frames"].append(
                     {
                         "name": "multisensor_current_temp_candidate",
-                        "transport": "raw_ff01_int14s",
+                        "transport": f"raw_ff01_{self.profile.key}",
                         **current,
+                    }
+                )
+        elif self.profile.key == MODEL_INT12E_BW and "2a19" in sender_text:
+            battery = parse_battery_payload(raw, self.profile.physical_probe_count)
+            if battery:
+                parsed["frames"].append(
+                    {
+                        "name": "battery_candidate",
+                        "transport": "raw_2a19_int12e",
+                        "raw_hex": raw.hex(),
+                        **battery,
                     }
                 )
         elif self.profile.key == MODEL_INT11I_B and "ff01" in sender_text:

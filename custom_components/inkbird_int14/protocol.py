@@ -351,12 +351,12 @@ def parse_int11i_temperature_payload(raw: bytes) -> dict[str, Any] | None:
     }
 
 
-def parse_battery_payload(raw: bytes) -> dict[str, Any] | None:
-    if len(raw) < 5:
+def parse_battery_payload(raw: bytes, probe_count: int = 4) -> dict[str, Any] | None:
+    if probe_count < 1 or len(raw) < probe_count + 1:
         return None
     return {
-        "base_power": None if raw[0] == 0x7F else raw[0],
-        "probe_battery": {index: None if byte == 0x7F else min(byte, 100) for index, byte in enumerate(raw[1:5], start=1)},
+        "base_power": None if raw[0] == 0x7F else min(raw[0], 100),
+        "probe_battery": {index: None if byte == 0x7F else min(byte, 100) for index, byte in enumerate(raw[1 : probe_count + 1], start=1)},
     }
 
 

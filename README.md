@@ -34,6 +34,7 @@ Product image is included only as a device reference. Inkbird names, logos and t
 - Exposes mapped probe temperatures, station temperature, target values, transport status, local availability and selected battery/state indicators for supported profiles.
 - INT-11I-B has experimental read-only BLE GATT-poll support for one probe temperature and base/probe battery from a community validation report.
 - INT-14S-BW has community-validated read-only BLE support for 20 mapped temperatures: four food sensors plus ambient on each of four physical probes.
+- INT-12E-BW has experimental read-only BLE support for 10 mapped temperatures: four food sensors plus ambient on each of two physical probes.
 - Models with multi-sensor probes are represented with their expected physical-probe and temperature-channel layout, but live entities are created only for channels mapped by the current parser.
 
 ## Status
@@ -247,6 +248,7 @@ example-local-key
 - Non-INT-14 and multi-sensor profiles are experimental or cataloged until hardware captures confirm their parser and write behavior.
 - Cataloged multi-sensor profiles may show an expected channel layout without exposing live temperature entities.
 - INT-14S-BW currently supports BLE temperature/battery readings only. Tuya LAN, cloud history, settings writes and protocol-state entities such as charging/paired/timer remain disabled until their model-specific frames are validated.
+- INT-12E-BW currently supports direct BLE temperature/battery snapshots only. Notification delivery may depend on the adapter or proxy, while direct GATT reads are the validated path. Tuya LAN, cloud, writes and protocol-state entities remain disabled.
 
 ## Alternatives
 

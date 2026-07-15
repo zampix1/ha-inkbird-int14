@@ -1,6 +1,6 @@
 # Model Profiles
 
-This integration is local-first and profile based. INT-14-BW remains the fully tested baseline. INT-14S-BW has a community-validated read-only BLE parser; other profiles are exposed so owners can validate related modern Inkbird INT food thermometers without creating separate forks.
+This integration is local-first and profile based. INT-14-BW remains the fully tested baseline. INT-14S-BW has a community-validated read-only BLE parser, and INT-12E-BW has an experimental parser derived from a real-device capture. Other profiles are exposed so owners can validate related modern Inkbird INT food thermometers without creating separate forks.
 
 Modern Inkbird probes are not always one probe equals one temperature. Some probes expose several food sensors plus an ambient sensor. The integration therefore tracks both physical probes and expected temperature channels.
 
@@ -15,7 +15,7 @@ Modern Inkbird probes are not always one probe equals one temperature. Some prob
 | `int14p_bw` | `INT-14P-BW` | 4 | 8 | 8 | yes | yes | DP109 read-only | experimental |
 | `int12_bw` | `INT-12-BW` | 2 | 4 | 4 | yes | yes | DP109 read-only | experimental |
 | `int12i_bw` | `INT-12I-BW` | 2 | 4 | 4 | yes | yes | DP109 read-only | experimental |
-| `int12e_bw` | `INT-12E-BW` | 2 | 10 | 0 | no | no | no | cataloged |
+| `int12e_bw` | `INT-12E-BW` | 2 | 10 | 10 | yes | no | no | experimental, read-only |
 | `int11i_b` | `INT-11I-B` | 1 | 1 | 1 | yes | no | no | experimental |
 | `int11p_b` | `INT-11P-B` | 1 | 2 | 0 | no | no | no | cataloged |
 | `int11s_b` | `INT-11S-B` | 1 | 5 | 0 | no | no | no | cataloged |
@@ -56,7 +56,15 @@ Cloud live data and cloud writes are not supported for any profile. Cloud histor
 
 Cataloged profiles are selectable only so owners can report the exact model and so Home Assistant creates the right device identity while testing. They do not enable live BLE parsing, Tuya LAN, cloud history or writes yet.
 
-`INT-12E-BW`, `INT-11S-B`, `INT-31-BW` and `INT-33-BW` remain in this conservative state because the vendor app contains dedicated product/model definitions for them. That is useful evidence for naming and expected channel layout, but not enough to reuse another model's parser safely.
+`INT-11S-B`, `INT-31-BW` and `INT-33-BW` remain in this conservative state because the vendor app contains dedicated product/model definitions for them. That is useful evidence for naming and expected channel layout, but not enough to reuse another model's parser safely.
+
+## INT-12E-BW Experimental BLE
+
+A community capture from @Nexus1212 confirmed the same multisensor FF01 structure used by INT-14S-BW, with two probes instead of four. The 28-byte value contains two 13-byte probe blocks followed by station temperature. Each probe block exposes an Internal aggregate, `Food 1-4`, `Ambient` and a status byte. Home Assistant exposes the ten physical channels and retains the Internal aggregate only as runtime diagnostics.
+
+The capture also confirmed a three-byte 2A19 battery value: station, probe 1 and probe 2. Direct characteristic reads completed successfully through an ESPHome Bluetooth Proxy even though notification subscriptions failed, so this profile uses GATT polling and does not require notification delivery for snapshots.
+
+This support remains experimental until the ten channel labels are confirmed through controlled tip/body/ambient heating tests. Tuya LAN, cloud history, every write control and unvalidated protocol-state entities remain disabled.
 
 ## INT-14S-BW Community-Validated BLE
 

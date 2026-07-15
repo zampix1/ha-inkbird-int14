@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.2.6-beta.2
+
+- Add experimental read-only BLE polling for INT-12E-BW from a real-device community capture: two physical probes and ten live temperature channels (`Food 1-4` plus `Ambient` per probe).
+- Decode the 28-byte FF01 frame as two 13-byte multisensor blocks plus station temperature, and decode the three-byte 2A19 station/probe battery report.
+- Use direct GATT reads so snapshots remain useful when notification subscriptions fail through an ESPHome Bluetooth Proxy.
+- Keep INT-12E-BW Tuya LAN, cloud, writes and unvalidated protocol-state entities disabled.
+- Thanks to @Nexus1212 for the careful capture and hardware testing.
+
 ## 0.2.6-beta.1
 
 - Add two disabled-by-default INT-14S-BW diagnostic buttons for a controlled, reversible BLE unit write test: set Celsius and set Fahrenheit.
