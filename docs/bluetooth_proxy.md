@@ -46,4 +46,10 @@ bluetooth_proxy:
 
 The proxy is not required for Tuya LAN or cloud-history modes. It only improves BLE reachability.
 
-When Tuya LAN is configured, `Auto` mode normally keeps the station on LAN and avoids a continuous BLE connection. Select `BLE only` temporarily when you need a forced BLE snapshot or a supported BLE command. Switch back to `Auto` after the test if LAN should remain the steady-state transport.
+When Tuya LAN is configured for a supported profile, `Auto` mode normally keeps the station on LAN and avoids a continuous BLE connection. Select `BLE only` temporarily when you need a forced BLE snapshot or a supported BLE command. Switch back to `Auto` after the test if LAN should remain the steady-state transport.
+
+## INT-12E-BW through a proxy
+
+INT-12E-BW uses a read-only connected GATT loop. Notifications can update temperatures more often than the configured fallback direct-read interval; that setting is a safety net, not a notification throttle.
+
+Real-device testing through an ESPHome Bluetooth Proxy showed that the station closes the connection after about 30 seconds with reason `0x13`. The integration reconnects automatically. Brief unavailable gaps are therefore expected, and an occasional slower reconnect is not by itself a proxy failure. Place the proxy close enough to the station before treating reconnect delays as a protocol problem.

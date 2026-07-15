@@ -1,6 +1,6 @@
 # Model Profiles
 
-This integration is local-first and profile based. INT-14-BW remains the fully tested baseline. INT-14S-BW and INT-12E-BW have community-validated read-only BLE parsers. Other profiles are exposed so owners can validate related modern Inkbird INT food thermometers without creating separate forks.
+This integration is local-first and profile based. INT-14-BW remains the fully tested baseline. INT-14S-BW and INT-12E-BW have community-validated read-only BLE parsers; INT-12E-BW is currently available in the `v0.2.6` prerelease line. Other profiles are exposed so owners can validate related modern Inkbird INT food thermometers without creating separate forks.
 
 Modern Inkbird probes are not always one probe equals one temperature. Some probes expose several food sensors plus an ambient sensor. The integration therefore tracks both physical probes and expected temperature channels.
 

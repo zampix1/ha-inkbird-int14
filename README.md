@@ -2,17 +2,11 @@
 
 Home Assistant custom integration for the modern Inkbird INT food thermometer family.
 
-INT-14-BW is the tested baseline. Related INT-14, INT-12, INT-31, INT-33 and selected INT-11 profiles are exposed as experimental or cataloged until validated by real hardware reports.
+INT-14-BW is the tested baseline. INT-14S-BW and INT-12E-BW now have community-validated, read-only BLE support. INT-11I-B has experimental community-tested GATT support; the remaining model profiles are cataloged until real hardware reports validate them.
 
 [![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=zampix1&repository=ha-inkbird-int14&category=integration)
 
-<p align="center">
-  <a href="https://www.buymeacoffee.com/zampix1">
-    <img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-support-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee">
-  </a>
-</p>
-
-If this project helps you, leaving a star or buying me a coffee is appreciated.
+If this project helps you, a GitHub star is appreciated.
 
 This project is not affiliated with, endorsed by or supported by Inkbird.
 
@@ -26,7 +20,7 @@ Product image is included only as a device reference. Inkbird names, logos and t
 ## What Works
 
 - Tested with an Inkbird INT-14-BW station as the baseline device.
-- Includes experimental and cataloged profiles for related INT-14, INT-12, INT-31, INT-33 and INT-11 family models.
+- Includes community-validated and cataloged profiles for related INT-14, INT-12, INT-31, INT-33 and INT-11 family models.
 - Installable as a HACS custom repository or by manual copy.
 - Local BLE is used for discovery, snapshots and explicit BLE commands.
 - Local Tuya LAN is used for station polling and supported writes when the user supplies their own host, device ID and local key.
@@ -34,12 +28,14 @@ Product image is included only as a device reference. Inkbird names, logos and t
 - Exposes mapped probe temperatures, station temperature, target values, transport status, local availability and selected battery/state indicators for supported profiles.
 - INT-11I-B has experimental read-only BLE GATT-poll support for one probe temperature and base/probe battery from a community validation report.
 - INT-14S-BW has community-validated read-only BLE support for 20 mapped temperatures: four food sensors plus ambient on each of four physical probes.
-- INT-12E-BW has community-validated read-only BLE support for 10 mapped temperatures: four food sensors plus ambient on each of two physical probes. Notifications update entities immediately, while fallback direct GATT reads run every 10 seconds by default.
+- INT-12E-BW has community-validated read-only BLE support in the `v0.2.6` prerelease line for 10 mapped temperatures: four food sensors plus ambient on each of two physical probes. Notifications update entities immediately, while fallback direct GATT reads run every 10 seconds by default.
 - Models with multi-sensor probes are represented with their expected physical-probe and temperature-channel layout, but live entities are created only for channels mapped by the current parser.
 
 ## Status
 
-Public HACS custom repository release for testers with INT family hardware. INT-14-BW is validated; other profiles are experimental or cataloged and need hardware feedback.
+Public HACS custom repository for the modern INT family. INT-14-BW is the tested baseline; INT-14S-BW and INT-12E-BW provide community-validated read-only BLE support. Check the model table before assuming that another profile has live readings or controls.
+
+The latest stable release is `v0.2.5`. INT-12E-BW support and the guarded INT-14S-BW unit-write experiment are currently available only in the `v0.2.6` prerelease line.
 
 Repository:
 
@@ -64,7 +60,7 @@ Cloud live updates and cloud writes are not supported.
 ## Requirements
 
 - Home Assistant with Bluetooth enabled for BLE mode and BLE snapshots.
-- Inkbird INT-14-BW as tested baseline, or a related experimental/cataloged INT model profile listed in `docs/model_profiles.md`.
+- Inkbird INT-14-BW as tested baseline, a community-validated INT-14S-BW or INT-12E-BW, or another experimental/cataloged profile listed in `docs/model_profiles.md`.
 - Optional Tuya LAN credentials supplied by the user:
   - station host or IP;
   - device ID;
@@ -104,6 +100,7 @@ The config flow asks for:
 - model profile;
 - transport mode;
 - optional Tuya LAN host, device ID, local key, protocol version, port and poll interval;
+- BLE fallback direct-read interval for profiles that keep a GATT session open, from `5` to `300` seconds (`10` seconds by default);
 - optional Tuya LAN test before saving.
 
 Advanced options include the same LAN fields plus optional experimental cloud history fields.
@@ -144,11 +141,11 @@ More detail: `docs/lan_setup.md`.
 
 `Auto` prefers Tuya LAN when a complete LAN configuration is available. It avoids keeping BLE connected continuously when LAN is working.
 
-`BLE only` uses Home Assistant Bluetooth for local snapshots and supported BLE commands.
+`BLE only` uses Home Assistant Bluetooth for local snapshots, connected GATT updates where the selected profile supports them, and supported BLE commands.
 
-BLE sessions perform the local challenge/response authentication before snapshots and command readback. The auth helper is adapted from the MIT-licensed [`paul43210/inkbird-bw-ble`](https://github.com/paul43210/inkbird-bw-ble) work, while this integration remains a native Home Assistant custom integration with Tuya LAN and optional history support.
+INT-14-family sessions perform the local challenge/response authentication before snapshots and command readback. Other profiles can use model-specific GATT reads instead. The auth helper is adapted from the MIT-licensed [`paul43210/inkbird-bw-ble`](https://github.com/paul43210/inkbird-bw-ble) work, while this integration remains a native Home Assistant custom integration with Tuya LAN and optional history support.
 
-`BLE only` can be selected explicitly even while the station remains connected to Wi-Fi. This is useful for one-shot GATT snapshots or local BLE writes without changing the station's network setup. Switch back to `Auto` for steady-state LAN polling.
+`BLE only` can be selected explicitly even while the station remains connected to Wi-Fi. On INT-14-BW this is useful for one-shot GATT snapshots or validated local BLE writes without changing the station's network setup. INT-12E-BW instead keeps a read-only GATT loop alive, applies notifications as they arrive and uses the configured direct-read interval only as a fallback. Switch back to `Auto` when LAN should be the steady-state transport.
 
 `Wi-Fi LAN only` uses the local Tuya protocol through `tinytuya`. It requires host, device ID and local key supplied by the user.
 
@@ -170,7 +167,7 @@ Noisy raw diagnostics and fragile fields that are often unknown are marked diagn
 
 The profile diagnostics include physical probe count, expected temperature channel count and mapped live temperature channel count. Cataloged profiles with no validated parser mapping do not create placeholder temperature entities for every expected channel.
 
-Cataloged profiles include passive BLE inspection. INT-14S-BW also retains a separate authenticated diagnostic capture for future protocol work. The capture sends only volatile session authentication and read/snapshot queries; it never enables normal settings writes. See `docs/ble_diagnostics.md` before sharing a sanitized capture.
+Cataloged profiles include passive BLE inspection. INT-14S-BW retains a separate authenticated diagnostic capture and guarded prerelease write-validation controls for protocol work. Those controls are not the normal settings layer and remain disabled by default. See `docs/ble_diagnostics.md` before testing or sharing a sanitized capture.
 
 Battery values remain numeric when a fresh INT-14 battery snapshot exists. Repeated 100% probe reports are flagged through `Battery Report Quality` and suspect binary sensors instead of hiding the battery value. Local testing showed that the station can still report all probe batteries as 100% after successful BLE authentication, so those values should be treated as station-reported rather than independently verified probe fuel gauges.
 
@@ -194,6 +191,8 @@ For ordinary setup questions use Discussions. For reproducible integration bugs 
 - Feature request: <https://github.com/zampix1/ha-inkbird-int14/issues/new?template=feature_request.yml>
 
 ## Writes
+
+Write availability is profile-specific. Normal local controls are available only where the selected profile and transport have been validated. INT-14S-BW, INT-12E-BW and INT-11I-B remain read-only in normal use.
 
 Supported local writes use Tuya LAN when configured and fall back to BLE only when the selected transport allows BLE:
 
@@ -245,7 +244,7 @@ example-local-key
 - Battery percentage is the value reported by the station. Use the diagnostic quality/suspect entities when the station reports repeated 100% probe values.
 - Cloud history covers DP109 temperature history only.
 - Cloud live data, cloud battery/state and cloud writes are not supported.
-- Non-INT-14 and multi-sensor profiles are experimental or cataloged until hardware captures confirm their parser and write behavior.
+- Model support is profile-specific. A known probe layout does not by itself mean that live parsing or writes are supported.
 - Cataloged multi-sensor profiles may show an expected channel layout without exposing live temperature entities.
 - INT-14S-BW currently supports BLE temperature/battery readings only. Tuya LAN, cloud history, settings writes and protocol-state entities such as charging/paired/timer remain disabled until their model-specific frames are validated.
 - INT-12E-BW currently supports read-only BLE temperature/battery updates. Valid notifications are applied immediately; fallback direct GATT reads run every 10 seconds by default and can be configured from 5 to 300 seconds. The station may end sessions after about 30 seconds, after which the integration reconnects automatically. Tuya LAN, cloud, writes and protocol-state entities remain disabled.
