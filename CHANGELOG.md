@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.3-beta.4
+
+- Keep the community-validated INT-14S-BW BLE temperature and battery path from beta.3.
+- Hide inherited charging, connected, paired, timer, alarm, Wi-Fi, sound and mute binary sensors for INT-14S-BW because its protocol-state frame has not been mapped yet.
+- Retain only transport and derived battery-quality binary diagnostics for this profile, avoiding plausible-looking but unvalidated state values.
+
 ## 0.2.3-beta.3
 
 - Add experimental read-only BLE temperatures for INT-14S-BW after a community hardware capture confirmed authentication and the 54-byte FF01 frame.

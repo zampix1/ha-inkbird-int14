@@ -59,6 +59,18 @@ BASE_STATES = [
     StateDescription("device_over_low_temp_alarm", "Device Over Low Temperature Alarm", "problem"),
 ]
 
+DERIVED_PROBE_STATE_KEYS = {"battery_report_suspect"}
+DERIVED_BASE_STATE_KEYS = {
+    "ble_enabled",
+    "ble_connected",
+    "cloud_enabled",
+    "cloud_available",
+    "battery_data_stale",
+    "battery_report_suspect",
+    "base_battery_report_suspect",
+    "probe_battery_report_suspect",
+}
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -69,10 +81,20 @@ async def async_setup_entry(
     base_name = entry.data[CONF_NAME]
     entities: list[BinarySensorEntity] = []
     if runtime.profile.has_live_runtime_data:
+        probe_states = (
+            PROBE_STATES
+            if runtime.profile.supports_protocol_state
+            else [description for description in PROBE_STATES if description.key in DERIVED_PROBE_STATE_KEYS]
+        )
         for probe_layout in runtime.profile.probe_layout:
-            for description in PROBE_STATES:
+            for description in probe_states:
                 entities.append(Int14ProbeStateBinarySensor(runtime, base_name, probe_layout.index, description))
-    for description in BASE_STATES:
+    base_states = (
+        BASE_STATES
+        if runtime.profile.supports_protocol_state
+        else [description for description in BASE_STATES if description.key in DERIVED_BASE_STATE_KEYS]
+    )
+    for description in base_states:
         entities.append(Int14BaseStateBinarySensor(runtime, base_name, description))
     async_add_entities(entities)
 

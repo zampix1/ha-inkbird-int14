@@ -113,3 +113,11 @@ def test_int14s_snapshot_path_omits_clock_sync_and_setting_builders() -> None:
         "build_unit_command",
     ):
         assert forbidden_builder not in snapshot_block
+
+
+def test_unvalidated_protocol_state_entities_are_profile_gated() -> None:
+    binary_sensor = (ROOT / "custom_components" / "inkbird_int14" / "binary_sensor.py").read_text(encoding="utf-8")
+
+    assert "supports_protocol_state" in binary_sensor
+    assert "DERIVED_PROBE_STATE_KEYS" in binary_sensor
+    assert "DERIVED_BASE_STATE_KEYS" in binary_sensor

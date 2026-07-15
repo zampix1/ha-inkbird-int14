@@ -72,7 +72,7 @@ A community beta.2 capture confirmed the INT-14S-BW FF00 GATT family, successful
 
 The four blocks are followed by station temperature in Fahrenheit tenths. Home Assistant exposes the 20 physical temperature channels (`Food 1-4` and `Ambient` per probe). The separate Internal value is retained as diagnostic runtime data and is not counted as a sixth physical sensor.
 
-This profile is still experimental and read-only. BLE temperature and battery snapshots are enabled, but Tuya LAN, cloud history and all setting controls remain disabled. Its snapshot path omits clock synchronization and sends only authentication plus read queries. The passive and authenticated diagnostic buttons remain available for follow-up captures.
+This profile is still experimental and read-only. BLE temperature and battery snapshots are enabled, but Tuya LAN, cloud history and all setting controls remain disabled. Charging, connected, paired, timer, alarm, Wi-Fi, sound and mute entities are also hidden because the INT-14S protocol-state frame is not mapped yet. Its snapshot path omits clock synchronization and sends only authentication plus read queries. The passive and authenticated diagnostic buttons remain available for follow-up captures.
 
 `INT-11I-B` is different from the INT-14-BW station profile. A community report from Dmitry/dskudrin validated it as a connectable GATT-poll device: `ff01` exposes one probe temperature as little-endian Fahrenheit hundredths, and `2a19` exposes two battery bytes, base/booster first and probe second. Writes remain disabled for this profile until command behavior is validated on hardware.
 

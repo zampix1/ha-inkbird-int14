@@ -84,6 +84,7 @@ class InkbirdIntModelProfile:
     notes: str
     supports_base_temperature: bool = True
     allows_authenticated_ble_diagnostics: bool = False
+    supports_protocol_state: bool = True
 
     @property
     def is_tested(self) -> bool:
@@ -236,6 +237,7 @@ MODEL_PROFILES: dict[str, InkbirdIntModelProfile] = {
         support_status="experimental",
         notes="Community-validated read-only BLE parser for four food sensors plus ambient per probe; LAN, cloud and writes remain disabled.",
         allows_authenticated_ble_diagnostics=True,
+        supports_protocol_state=False,
     ),
     MODEL_INT14P_BW: InkbirdIntModelProfile(
         key=MODEL_INT14P_BW,

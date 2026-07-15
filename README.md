@@ -246,7 +246,7 @@ example-local-key
 - Cloud live data, cloud battery/state and cloud writes are not supported.
 - Non-INT-14 and multi-sensor profiles are experimental or cataloged until hardware captures confirm their parser and write behavior.
 - Cataloged multi-sensor profiles may show an expected channel layout without exposing live temperature entities.
-- INT-14S-BW currently supports BLE readings only. Tuya LAN, cloud history and all settings writes remain disabled for this profile.
+- INT-14S-BW currently supports BLE temperature/battery readings only. Tuya LAN, cloud history, settings writes and protocol-state entities such as charging/paired/timer remain disabled until their model-specific frames are validated.
 
 ## Alternatives
 
