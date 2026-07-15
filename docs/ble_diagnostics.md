@@ -45,7 +45,7 @@ Run this capture with at least one probe awake and outside the charging dock. Ke
 
 For INT-14S-BW, `FF01` has four 13-byte probe blocks followed by a two-byte station temperature. The confirmed field order in each block is Internal aggregate, Food 1, Food 2, Food 3, Food 4, Ambient and one status byte. Internal/Food values use Fahrenheit hundredths; Ambient and station temperature use Fahrenheit tenths. Docked or unavailable probes use the `0x7FFE` temperature sentinel.
 
-Starting with `v0.2.3-beta.3`, these captures support an experimental live BLE parser. Home Assistant creates 20 mapped temperature entities: Food 1-4 and Ambient for each physical probe. The separate Internal aggregate is retained in diagnostics and does not count as another physical sensor. Starting with beta.4, inherited protocol-state entities are hidden because the INT-14S charging/connection/pairing/alarm bit map is not validated. LAN, cloud and all setting writes remain disabled for this profile.
+The live parser was introduced in `v0.2.3-beta.3` and community validated for stable `v0.2.3`. Home Assistant creates 20 mapped temperature entities: Food 1-4 and Ambient for each physical probe. The separate Internal aggregate is retained in diagnostics and does not count as another physical sensor. Inherited protocol-state entities are hidden because the INT-14S charging/connection/pairing/alarm bit map is not validated. LAN, cloud and all setting writes remain disabled for this profile.
 
 The downloaded diagnostic includes sanitized service/characteristic metadata, readable values and notification payloads. Bluetooth addresses and IPv4 addresses embedded in errors are redacted.
 

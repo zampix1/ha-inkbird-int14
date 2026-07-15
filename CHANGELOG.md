@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.2.3
+
+- Add community-validated, read-only BLE support for INT-14S-BW: 4 physical probes and 20 live temperature channels (`Food 1-4` plus `Ambient` per probe).
+- Confirm the INT-14S FF01 field order, signed values, mixed Fahrenheit scales and docked-probe sentinel through authenticated real-device captures.
+- Keep INT-14S Tuya LAN, cloud, settings writes and unvalidated protocol-state entities disabled.
+- Retain passive and authenticated BLE diagnostics for future state-frame work.
+- Thanks to @lyonhome for patiently testing all four prereleases, sharing sanitized diagnostics and catching the misleading inherited state entities before the stable release.
+
 ## 0.2.3-beta.4
 
 - Keep the community-validated INT-14S-BW BLE temperature and battery path from beta.3.

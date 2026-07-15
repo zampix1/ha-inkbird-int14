@@ -1,6 +1,6 @@
 # Model Profiles
 
-This integration is local-first and profile based. INT-14-BW remains the fully tested baseline. INT-14S-BW now has a community-validated experimental read-only BLE parser; other profiles are exposed so owners can validate related modern Inkbird INT food thermometers without creating separate forks.
+This integration is local-first and profile based. INT-14-BW remains the fully tested baseline. INT-14S-BW has a community-validated read-only BLE parser; other profiles are exposed so owners can validate related modern Inkbird INT food thermometers without creating separate forks.
 
 Modern Inkbird probes are not always one probe equals one temperature. Some probes expose several food sensors plus an ambient sensor. The integration therefore tracks both physical probes and expected temperature channels.
 
@@ -11,7 +11,7 @@ Modern Inkbird probes are not always one probe equals one temperature. Some prob
 | `int14_bw` | `INT-14-BW` | 4 | 8 | 8 | yes | yes | DP109 read-only | tested |
 | `int14_bw_wh` | `INT-14-BW_WH` | 4 | 8 | 8 | yes | yes | DP109 read-only | experimental |
 | `ing14` | `ING14` | 4 | 8 | 8 | yes | yes | DP109 read-only | experimental |
-| `int14s_bw` | `INT-14S-BW` | 4 | 20 | 20 | yes | no | no | experimental, read-only |
+| `int14s_bw` | `INT-14S-BW` | 4 | 20 | 20 | yes | no | no | community validated, read-only |
 | `int14p_bw` | `INT-14P-BW` | 4 | 8 | 8 | yes | yes | DP109 read-only | experimental |
 | `int12_bw` | `INT-12-BW` | 2 | 4 | 4 | yes | yes | DP109 read-only | experimental |
 | `int12i_bw` | `INT-12I-BW` | 2 | 4 | 4 | yes | yes | DP109 read-only | experimental |
@@ -58,7 +58,7 @@ Cataloged profiles are selectable only so owners can report the exact model and 
 
 `INT-12E-BW`, `INT-11S-B`, `INT-31-BW` and `INT-33-BW` remain in this conservative state because the vendor app contains dedicated product/model definitions for them. That is useful evidence for naming and expected channel layout, but not enough to reuse another model's parser safely.
 
-## INT-14S-BW Experimental BLE
+## INT-14S-BW Community-Validated BLE
 
 A community beta.2 capture confirmed the INT-14S-BW FF00 GATT family, successful challenge/response authentication and a 54-byte FF01 temperature frame. Each physical probe contributes a 13-byte block:
 
@@ -72,7 +72,7 @@ A community beta.2 capture confirmed the INT-14S-BW FF00 GATT family, successful
 
 The four blocks are followed by station temperature in Fahrenheit tenths. Home Assistant exposes the 20 physical temperature channels (`Food 1-4` and `Ambient` per probe). The separate Internal value is retained as diagnostic runtime data and is not counted as a sixth physical sensor.
 
-This profile is still experimental and read-only. BLE temperature and battery snapshots are enabled, but Tuya LAN, cloud history and all setting controls remain disabled. Charging, connected, paired, timer, alarm, Wi-Fi, sound and mute entities are also hidden because the INT-14S protocol-state frame is not mapped yet. Its snapshot path omits clock synchronization and sends only authentication plus read queries. The passive and authenticated diagnostic buttons remain available for follow-up captures.
+This profile is community validated and read-only. BLE temperature and battery snapshots are enabled, but Tuya LAN, cloud history and all setting controls remain disabled. Charging, connected, paired, timer, alarm, Wi-Fi, sound and mute entities are also hidden because the INT-14S protocol-state frame is not mapped yet. Its snapshot path omits clock synchronization and sends only authentication plus read queries. The passive and authenticated diagnostic buttons remain available for follow-up captures.
 
 `INT-11I-B` is different from the INT-14-BW station profile. A community report from Dmitry/dskudrin validated it as a connectable GATT-poll device: `ff01` exposes one probe temperature as little-endian Fahrenheit hundredths, and `2a19` exposes two battery bytes, base/booster first and probe second. Writes remain disabled for this profile until command behavior is validated on hardware.
 
