@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.6-beta.5
+
+- Show `BLE direct-read interval` in initial setup, Reconfigure and Options instead of relying on the Options form alone.
+- Persist the interval explicitly in config-entry data during setup/reconfiguration and preserve compatibility with values already stored in options.
+- Keep the allowed range at 5-300 seconds and the INT-12E default at 10 seconds.
+
 ## 0.2.6-beta.4
 
 - Treat the repeatable INT-12E-BW remote BLE disconnect after approximately 30 seconds as a station session limit rather than a parser failure.

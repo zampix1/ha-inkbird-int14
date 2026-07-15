@@ -43,6 +43,7 @@ from .lan import TuyaLanConfig, fetch_lan_dps
 from .models import DEFAULT_MODEL, model_options
 
 RECONFIGURE_OPTION_KEYS = {
+    CONF_BLE_POLL_SECONDS,
     CONF_MODEL,
     CONF_REQUEST_INIT_ON_CONNECT,
     CONF_TRANSPORT_MODE,
@@ -110,6 +111,7 @@ def _entry_data_from_input(user_input: dict[str, Any]) -> dict[str, Any]:
         CONF_NAME: _stripped(user_input, CONF_NAME) or DEFAULT_NAME,
         CONF_MODEL: user_input.get(CONF_MODEL, DEFAULT_MODEL),
         CONF_REQUEST_INIT_ON_CONNECT: user_input.get(CONF_REQUEST_INIT_ON_CONNECT, True),
+        CONF_BLE_POLL_SECONDS: int(user_input.get(CONF_BLE_POLL_SECONDS, DEFAULT_BLE_POLL_SECONDS)),
         CONF_TRANSPORT_MODE: user_input.get(CONF_TRANSPORT_MODE, TRANSPORT_MODE_AUTO),
         CONF_LAN_HOST: _stripped(user_input, CONF_LAN_HOST),
         CONF_LAN_DEVICE_ID: _stripped(user_input, CONF_LAN_DEVICE_ID),
@@ -136,6 +138,10 @@ def _base_schema(defaults: dict[str, Any]) -> vol.Schema:
                 CONF_REQUEST_INIT_ON_CONNECT,
                 default=defaults.get(CONF_REQUEST_INIT_ON_CONNECT, True),
             ): bool,
+            vol.Optional(
+                CONF_BLE_POLL_SECONDS,
+                default=_default_int(defaults, CONF_BLE_POLL_SECONDS, DEFAULT_BLE_POLL_SECONDS),
+            ): vol.All(vol.Coerce(int), vol.Range(min=5, max=300)),
             vol.Optional(
                 CONF_TRANSPORT_MODE,
                 default=_default_choice(defaults, CONF_TRANSPORT_MODE, TRANSPORT_MODE_AUTO, TRANSPORT_MODES),

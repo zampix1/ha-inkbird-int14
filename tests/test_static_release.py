@@ -167,3 +167,8 @@ def test_int12e_continuous_gatt_polling_is_scoped_and_configurable() -> None:
     assert request_init_block.index("self._client") < request_init_block.index("async with self._connection_lock")
     assert "CONF_BLE_POLL_SECONDS" in config_flow
     assert "vol.Range(min=5, max=300)" in config_flow
+    base_schema = config_flow.split("def _base_schema", 1)[1].split("def _advanced_schema", 1)[0]
+    advanced_schema = config_flow.split("def _advanced_schema", 1)[1].split("class InkbirdInt14ConfigFlow", 1)[0]
+    assert "CONF_BLE_POLL_SECONDS" in base_schema
+    assert "CONF_BLE_POLL_SECONDS" in advanced_schema
+    assert "CONF_BLE_POLL_SECONDS: int" in config_flow
