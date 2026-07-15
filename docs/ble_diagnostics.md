@@ -1,6 +1,6 @@
 # BLE diagnostics
 
-Cataloged profiles describe the expected physical probes and temperature channels, but they do not claim that live BLE frames are decoded. They keep live transports and writes disabled.
+Cataloged profiles describe the expected physical probes and temperature channels, but they do not claim that live BLE frames are decoded. They keep live transports and writes disabled. Once a parser is validated, normal runtime readings replace the passive capture as the primary test path.
 
 A cataloged profile exposes a passive diagnostic `Capture BLE Diagnostics` button. The capture:
 
@@ -48,5 +48,26 @@ For INT-14S-BW, `FF01` has four 13-byte probe blocks followed by a two-byte stat
 The live parser was introduced in `v0.2.3-beta.3` and community validated for stable `v0.2.3`. Home Assistant creates 20 mapped temperature entities: Food 1-4 and Ambient for each physical probe. The separate Internal aggregate is retained in diagnostics and does not count as another physical sensor. Inherited protocol-state entities are hidden because the INT-14S charging/connection/pairing/alarm bit map is not validated. LAN, cloud and all setting writes remain disabled for this profile.
 
 The downloaded diagnostic includes sanitized service/characteristic metadata, readable values and notification payloads. Bluetooth addresses and IPv4 addresses embedded in errors are redacted.
+
+## INT-12E-BW live BLE behavior
+
+INT-12E-BW has community-validated read-only BLE support in the `v0.2.6` prerelease line. It exposes ten temperatures from two physical probes: Food 1-4 and Ambient for each probe, plus station temperature and the three battery values reported by GATT.
+
+While connected, valid notifications are applied immediately and have been observed roughly every three seconds. The configurable `BLE fallback direct-read interval` does not throttle those notifications. It controls only the safety-net read of the temperature and battery characteristics when no fresh notification has arrived; the default is 10 seconds and the allowed range is 5-300 seconds.
+
+The station has also been observed ending each connection after about 30 seconds with reason `0x13` (remote user terminated connection). This is device behavior, not a failed Home Assistant write. The integration reconnects automatically with bounded backoff, so a short unavailable gap between sessions is expected.
+
+INT-12E-BW remains read-only. It does not expose LAN, cloud, settings writes or protocol-state entities. Food 4 has been physically confirmed as the tip channel on both probes; the exact physical order of Food 1-3 still needs a controlled mapping report.
+
+## Experimental INT-14S unit write validation
+
+`v0.2.6-beta.1` adds two disabled-by-default diagnostic buttons for INT-14S-BW only:
+
+- `Validate BLE Write: Set Celsius`;
+- `Validate BLE Write: Set Fahrenheit`.
+
+These buttons do not enable the integration's normal write layer. Each run opens an authenticated BLE session, sends only the station-wide unit opcode, follows it with the already reviewed read/snapshot queries and records whether a unit readback was available. BLE accepting the command is not proof that the station changed, so the tester must still compare the station display before and after pressing the button.
+
+For a reversible test, note the current unit, press the opposite-unit button, confirm the display changed, then press the original-unit button and confirm it was restored. Download fresh integration diagnostics after each press. Do not test target, alarm, timer, calibration, display or pairing writes with this prerelease; those remain blocked.
 
 Do not post unredacted Home Assistant logs. Before sharing diagnostics or screenshots, verify that they contain no addresses, network names, device IDs, local keys, tokens, account data or private entity IDs.
