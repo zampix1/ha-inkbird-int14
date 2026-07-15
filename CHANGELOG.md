@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.3-beta.3
+
+- Add experimental read-only BLE temperatures for INT-14S-BW after a community hardware capture confirmed authentication and the 54-byte FF01 frame.
+- Map each of the four physical probes to four food channels plus ambient, preserving the separate Internal aggregate as diagnostic runtime data.
+- Correct the INT-14S wire scales: Internal/Food values are Fahrenheit hundredths; Ambient and station values are Fahrenheit tenths.
+- Keep INT-14S Tuya LAN, cloud history and all settings writes disabled. Its snapshot path sends authentication and read queries but omits clock synchronization.
+
 ## 0.2.3-beta.2
 
 - Add a separate authenticated BLE diagnostic capture for the observed INT-14S-BW profile. It sends only the volatile challenge/response exchange and snapshot queries; it omits the normal clock-sync frame and does not send settings, target, calibration, timer, display or pairing commands.

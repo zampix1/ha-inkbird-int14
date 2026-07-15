@@ -26,7 +26,15 @@ from .const import (
     WRITE_UUID,
 )
 from .lan import TuyaLanConfig, fetch_lan_dps, set_lan_dps
-from .models import AUTH_MODE_GATT_POLL, AUTH_MODE_SCAN_ONLY, DEFAULT_MODEL, MODEL_INT11I_B, InkbirdIntModelProfile, model_profile
+from .models import (
+    AUTH_MODE_GATT_POLL,
+    AUTH_MODE_SCAN_ONLY,
+    DEFAULT_MODEL,
+    MODEL_INT11I_B,
+    MODEL_INT14S_BW,
+    InkbirdIntModelProfile,
+    model_profile,
+)
 from .protocol import (
     build_calibration_command,
     build_calibration_dp_value,
@@ -369,11 +377,11 @@ class Int14Runtime:
             await self._request_init_with_fresh_connection()
 
     async def request_ble_diagnostics(self) -> None:
-        """Inspect a cataloged profile over GATT without sending Inkbird commands."""
+        """Inspect an eligible profile over GATT without sending Inkbird commands."""
         await self._request_ble_diagnostics(authenticated=False)
 
     async def request_authenticated_ble_diagnostics(self) -> None:
-        """Capture cataloged BW traffic after volatile auth and snapshot requests."""
+        """Capture reviewed BW traffic after volatile auth and snapshot requests."""
         if not self.profile.supports_authenticated_ble_diagnostics:
             self.data["ble_debug_status"] = "authenticated_not_available_for_profile"
             self.data["ble_debug_last_error"] = "Authenticated BLE diagnostics are not available for this profile"
@@ -384,7 +392,7 @@ class Int14Runtime:
     async def _request_ble_diagnostics(self, *, authenticated: bool) -> None:
         if not self.profile.supports_ble_diagnostics:
             self.data["ble_debug_status"] = "not_available_for_profile"
-            self.data["ble_debug_last_error"] = "BLE diagnostics are only exposed for cataloged profiles"
+            self.data["ble_debug_last_error"] = "BLE diagnostics are not available for this profile"
             self._notify_listeners()
             return
         if self.transport_mode not in {TRANSPORT_MODE_AUTO, TRANSPORT_MODE_BLE_ONLY}:
@@ -555,7 +563,7 @@ class Int14Runtime:
             self.data["ble_debug_status"] = "failed"
             self.data["ble_debug_last_error_type"] = type(exc).__name__
             self.data["ble_debug_last_error"] = str(exc)[:200]
-            _LOGGER.warning("Inkbird cataloged-profile BLE diagnostic failed: %s", exc)
+            _LOGGER.warning("Inkbird BLE diagnostic failed: %s", exc)
         finally:
             if pending_tasks:
                 await asyncio.gather(*pending_tasks, return_exceptions=True)
@@ -697,7 +705,8 @@ class Int14Runtime:
             self.data["last_ble_error"] = None
             return
         await self._request_auth(client)
-        for payload in init_command_chunks():
+        command_chunks = diagnostic_snapshot_query_chunks() if self.profile.key == MODEL_INT14S_BW else init_command_chunks()
+        for payload in command_chunks:
             if not await self._write_command(payload):
                 break
             await asyncio.sleep(0.3)
@@ -1025,7 +1034,17 @@ class Int14Runtime:
             self._auth_ack_event.set()
         sender_text = str(getattr(sender, "uuid", None) or sender).lower()
         parsed = parse_notification(bytes(data))
-        if self.profile.key == MODEL_INT11I_B and "ff01" in sender_text:
+        if self.profile.key == MODEL_INT14S_BW and "ff01" in sender_text:
+            current = parse_multisensor_temperature_payload(raw, self.profile.physical_probe_count)
+            if current:
+                parsed["frames"].append(
+                    {
+                        "name": "multisensor_current_temp_candidate",
+                        "transport": "raw_ff01_int14s",
+                        **current,
+                    }
+                )
+        elif self.profile.key == MODEL_INT11I_B and "ff01" in sender_text:
             current = parse_int11i_temperature_payload(raw)
             if current:
                 parsed["frames"].append({"name": "current_temp_candidate", "transport": "raw_ff01_int11i", **current})
@@ -1051,6 +1070,21 @@ class Int14Runtime:
                     continue
                 self.data[f"probe_{idx}_internal_f_tenths"] = probe["internal_f_tenths"]
                 self.data[f"probe_{idx}_ambient_f_tenths"] = probe["ambient_f_tenths"]
+        elif frame.get("name") == "multisensor_current_temp_candidate":
+            self.data["last_transport"] = frame.get("transport")
+            if not live_allowed:
+                return
+            self.data["base_temp_f_tenths"] = frame.get("base_temp_f_tenths")
+            for probe in frame["probes"]:
+                idx = probe["probe"]
+                if idx > self.probe_count:
+                    continue
+                self.data[f"probe_{idx}_internal_f_tenths"] = probe["internal_f_tenths"]
+                self.data[f"probe_{idx}_internal_raw_f_hundredths"] = probe["internal_f_hundredths"]
+                for food_index, value in enumerate(probe["food_f_tenths"], start=1):
+                    self.data[f"probe_{idx}_food_{food_index}_f_tenths"] = value
+                self.data[f"probe_{idx}_ambient_f_tenths"] = probe["ambient_f_tenths"]
+                self.data[f"probe_{idx}_multisensor_status"] = probe["status"]
         elif frame.get("name") == "battery_candidate":
             self.data["last_transport"] = frame.get("transport")
             self.data["last_battery_transport"] = frame.get("transport")

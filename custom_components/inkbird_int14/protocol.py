@@ -296,28 +296,37 @@ def parse_current_temp_payload(raw: bytes) -> dict[str, Any] | None:
 
 
 def parse_multisensor_temperature_payload(raw: bytes, probe_count: int) -> dict[str, Any] | None:
-    """Decode the observed multi-sensor FF01 shape without assigning channel meaning."""
+    """Decode the INT-14S FF01 probe blocks confirmed by the vendor app parser."""
     if probe_count < 1 or len(raw) != probe_count * 13 + 2:
         return None
     probes = []
     for probe_index in range(probe_count):
         block = raw[probe_index * 13 : (probe_index + 1) * 13]
-        raw_slots = [int.from_bytes(block[offset : offset + 2], "little", signed=False) for offset in range(0, 12, 2)]
+        raw_values = [le_i16(block[offset : offset + 2]) for offset in range(0, 12, 2)]
+        available = [None if abs(value) in SENTINELS else value for value in raw_values]
+        internal = available[0]
+        food = available[1:5]
+        ambient = available[5]
         probes.append(
             {
                 "probe": probe_index + 1,
-                "raw_f_tenths_slots": raw_slots,
-                "available_f_tenths_slots": [None if value in SENTINELS else value for value in raw_slots],
+                "raw_values": raw_values,
+                "internal_f_hundredths": internal,
+                "internal_f_tenths": None if internal is None else half_up_int(internal / 10),
+                "food_f_hundredths": food,
+                "food_f_tenths": [None if value is None else half_up_int(value / 10) for value in food],
+                "ambient_f_tenths": ambient,
                 "status": block[12],
             }
         )
-    base_temp = int.from_bytes(raw[-2:], "little", signed=False)
+    base_temp = le_i16(raw[-2:])
     return {
         "probe_block_length": 13,
         "temperature_slots_per_probe": 6,
+        "mapped_temperature_channels_per_probe": 5,
         "probes": probes,
         "base_temp_raw": base_temp,
-        "base_temp_f_tenths": None if base_temp in SENTINELS else base_temp,
+        "base_temp_f_tenths": None if abs(base_temp) in SENTINELS or base_temp >= 1310 else base_temp,
     }
 
 

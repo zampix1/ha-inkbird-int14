@@ -71,7 +71,7 @@ def test_modern_multi_sensor_layouts_match_app_model_family() -> None:
     models = _load_models_module()
     cases = {
         "int31_bw": (1, 5, 0),
-        "int14s_bw": (4, 20, 0),
+        "int14s_bw": (4, 20, 20),
         "int12e_bw": (2, 10, 0),
         "int33_bw": (3, 13, 0),
         "int11s_b": (1, 5, 0),
@@ -86,7 +86,7 @@ def test_modern_multi_sensor_layouts_match_app_model_family() -> None:
 
 def test_cataloged_profiles_do_not_expose_live_channels() -> None:
     models = _load_models_module()
-    for profile_key in ("int14s_bw", "int12e_bw", "int11s_b", "int31_bw", "int33_bw"):
+    for profile_key in ("int12e_bw", "int11s_b", "int31_bw", "int33_bw"):
         profile = models.model_profile(profile_key)
         assert profile.support_status == "cataloged"
         assert profile.has_live_runtime_data is False
@@ -111,7 +111,7 @@ def test_transport_capabilities_are_not_overstated() -> None:
     assert models.model_profile("int11i_b").write_support == "not_supported"
     assert models.model_profile("int11i_b").supports_base_temperature is False
     assert models.model_profile("int11p_b").write_support == "not_supported"
-    for profile_key in ("int14s_bw", "int12e_bw", "int11s_b", "int31_bw", "int33_bw"):
+    for profile_key in ("int12e_bw", "int11s_b", "int31_bw", "int33_bw"):
         profile = models.model_profile(profile_key)
         assert profile.support_status == "cataloged"
         assert profile.supports_ble_snapshot is False
@@ -125,12 +125,34 @@ def test_transport_capabilities_are_not_overstated() -> None:
     assert models.model_profile("int31_bw").supports_authenticated_ble_diagnostics is False
 
 
-def test_ble_diagnostics_do_not_enable_live_support() -> None:
+def test_int14s_ble_read_path_is_experimental_and_write_blocked() -> None:
     models = _load_models_module()
-    for profile_key in ("int14s_bw", "int12e_bw"):
-        profile = models.model_profile(profile_key)
-        assert profile.supports_ble_diagnostics is True
-        assert profile.supports_ble_snapshot is False
-        assert profile.has_live_runtime_data is False
-        assert profile.live_temperature_channel_count == 0
-        assert profile.write_support == "not_supported"
+    profile = models.model_profile("int14s_bw")
+
+    assert profile.support_status == "experimental"
+    assert profile.supports_ble_diagnostics is True
+    assert profile.supports_authenticated_ble_diagnostics is True
+    assert profile.supports_ble_snapshot is True
+    assert profile.has_live_runtime_data is True
+    assert profile.live_temperature_channel_count == 20
+    assert profile.write_support == "not_supported"
+    assert profile.supports_lan is False
+    assert profile.supports_cloud_history is False
+    assert [channel.data_key for channel in profile.probe_layout[0].live_temperature_channels] == [
+        "food_1",
+        "food_2",
+        "food_3",
+        "food_4",
+        "ambient",
+    ]
+
+
+def test_cataloged_ble_diagnostics_do_not_enable_live_support() -> None:
+    models = _load_models_module()
+    profile = models.model_profile("int12e_bw")
+
+    assert profile.supports_ble_diagnostics is True
+    assert profile.supports_ble_snapshot is False
+    assert profile.has_live_runtime_data is False
+    assert profile.live_temperature_channel_count == 0
+    assert profile.write_support == "not_supported"

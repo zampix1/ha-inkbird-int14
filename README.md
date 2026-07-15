@@ -33,6 +33,7 @@ Product image is included only as a device reference. Inkbird names, logos and t
 - Optional cloud history is read-only and limited to DP109 temperature history.
 - Exposes mapped probe temperatures, station temperature, target values, transport status, local availability and selected battery/state indicators for supported profiles.
 - INT-11I-B has experimental read-only BLE GATT-poll support for one probe temperature and base/probe battery from a community validation report.
+- INT-14S-BW has experimental read-only BLE support for 20 mapped temperatures: four food sensors plus ambient on each of four physical probes.
 - Models with multi-sensor probes are represented with their expected physical-probe and temperature-channel layout, but live entities are created only for channels mapped by the current parser.
 
 ## Status
@@ -168,7 +169,7 @@ Noisy raw diagnostics and fragile fields that are often unknown are marked diagn
 
 The profile diagnostics include physical probe count, expected temperature channel count and mapped live temperature channel count. Cataloged profiles with no validated parser mapping do not create placeholder temperature entities for every expected channel.
 
-Cataloged profiles include passive BLE inspection. Cataloged BW profiles may also expose a separate authenticated snapshot diagnostic that sends only volatile session authentication and read/snapshot queries. It never enables normal settings writes or live entities. See `docs/ble_diagnostics.md` before sharing a sanitized capture.
+Cataloged profiles include passive BLE inspection. INT-14S-BW also retains a separate authenticated diagnostic capture while its live BLE parser is experimental. The capture sends only volatile session authentication and read/snapshot queries; it never enables normal settings writes. See `docs/ble_diagnostics.md` before sharing a sanitized capture.
 
 Battery values remain numeric when a fresh INT-14 battery snapshot exists. Repeated 100% probe reports are flagged through `Battery Report Quality` and suspect binary sensors instead of hiding the battery value. Local testing showed that the station can still report all probe batteries as 100% after successful BLE authentication, so those values should be treated as station-reported rather than independently verified probe fuel gauges.
 
@@ -245,6 +246,7 @@ example-local-key
 - Cloud live data, cloud battery/state and cloud writes are not supported.
 - Non-INT-14 and multi-sensor profiles are experimental or cataloged until hardware captures confirm their parser and write behavior.
 - Cataloged multi-sensor profiles may show an expected channel layout without exposing live temperature entities.
+- INT-14S-BW currently supports BLE readings only. Tuya LAN, cloud history and all settings writes remain disabled for this profile.
 
 ## Alternatives
 

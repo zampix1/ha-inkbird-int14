@@ -1,6 +1,6 @@
 # Model Profiles
 
-This integration is local-first and profile based. The INT-14-BW profile is the only profile validated with live hardware captures in this repository. Other profiles are exposed so testers can help validate related modern Inkbird INT food thermometers without creating separate forks.
+This integration is local-first and profile based. INT-14-BW remains the fully tested baseline. INT-14S-BW now has a community-validated experimental read-only BLE parser; other profiles are exposed so owners can validate related modern Inkbird INT food thermometers without creating separate forks.
 
 Modern Inkbird probes are not always one probe equals one temperature. Some probes expose several food sensors plus an ambient sensor. The integration therefore tracks both physical probes and expected temperature channels.
 
@@ -11,7 +11,7 @@ Modern Inkbird probes are not always one probe equals one temperature. Some prob
 | `int14_bw` | `INT-14-BW` | 4 | 8 | 8 | yes | yes | DP109 read-only | tested |
 | `int14_bw_wh` | `INT-14-BW_WH` | 4 | 8 | 8 | yes | yes | DP109 read-only | experimental |
 | `ing14` | `ING14` | 4 | 8 | 8 | yes | yes | DP109 read-only | experimental |
-| `int14s_bw` | `INT-14S-BW` | 4 | 20 | 0 | no | no | no | cataloged |
+| `int14s_bw` | `INT-14S-BW` | 4 | 20 | 20 | yes | no | no | experimental, read-only |
 | `int14p_bw` | `INT-14P-BW` | 4 | 8 | 8 | yes | yes | DP109 read-only | experimental |
 | `int12_bw` | `INT-12-BW` | 2 | 4 | 4 | yes | yes | DP109 read-only | experimental |
 | `int12i_bw` | `INT-12I-BW` | 2 | 4 | 4 | yes | yes | DP109 read-only | experimental |
@@ -48,7 +48,7 @@ These layouts come from the vendor app model definitions, where the app initiali
 
 ## What Is Still INT-14 Derived
 
-The command builders, DP maps and parser grammar are still derived from the INT-14-BW baseline. Profiles with `0` live mapped temperature channels are intentionally cataloged only: they describe expected hardware layout, but they do not create live temperature entities, enable LAN/cloud transports or allow writes.
+Most command builders and DP maps are still derived from the INT-14-BW baseline. Profiles with `0` live mapped temperature channels are intentionally cataloged only: they describe expected hardware layout, but they do not create live temperature entities, enable LAN/cloud transports or allow writes.
 
 Cloud live data and cloud writes are not supported for any profile. Cloud history remains optional, disabled by default and read-only.
 
@@ -56,9 +56,23 @@ Cloud live data and cloud writes are not supported for any profile. Cloud histor
 
 Cataloged profiles are selectable only so owners can report the exact model and so Home Assistant creates the right device identity while testing. They do not enable live BLE parsing, Tuya LAN, cloud history or writes yet.
 
-`INT-14S-BW`, `INT-12E-BW`, `INT-11S-B`, `INT-31-BW` and `INT-33-BW` are exposed in this conservative state because the vendor app contains dedicated product/model definitions for them. That is useful evidence for naming and expected channel layout, but not enough to reuse the INT-14 parser safely.
+`INT-12E-BW`, `INT-11S-B`, `INT-31-BW` and `INT-33-BW` remain in this conservative state because the vendor app contains dedicated product/model definitions for them. That is useful evidence for naming and expected channel layout, but not enough to reuse another model's parser safely.
 
-INT-14S-BW additionally exposes an opt-in authenticated diagnostic capture after a community beta.1 GATT inventory confirmed its FF00 service family. This diagnostic sends only volatile session authentication and snapshot queries, omits clock synchronization and settings commands, and does not change the profile's cataloged/non-live status.
+## INT-14S-BW Experimental BLE
+
+A community beta.2 capture confirmed the INT-14S-BW FF00 GATT family, successful challenge/response authentication and a 54-byte FF01 temperature frame. Each physical probe contributes a 13-byte block:
+
+1. Internal aggregate, Fahrenheit hundredths;
+2. Food 1, Fahrenheit hundredths;
+3. Food 2, Fahrenheit hundredths;
+4. Food 3, Fahrenheit hundredths;
+5. Food 4, Fahrenheit hundredths;
+6. Ambient, Fahrenheit tenths;
+7. one status byte.
+
+The four blocks are followed by station temperature in Fahrenheit tenths. Home Assistant exposes the 20 physical temperature channels (`Food 1-4` and `Ambient` per probe). The separate Internal value is retained as diagnostic runtime data and is not counted as a sixth physical sensor.
+
+This profile is still experimental and read-only. BLE temperature and battery snapshots are enabled, but Tuya LAN, cloud history and all setting controls remain disabled. Its snapshot path omits clock synchronization and sends only authentication plus read queries. The passive and authenticated diagnostic buttons remain available for follow-up captures.
 
 `INT-11I-B` is different from the INT-14-BW station profile. A community report from Dmitry/dskudrin validated it as a connectable GATT-poll device: `ff01` exposes one probe temperature as little-endian Fahrenheit hundredths, and `2a19` exposes two battery bytes, base/booster first and probe second. Writes remain disabled for this profile until command behavior is validated on hardware.
 

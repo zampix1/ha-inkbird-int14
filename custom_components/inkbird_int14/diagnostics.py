@@ -42,6 +42,7 @@ TO_REDACT = {
 
 RUNTIME_DIAGNOSTIC_KEYS = {
     "active_transport",
+    "base_temp_f_tenths",
     "ble_connected",
     "ble_enabled",
     "live_temperature_channel_count",
@@ -53,6 +54,9 @@ RUNTIME_DIAGNOSTIC_KEYS = {
     "temperature_channel_count",
     "transport_mode",
 }
+MULTISENSOR_RUNTIME_KEY_PATTERN = re.compile(
+    r"probe_[1-4]_(?:internal_(?:f_tenths|raw_f_hundredths)|food_[1-4]_f_tenths|ambient_f_tenths|multisensor_status)"
+)
 MAC_PATTERN = re.compile(r"(?i)(?:[0-9a-f]{2}[:-]){5}[0-9a-f]{2}")
 IPV4_PATTERN = re.compile(r"(?<!\d)(?:\d{1,3}\.){3}\d{1,3}(?!\d)")
 
@@ -76,7 +80,11 @@ async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: ConfigE
     }
     if runtime is not None:
         payload["runtime_type"] = type(runtime).__name__
-        runtime_data = {key: value for key, value in runtime.data.items() if key in RUNTIME_DIAGNOSTIC_KEYS or key.startswith("ble_debug_")}
+        runtime_data = {
+            key: value
+            for key, value in runtime.data.items()
+            if key in RUNTIME_DIAGNOSTIC_KEYS or key.startswith("ble_debug_") or MULTISENSOR_RUNTIME_KEY_PATTERN.fullmatch(key)
+        }
         payload["runtime"] = async_redact_data(_sanitize_runtime_value(runtime_data), TO_REDACT)
         for attr in ("address", "session", "device", "config"):
             value = getattr(runtime, attr, None)

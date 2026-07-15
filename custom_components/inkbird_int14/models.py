@@ -112,12 +112,12 @@ class InkbirdIntModelProfile:
     @property
     def supports_ble_diagnostics(self) -> bool:
         """Allow non-live GATT inspection without claiming model support."""
-        return self.support_status == "cataloged"
+        return self.support_status == "cataloged" or self.allows_authenticated_ble_diagnostics
 
     @property
     def supports_authenticated_ble_diagnostics(self) -> bool:
-        """Allow BW session/snapshot diagnostics without enabling live support."""
-        return self.supports_ble_diagnostics and self.ble_auth_mode == AUTH_MODE_BW and self.allows_authenticated_ble_diagnostics
+        """Allow an explicitly reviewed BW session/snapshot diagnostic."""
+        return self.ble_auth_mode == AUTH_MODE_BW and self.allows_authenticated_ble_diagnostics
 
     @property
     def probe_layout_summary(self) -> str:
@@ -152,6 +152,12 @@ def _single_food_layout(probe_count: int) -> tuple[ProbeLayout, ...]:
 
 def _expected_multi_sensor_probe(sensor_count: int) -> tuple[TemperatureChannel, ...]:
     return tuple(TemperatureChannel(f"food_{index}", f"Food {index}") for index in range(1, sensor_count + 1)) + (CHANNEL_AMBIENT_EXPECTED,)
+
+
+def _mapped_multi_sensor_probe(sensor_count: int) -> tuple[TemperatureChannel, ...]:
+    return tuple(
+        TemperatureChannel(f"food_{index}", f"Food {index}", parser_key=f"food_{index}") for index in range(1, sensor_count + 1)
+    ) + (CHANNEL_AMBIENT_MAPPED,)
 
 
 def _expected_multi_sensor_layout(probe_count: int, sensor_count: int = 4) -> tuple[ProbeLayout, ...]:
@@ -220,15 +226,15 @@ MODEL_PROFILES: dict[str, InkbirdIntModelProfile] = {
         display_name="Inkbird INT-14S-BW",
         app_model="INT-14S-BW",
         product_id="bozmpl04yva3x0sa",
-        probe_layout=_expected_multi_sensor_layout(4),
+        probe_layout=tuple(ProbeLayout(index=index, channels=_mapped_multi_sensor_probe(4)) for index in range(1, 5)),
         asset_family="int14sbw",
         ble_auth_mode=AUTH_MODE_BW,
-        supports_ble_snapshot=False,
+        supports_ble_snapshot=True,
         supports_lan=False,
         supports_cloud_history=False,
         write_support="not_supported",
-        support_status="cataloged",
-        notes="Expected four physical probes with four food sensors plus ambient per probe; live frame and DP maps are not implemented here yet.",
+        support_status="experimental",
+        notes="Community-validated read-only BLE parser for four food sensors plus ambient per probe; LAN, cloud and writes remain disabled.",
         allows_authenticated_ble_diagnostics=True,
     ),
     MODEL_INT14P_BW: InkbirdIntModelProfile(
