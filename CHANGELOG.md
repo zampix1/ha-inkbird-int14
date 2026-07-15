@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.6-beta.4
+
+- Treat the repeatable INT-12E-BW remote BLE disconnect after approximately 30 seconds as a station session limit rather than a parser failure.
+- Reduce the normal continuous-GATT reconnect delay from 10 to 5 seconds, while retaining a 10-second minimum backoff after actual connection errors to avoid proxy retry storms.
+- Keep the validated 10-second default temperature/battery read interval unchanged.
+
 ## 0.2.6-beta.3
 
 - Keep the INT-12E-BW GATT connection open and read FF01 plus 2A19 directly at a configurable interval instead of reconnecting for every update.

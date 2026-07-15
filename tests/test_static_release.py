@@ -161,6 +161,8 @@ def test_int12e_continuous_gatt_polling_is_scoped_and_configurable() -> None:
     assert "continuous_gatt_polling" in listen_block
     assert "self.ble_poll_seconds" in listen_block
     assert "(LIVE_UUID, BATTERY_UUID)" in listen_block
+    assert "CONTINUOUS_GATT_RECONNECT_DELAY_SECONDS = 5" in runtime
+    assert "max(10, self._ble_reconnect_delay_seconds)" in runtime
     request_init_block = runtime.split("    async def request_init", 1)[1].split("    async def request_ble_diagnostics", 1)[0]
     assert request_init_block.index("self._client") < request_init_block.index("async with self._connection_lock")
     assert "CONF_BLE_POLL_SECONDS" in config_flow

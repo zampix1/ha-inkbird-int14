@@ -66,7 +66,7 @@ The capture also confirmed a three-byte 2A19 battery value: station, probe 1 and
 
 Community hardware testing confirms that all ten entities populate with plausible values and that `Food 4` is the tip sensor on both probes. Mapping of `Food 1-3` to the remaining physical sections is still pending.
 
-The runtime keeps the GATT connection open and directly reads FF01 and 2A19 every 10 seconds by default. The interval can be changed from 5 to 300 seconds in the integration options. If the station or proxy drops the connection, the integration reconnects and resumes polling; transient ESPHome `status=133` connection errors can still occur and are retried.
+The runtime keeps the GATT connection open and directly reads FF01 and 2A19 every 10 seconds by default. The interval can be changed from 5 to 300 seconds in the integration options. Community testing shows that the station closes the connection itself after approximately 30 seconds with BLE reason `0x13`; the integration waits 5 seconds, reconnects and resumes polling. Actual connection failures retain a longer backoff. Transient ESPHome `status=133` connection errors can still occur and are retried.
 
 This support remains experimental until the remaining channel labels and longer-running connection behavior are confirmed. Tuya LAN, cloud history, every write control and unvalidated protocol-state entities remain disabled.
 

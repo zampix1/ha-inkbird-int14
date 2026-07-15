@@ -67,6 +67,7 @@ NOTIFY_UUIDS = {LIVE_UUID, WRITE_UUID, STATE_UUID, BATTERY_UUID}
 READ_ON_CONNECT_UUIDS = (LIVE_UUID, WRITE_UUID, STATE_UUID, BATTERY_UUID)
 SESSION_SECONDS = 20
 RECONNECT_DELAY_SECONDS = 25
+CONTINUOUS_GATT_RECONNECT_DELAY_SECONDS = 5
 WRITE_RETRY_DELAY_SECONDS = 1.0
 AUTH_TIMEOUT_SECONDS = 3.0
 BATTERY_STALE_SECONDS = 6 * 60 * 60
@@ -1386,7 +1387,7 @@ class Int14Runtime:
     @property
     def _ble_reconnect_delay_seconds(self) -> int:
         if self.profile.continuous_gatt_polling:
-            return self.ble_poll_seconds
+            return CONTINUOUS_GATT_RECONNECT_DELAY_SECONDS
         return RECONNECT_DELAY_SECONDS
 
     def _active_transport(self, ble_connected: bool) -> str:
