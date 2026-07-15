@@ -58,6 +58,8 @@ Cataloged profiles are selectable only so owners can report the exact model and 
 
 `INT-14S-BW`, `INT-12E-BW`, `INT-11S-B`, `INT-31-BW` and `INT-33-BW` are exposed in this conservative state because the vendor app contains dedicated product/model definitions for them. That is useful evidence for naming and expected channel layout, but not enough to reuse the INT-14 parser safely.
 
+INT-14S-BW additionally exposes an opt-in authenticated diagnostic capture after a community beta.1 GATT inventory confirmed its FF00 service family. This diagnostic sends only volatile session authentication and snapshot queries, omits clock synchronization and settings commands, and does not change the profile's cataloged/non-live status.
+
 `INT-11I-B` is different from the INT-14-BW station profile. A community report from Dmitry/dskudrin validated it as a connectable GATT-poll device: `ff01` exposes one probe temperature as little-endian Fahrenheit hundredths, and `2a19` exposes two battery bytes, base/booster first and probe second. Writes remain disabled for this profile until command behavior is validated on hardware.
 
 ## Seen In The App But Not Exposed Yet

@@ -83,6 +83,7 @@ class InkbirdIntModelProfile:
     support_status: str
     notes: str
     supports_base_temperature: bool = True
+    allows_authenticated_ble_diagnostics: bool = False
 
     @property
     def is_tested(self) -> bool:
@@ -112,6 +113,11 @@ class InkbirdIntModelProfile:
     def supports_ble_diagnostics(self) -> bool:
         """Allow non-live GATT inspection without claiming model support."""
         return self.support_status == "cataloged"
+
+    @property
+    def supports_authenticated_ble_diagnostics(self) -> bool:
+        """Allow BW session/snapshot diagnostics without enabling live support."""
+        return self.supports_ble_diagnostics and self.ble_auth_mode == AUTH_MODE_BW and self.allows_authenticated_ble_diagnostics
 
     @property
     def probe_layout_summary(self) -> str:
@@ -223,6 +229,7 @@ MODEL_PROFILES: dict[str, InkbirdIntModelProfile] = {
         write_support="not_supported",
         support_status="cataloged",
         notes="Expected four physical probes with four food sensors plus ambient per probe; live frame and DP maps are not implemented here yet.",
+        allows_authenticated_ble_diagnostics=True,
     ),
     MODEL_INT14P_BW: InkbirdIntModelProfile(
         key=MODEL_INT14P_BW,

@@ -71,9 +71,27 @@ def test_no_private_research_terms_in_public_docs() -> None:
             assert term not in text, f"{term} found in {path.relative_to(ROOT)}"
 
 
-def test_cataloged_ble_diagnostics_do_not_send_gatt_writes() -> None:
+def test_passive_and_authenticated_ble_diagnostics_remain_separate() -> None:
     runtime = (ROOT / "custom_components" / "inkbird_int14" / "runtime.py").read_text(encoding="utf-8")
-    diagnostic_block = runtime.split("    async def request_ble_diagnostics", 1)[1].split("    async def _request_init_on_client", 1)[0]
-    assert "write_gatt_char" not in diagnostic_block
-    assert "_request_auth" not in diagnostic_block
-    assert "init_command_chunks" not in diagnostic_block
+    passive_wrapper = runtime.split("    async def request_ble_diagnostics", 1)[1].split(
+        "    async def request_authenticated_ble_diagnostics", 1
+    )[0]
+    authenticated_block = runtime.split("    async def request_authenticated_ble_diagnostics", 1)[1].split(
+        "    async def _request_init_on_client", 1
+    )[0]
+    assert "authenticated=False" in passive_wrapper
+    assert "write_gatt_char" not in passive_wrapper
+    assert "authenticated=True" in authenticated_block
+    assert "AUTH_CHALLENGE_REQUEST" in authenticated_block
+    assert "diagnostic_snapshot_query_chunks" in authenticated_block
+    assert "init_command_chunks" not in authenticated_block
+    for forbidden_builder in (
+        "build_calibration_command",
+        "build_display_light_command",
+        "build_pre_alarm_command",
+        "build_target_command",
+        "build_timer_command",
+        "build_timer_reset_command",
+        "build_unit_command",
+    ):
+        assert forbidden_builder not in authenticated_block

@@ -120,6 +120,10 @@ def test_transport_capabilities_are_not_overstated() -> None:
         assert profile.write_support == "not_supported"
         assert profile.supports_ble_diagnostics is True
 
+    assert models.model_profile("int14s_bw").supports_authenticated_ble_diagnostics is True
+    assert models.model_profile("int12e_bw").supports_authenticated_ble_diagnostics is False
+    assert models.model_profile("int31_bw").supports_authenticated_ble_diagnostics is False
+
 
 def test_ble_diagnostics_do_not_enable_live_support() -> None:
     models = _load_models_module()

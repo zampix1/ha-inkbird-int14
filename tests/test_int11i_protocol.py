@@ -54,3 +54,37 @@ def test_int11i_2a19_battery_handles_unknown_marker() -> None:
         "base_power": None,
         "probe_battery": {1: None},
     }
+
+
+def test_int14s_multisensor_ff01_shape_is_decoded_without_channel_claims() -> None:
+    protocol = _load_protocol_module()
+    sentinel_block = bytes.fromhex("fe7ffe7ffe7ffe7ffe7ffe7f7e")
+    raw = sentinel_block * 4 + bytes.fromhex("4c03")
+
+    parsed = protocol.parse_multisensor_temperature_payload(raw, 4)
+
+    assert parsed["probe_block_length"] == 13
+    assert parsed["temperature_slots_per_probe"] == 6
+    assert parsed["base_temp_f_tenths"] == 844
+    assert len(parsed["probes"]) == 4
+    assert parsed["probes"][0] == {
+        "probe": 1,
+        "raw_f_tenths_slots": [32766] * 6,
+        "available_f_tenths_slots": [None] * 6,
+        "status": 0x7E,
+    }
+
+
+def test_multisensor_ff01_rejects_unexpected_length() -> None:
+    protocol = _load_protocol_module()
+
+    assert protocol.parse_multisensor_temperature_payload(bytes(18), 4) is None
+
+
+def test_diagnostic_snapshot_queries_exclude_clock_sync_and_settings() -> None:
+    protocol = _load_protocol_module()
+
+    commands = protocol.split_frames(b"".join(protocol.diagnostic_snapshot_query_chunks()))
+
+    assert [command.hex() for command in commands] == [frame[2:] for frame in protocol.INIT_STATIC_FRAMES]
+    assert all(command[0] != 0x19 for command in commands)

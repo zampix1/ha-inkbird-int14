@@ -168,6 +168,8 @@ Noisy raw diagnostics and fragile fields that are often unknown are marked diagn
 
 The profile diagnostics include physical probe count, expected temperature channel count and mapped live temperature channel count. Cataloged profiles with no validated parser mapping do not create placeholder temperature entities for every expected channel.
 
+Cataloged profiles include passive BLE inspection. Cataloged BW profiles may also expose a separate authenticated snapshot diagnostic that sends only volatile session authentication and read/snapshot queries. It never enables normal settings writes or live entities. See `docs/ble_diagnostics.md` before sharing a sanitized capture.
+
 Battery values remain numeric when a fresh INT-14 battery snapshot exists. Repeated 100% probe reports are flagged through `Battery Report Quality` and suspect binary sensors instead of hiding the battery value. Local testing showed that the station can still report all probe batteries as 100% after successful BLE authentication, so those values should be treated as station-reported rather than independently verified probe fuel gauges.
 
 See `docs/model_profiles.md` for the tested or experimental status of each profile.

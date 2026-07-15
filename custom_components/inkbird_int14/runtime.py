@@ -40,10 +40,12 @@ from .protocol import (
     build_timer_reset_command,
     build_timer_reset_dp_value,
     build_unit_command,
+    diagnostic_snapshot_query_chunks,
     init_command_chunks,
     parse_cloud_dps,
     parse_int11i_battery_payload,
     parse_int11i_temperature_payload,
+    parse_multisensor_temperature_payload,
     parse_notification,
     timer_epoch_values_plausible,
 )
@@ -58,6 +60,7 @@ WRITE_RETRY_DELAY_SECONDS = 1.0
 AUTH_TIMEOUT_SECONDS = 3.0
 BATTERY_STALE_SECONDS = 6 * 60 * 60
 BLE_DIAGNOSTIC_CAPTURE_SECONDS = 8
+BLE_DIAGNOSTIC_AUTH_TIMEOUT_SECONDS = 5
 BLE_DIAGNOSTIC_MAX_NOTIFICATIONS = 64
 BLE_DIAGNOSTIC_HEX_LIMIT = 320
 
@@ -367,6 +370,18 @@ class Int14Runtime:
 
     async def request_ble_diagnostics(self) -> None:
         """Inspect a cataloged profile over GATT without sending Inkbird commands."""
+        await self._request_ble_diagnostics(authenticated=False)
+
+    async def request_authenticated_ble_diagnostics(self) -> None:
+        """Capture cataloged BW traffic after volatile auth and snapshot requests."""
+        if not self.profile.supports_authenticated_ble_diagnostics:
+            self.data["ble_debug_status"] = "authenticated_not_available_for_profile"
+            self.data["ble_debug_last_error"] = "Authenticated BLE diagnostics are not available for this profile"
+            self._notify_listeners()
+            return
+        await self._request_ble_diagnostics(authenticated=True)
+
+    async def _request_ble_diagnostics(self, *, authenticated: bool) -> None:
         if not self.profile.supports_ble_diagnostics:
             self.data["ble_debug_status"] = "not_available_for_profile"
             self.data["ble_debug_last_error"] = "BLE diagnostics are only exposed for cataloged profiles"
@@ -379,11 +394,15 @@ class Int14Runtime:
             return
 
         async with self._connection_lock:
-            await self._request_ble_diagnostics_locked()
+            await self._request_ble_diagnostics_locked(authenticated=authenticated)
 
-    async def _request_ble_diagnostics_locked(self) -> None:
+    async def _request_ble_diagnostics_locked(self, *, authenticated: bool) -> None:
         client = None
         started_notify = []
+        pending_tasks: list[asyncio.Task] = []
+        auth_challenge_event = asyncio.Event()
+        auth_ack_event = asyncio.Event()
+        auth_response_scheduled = False
         self.data.update(
             {
                 "ble_debug_last_run_epoch_s": int(time.time()),
@@ -404,6 +423,12 @@ class Int14Runtime:
                 "ble_debug_read_value_count": 0,
                 "ble_debug_notification_count": 0,
                 "ble_debug_application_commands_sent": 0,
+                "ble_debug_capture_mode": "authenticated_snapshot" if authenticated else "passive",
+                "ble_debug_application_commands": [],
+                "ble_debug_command_errors": [],
+                "ble_debug_post_auth_read_values": [],
+                "ble_debug_auth_challenge_received": False,
+                "ble_debug_auth_ok": None,
             }
         )
         self._notify_listeners()
@@ -467,13 +492,7 @@ class Int14Runtime:
                     if "read" in properties:
                         try:
                             value = bytes(await client.read_gatt_char(characteristic))
-                            read_values.append(
-                                {
-                                    "uuid": characteristic_uuid,
-                                    "length": len(value),
-                                    "hex": value.hex()[:BLE_DIAGNOSTIC_HEX_LIMIT],
-                                }
-                            )
+                            read_values.append(self._ble_diagnostic_value(characteristic_uuid, value))
                         except Exception as exc:  # noqa: BLE001
                             read_errors.append({"uuid": characteristic_uuid, "error_type": type(exc).__name__})
                     if "notify" in properties or "indicate" in properties:
@@ -487,25 +506,59 @@ class Int14Runtime:
             self.data["ble_debug_characteristic_count"] = len(characteristics)
             self.data["ble_debug_read_value_count"] = len(read_values)
 
+            def diagnostic_notification(sender: int | str, data: bytearray) -> None:
+                nonlocal auth_response_scheduled
+                self._ble_diagnostic_notification(sender, data)
+                if not authenticated:
+                    return
+                raw = bytes(data)
+                if (challenge := auth_challenge_from_frame(raw)) is not None:
+                    self.data["ble_debug_auth_challenge_received"] = True
+                    auth_challenge_event.set()
+                    if not auth_response_scheduled:
+                        auth_response_scheduled = True
+                        response = build_auth_response(challenge)
+                        pending_tasks.append(
+                            self.hass.async_create_task(self._write_ble_diagnostic_command(client, response, "auth_response"))
+                        )
+                if (ok := auth_ack_ok(raw)) is not None:
+                    self.data["ble_debug_auth_ok"] = ok
+                    auth_ack_event.set()
+
             for characteristic in notify_candidates:
                 try:
-                    await client.start_notify(characteristic, self._ble_diagnostic_notification)
+                    await client.start_notify(characteristic, diagnostic_notification)
                     started_notify.append(characteristic)
                 except Exception as exc:  # noqa: BLE001
                     self.data["ble_debug_notification_errors"].append(
                         {"uuid": characteristic.uuid.lower(), "error_type": type(exc).__name__}
                     )
 
+            if authenticated:
+                await self._run_authenticated_ble_diagnostic(
+                    client,
+                    auth_challenge_event=auth_challenge_event,
+                    auth_ack_event=auth_ack_event,
+                )
+                self.data["ble_debug_post_auth_read_values"] = await self._read_ble_diagnostic_values(
+                    client,
+                    characteristics,
+                )
             if started_notify:
                 await asyncio.sleep(BLE_DIAGNOSTIC_CAPTURE_SECONDS)
             self.data["ble_debug_notification_count"] = len(self.data["ble_debug_notifications"])
-            self.data["ble_debug_status"] = "complete"
+            if authenticated and self.data.get("ble_debug_auth_ok") is not True:
+                self.data["ble_debug_status"] = "complete_auth_failed"
+            else:
+                self.data["ble_debug_status"] = "complete"
         except Exception as exc:  # noqa: BLE001
             self.data["ble_debug_status"] = "failed"
             self.data["ble_debug_last_error_type"] = type(exc).__name__
             self.data["ble_debug_last_error"] = str(exc)[:200]
             _LOGGER.warning("Inkbird cataloged-profile BLE diagnostic failed: %s", exc)
         finally:
+            if pending_tasks:
+                await asyncio.gather(*pending_tasks, return_exceptions=True)
             if client is not None:
                 for characteristic in started_notify:
                     try:
@@ -518,6 +571,83 @@ class Int14Runtime:
                 except Exception as exc:  # noqa: BLE001
                     _LOGGER.debug("BLE diagnostic disconnect failed: %s", exc)
             self._notify_listeners()
+
+    async def _run_authenticated_ble_diagnostic(
+        self,
+        client: BleakClient,
+        *,
+        auth_challenge_event: asyncio.Event,
+        auth_ack_event: asyncio.Event,
+    ) -> None:
+        if not await self._write_ble_diagnostic_command(client, AUTH_CHALLENGE_REQUEST, "auth_challenge_request"):
+            self.data["ble_debug_last_error"] = "auth_challenge_request_failed"
+            return
+        try:
+            await asyncio.wait_for(auth_challenge_event.wait(), timeout=BLE_DIAGNOSTIC_AUTH_TIMEOUT_SECONDS)
+        except TimeoutError:
+            self.data["ble_debug_last_error"] = "auth_challenge_timeout"
+            return
+        try:
+            await asyncio.wait_for(auth_ack_event.wait(), timeout=BLE_DIAGNOSTIC_AUTH_TIMEOUT_SECONDS)
+        except TimeoutError:
+            self.data["ble_debug_last_error"] = "auth_ack_timeout"
+            return
+        if self.data.get("ble_debug_auth_ok") is not True:
+            self.data["ble_debug_last_error"] = "auth_rejected"
+            return
+        for index, payload in enumerate(diagnostic_snapshot_query_chunks(), start=1):
+            if not await self._write_ble_diagnostic_command(client, payload, f"snapshot_query_{index}"):
+                self.data["ble_debug_last_error"] = f"snapshot_query_{index}_failed"
+                return
+            await asyncio.sleep(0.3)
+        await asyncio.sleep(1)
+
+    async def _write_ble_diagnostic_command(self, client: BleakClient, payload: bytes, label: str) -> bool:
+        error_type = None
+        try:
+            await client.write_gatt_char(WRITE_UUID, payload, response=True)
+        except Exception:  # noqa: BLE001
+            try:
+                await client.write_gatt_char(WRITE_UUID, payload, response=False)
+            except Exception as exc:  # noqa: BLE001
+                error_type = type(exc).__name__
+        if error_type is not None:
+            self.data.setdefault("ble_debug_command_errors", []).append({"label": label, "error_type": error_type})
+            return False
+        commands = self.data.setdefault("ble_debug_application_commands", [])
+        commands.append({"label": label, "length": len(payload), "hex": payload.hex()[:BLE_DIAGNOSTIC_HEX_LIMIT]})
+        self.data["ble_debug_application_commands_sent"] = len(commands)
+        return True
+
+    async def _read_ble_diagnostic_values(
+        self,
+        client: BleakClient,
+        characteristics: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        values = []
+        for characteristic in characteristics:
+            if "read" not in characteristic["properties"]:
+                continue
+            uuid = characteristic["uuid"]
+            try:
+                value = bytes(await client.read_gatt_char(uuid))
+            except Exception as exc:  # noqa: BLE001
+                values.append({"uuid": uuid, "error_type": type(exc).__name__})
+                continue
+            values.append(self._ble_diagnostic_value(uuid, value))
+        return values
+
+    def _ble_diagnostic_value(self, uuid: str, value: bytes) -> dict[str, Any]:
+        item: dict[str, Any] = {
+            "uuid": uuid.lower(),
+            "length": len(value),
+            "hex": value.hex()[:BLE_DIAGNOSTIC_HEX_LIMIT],
+        }
+        if uuid.lower() == LIVE_UUID:
+            candidate = parse_multisensor_temperature_payload(value, self.profile.physical_probe_count)
+            if candidate is not None:
+                item["multisensor_candidate"] = candidate
+        return item
 
     def _resolve_ble_diagnostic_device(self):
         from homeassistant.components import bluetooth
@@ -552,13 +682,8 @@ class Int14Runtime:
             return
         sender_uuid = getattr(sender, "uuid", None)
         raw = bytes(data)
-        notifications.append(
-            {
-                "uuid": str(sender_uuid or sender).lower()[:120],
-                "length": len(raw),
-                "hex": raw.hex()[:BLE_DIAGNOSTIC_HEX_LIMIT],
-            }
-        )
+        uuid = str(sender_uuid or sender).lower()[:120]
+        notifications.append(self._ble_diagnostic_value(uuid, raw))
         self.data["ble_debug_notification_count"] = len(notifications)
         self._notify_listeners()
 

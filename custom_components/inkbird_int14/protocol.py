@@ -86,10 +86,10 @@ def init_command_frames(now_ms: int | None = None) -> list[bytes]:
     ]
 
 
-def init_command_chunks(now_ms: int | None = None, max_chunk_len: int = 18) -> list[bytes]:
+def _chunk_command_frames(frames: list[bytes], max_chunk_len: int) -> list[bytes]:
     chunks: list[bytes] = []
     current = bytearray()
-    for item in init_command_frames(now_ms):
+    for item in frames:
         if current and len(current) + len(item) > max_chunk_len:
             chunks.append(bytes(current))
             current.clear()
@@ -97,6 +97,15 @@ def init_command_chunks(now_ms: int | None = None, max_chunk_len: int = 18) -> l
     if current:
         chunks.append(bytes(current))
     return chunks
+
+
+def init_command_chunks(now_ms: int | None = None, max_chunk_len: int = 18) -> list[bytes]:
+    return _chunk_command_frames(init_command_frames(now_ms), max_chunk_len)
+
+
+def diagnostic_snapshot_query_chunks(max_chunk_len: int = 18) -> list[bytes]:
+    """Build snapshot queries without the normal station clock synchronization frame."""
+    return _chunk_command_frames([bytes.fromhex(command) for command in INIT_STATIC_FRAMES], max_chunk_len)
 
 
 def build_unit_command(unit: str) -> bytes:
@@ -283,6 +292,32 @@ def parse_current_temp_payload(raw: bytes) -> dict[str, Any] | None:
         "probes": parse_probe_temperature_block(raw[:16]),
         "base_temp_raw": base_temp_f_tenths,
         "base_temp_f_tenths": base_temp_f_tenths,
+    }
+
+
+def parse_multisensor_temperature_payload(raw: bytes, probe_count: int) -> dict[str, Any] | None:
+    """Decode the observed multi-sensor FF01 shape without assigning channel meaning."""
+    if probe_count < 1 or len(raw) != probe_count * 13 + 2:
+        return None
+    probes = []
+    for probe_index in range(probe_count):
+        block = raw[probe_index * 13 : (probe_index + 1) * 13]
+        raw_slots = [int.from_bytes(block[offset : offset + 2], "little", signed=False) for offset in range(0, 12, 2)]
+        probes.append(
+            {
+                "probe": probe_index + 1,
+                "raw_f_tenths_slots": raw_slots,
+                "available_f_tenths_slots": [None if value in SENTINELS else value for value in raw_slots],
+                "status": block[12],
+            }
+        )
+    base_temp = int.from_bytes(raw[-2:], "little", signed=False)
+    return {
+        "probe_block_length": 13,
+        "temperature_slots_per_probe": 6,
+        "probes": probes,
+        "base_temp_raw": base_temp,
+        "base_temp_f_tenths": None if base_temp in SENTINELS else base_temp,
     }
 
 

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.3-beta.2
+
+- Add a separate authenticated BLE diagnostic capture for the observed INT-14S-BW profile. It sends only the volatile challenge/response exchange and snapshot queries; it omits the normal clock-sync frame and does not send settings, target, calibration, timer, display or pairing commands.
+- Decode the observed 13-byte multi-sensor probe blocks into numbered raw temperature slots for diagnostics, without assigning those slots to Home Assistant entities yet.
+- Keep the original passive capture available and keep cataloged profiles non-live and write-blocked.
+
 ## 0.2.3-beta.1
 
 - Add an opt-in BLE diagnostic capture button for cataloged profiles. It discovers the station through Home Assistant Bluetooth, enumerates GATT, reads readable characteristics and captures unsolicited notifications without sending Inkbird application commands.

@@ -65,6 +65,8 @@ Battery readings remain numeric when a fresh INT-14 battery snapshot exists. Sus
 
 INT-14-BW is the validated profile. Other model profiles are experimental or cataloged as documented in `docs/model_profiles.md`. Cataloged profiles such as INT-14S-BW, INT-12E-BW, INT-11S-B, INT-31-BW and INT-33-BW are selectable for validation intake and expose expected layout diagnostics, but their live transports and writes stay disabled until hardware captures confirm the parser and DP maps.
 
+The INT-14S-BW beta diagnostic is intentionally separate from normal runtime support. Its authenticated mode is explicitly user-triggered, records every application command it sends, uses only session authentication and snapshot query frames, omits clock synchronization, and cannot call settings command builders.
+
 Hardware validation also confirmed that selecting `BLE only` can force a BLE snapshot/write while the station remains connected to Wi-Fi, and returning to `Auto` restores LAN-first polling.
 
 ## Community Intake
