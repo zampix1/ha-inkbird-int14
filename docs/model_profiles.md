@@ -64,7 +64,11 @@ A community capture from @Nexus1212 confirmed the same multisensor FF01 structur
 
 The capture also confirmed a three-byte 2A19 battery value: station, probe 1 and probe 2. Direct characteristic reads completed successfully through an ESPHome Bluetooth Proxy even though notification subscriptions failed, so this profile uses GATT polling and does not require notification delivery for snapshots.
 
-This support remains experimental until the ten channel labels are confirmed through controlled tip/body/ambient heating tests. Tuya LAN, cloud history, every write control and unvalidated protocol-state entities remain disabled.
+Community hardware testing confirms that all ten entities populate with plausible values and that `Food 4` is the tip sensor on both probes. Mapping of `Food 1-3` to the remaining physical sections is still pending.
+
+The runtime keeps the GATT connection open and directly reads FF01 and 2A19 every 10 seconds by default. The interval can be changed from 5 to 300 seconds in the integration options. If the station or proxy drops the connection, the integration reconnects and resumes polling; transient ESPHome `status=133` connection errors can still occur and are retried.
+
+This support remains experimental until the remaining channel labels and longer-running connection behavior are confirmed. Tuya LAN, cloud history, every write control and unvalidated protocol-state entities remain disabled.
 
 ## INT-14S-BW Community-Validated BLE
 

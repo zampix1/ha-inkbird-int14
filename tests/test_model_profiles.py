@@ -131,7 +131,7 @@ def test_int12e_ble_read_path_is_experimental_and_write_blocked() -> None:
 
     assert profile.support_status == "experimental"
     assert profile.ble_auth_mode == models.AUTH_MODE_GATT_POLL
-    assert profile.supports_ble_diagnostics is True
+    assert profile.supports_ble_diagnostics is False
     assert profile.supports_authenticated_ble_diagnostics is False
     assert profile.supports_ble_snapshot is True
     assert profile.has_live_runtime_data is True
@@ -142,6 +142,7 @@ def test_int12e_ble_read_path_is_experimental_and_write_blocked() -> None:
     assert profile.supports_lan is False
     assert profile.supports_cloud_history is False
     assert profile.supports_protocol_state is False
+    assert profile.continuous_gatt_polling is True
     assert [channel.data_key for channel in profile.probe_layout[0].live_temperature_channels] == [
         "food_1",
         "food_2",

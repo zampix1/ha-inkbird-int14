@@ -9,9 +9,11 @@ from homeassistant.exceptions import HomeAssistantError
 from .cloud import build_cloud_history_config_from_sources
 from .const import (
     CONF_ADDRESS,
+    CONF_BLE_POLL_SECONDS,
     CONF_MODEL,
     CONF_REQUEST_INIT_ON_CONNECT,
     CONF_TRANSPORT_MODE,
+    DEFAULT_BLE_POLL_SECONDS,
     DEFAULT_CLOUD_BASE_URL,
     DEFAULT_CLOUD_POLL_SECONDS,
     DOMAIN,
@@ -435,7 +437,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         default_poll_seconds=DEFAULT_CLOUD_POLL_SECONDS,
     )
     lan_config = build_lan_config_from_sources(entry.data, entry.options)
-    runtime = Int14Runtime(hass, entry.data[CONF_ADDRESS], transport_mode, cloud_history_config, lan_config)
+    ble_poll_seconds = entry.options.get(
+        CONF_BLE_POLL_SECONDS,
+        entry.data.get(CONF_BLE_POLL_SECONDS, DEFAULT_BLE_POLL_SECONDS),
+    )
+    runtime = Int14Runtime(
+        hass,
+        entry.data[CONF_ADDRESS],
+        transport_mode,
+        cloud_history_config,
+        lan_config,
+        ble_poll_seconds=ble_poll_seconds,
+    )
     runtime.set_model(entry.options.get(CONF_MODEL, entry.data.get(CONF_MODEL)))
     runtime.request_init_on_connect = entry.options.get(
         CONF_REQUEST_INIT_ON_CONNECT,

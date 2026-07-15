@@ -55,6 +55,7 @@
         "data": {
           "model": "Model profile (physical probes / temperature channels)",
           "request_init_on_connect": "Request BLE snapshot on connect",
+          "ble_poll_seconds": "BLE direct-read interval (GATT polling profiles)",
           "transport_mode": "Transport mode",
           "lan_host": "Tuya LAN host or IP",
           "lan_device_id": "Tuya LAN device ID",

@@ -85,6 +85,7 @@ class InkbirdIntModelProfile:
     supports_base_temperature: bool = True
     allows_ble_diagnostics: bool = False
     allows_authenticated_ble_diagnostics: bool = False
+    continuous_gatt_polling: bool = False
     supports_protocol_state: bool = True
 
     @property
@@ -299,7 +300,7 @@ MODEL_PROFILES: dict[str, InkbirdIntModelProfile] = {
         write_support="not_supported",
         support_status="experimental",
         notes="Community capture validates read-only direct GATT polling: two 13-byte FF01 probe blocks plus station temperature and three-byte 2A19 battery data. Writes, LAN and cloud remain disabled.",
-        allows_ble_diagnostics=True,
+        continuous_gatt_polling=True,
         supports_protocol_state=False,
     ),
     MODEL_INT11I_B: InkbirdIntModelProfile(

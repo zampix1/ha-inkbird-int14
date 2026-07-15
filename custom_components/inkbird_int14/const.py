@@ -11,6 +11,7 @@ CONF_ADDRESS = "address"
 CONF_NAME = "name"
 CONF_MODEL = "model"
 CONF_REQUEST_INIT_ON_CONNECT = "request_init_on_connect"
+CONF_BLE_POLL_SECONDS = "ble_poll_seconds"
 CONF_TRANSPORT_MODE = "transport_mode"
 CONF_LAN_HOST = "lan_host"
 CONF_LAN_DEVICE_ID = "lan_device_id"
@@ -29,6 +30,7 @@ CONF_CLOUD_BASE_URL = "cloud_base_url"
 CONF_CLOUD_POLL_SECONDS = "cloud_poll_seconds"
 
 DEFAULT_CLOUD_BASE_URL = "https://us.api-inkbird.com/api/"
+DEFAULT_BLE_POLL_SECONDS = 10
 DEFAULT_CLOUD_POLL_SECONDS = 60
 DEFAULT_LAN_POLL_SECONDS = 10
 DEFAULT_LAN_PORT = 6668

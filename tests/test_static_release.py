@@ -147,3 +147,21 @@ def test_int14s_unit_write_validation_is_opt_in_and_narrow() -> None:
         "build_timer_reset_command",
     ):
         assert forbidden_builder not in validation_block
+
+
+def test_int12e_continuous_gatt_polling_is_scoped_and_configurable() -> None:
+    component = ROOT / "custom_components" / "inkbird_int14"
+    runtime = (component / "runtime.py").read_text(encoding="utf-8")
+    config_flow = (component / "config_flow.py").read_text(encoding="utf-8")
+    models = (component / "models.py").read_text(encoding="utf-8")
+    listen_block = runtime.split("    async def _listen", 1)[1].split("    async def _subscribe", 1)[0]
+    int12e_block = models.split("MODEL_INT12E_BW:", 1)[1].split("MODEL_INT11I_B:", 1)[0]
+
+    assert "continuous_gatt_polling=True" in int12e_block
+    assert "continuous_gatt_polling" in listen_block
+    assert "self.ble_poll_seconds" in listen_block
+    assert "(LIVE_UUID, BATTERY_UUID)" in listen_block
+    request_init_block = runtime.split("    async def request_init", 1)[1].split("    async def request_ble_diagnostics", 1)[0]
+    assert request_init_block.index("self._client") < request_init_block.index("async with self._connection_lock")
+    assert "CONF_BLE_POLL_SECONDS" in config_flow
+    assert "vol.Range(min=5, max=300)" in config_flow

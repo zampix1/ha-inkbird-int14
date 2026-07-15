@@ -222,6 +222,12 @@ BASE_DIAGNOSTIC_DESCRIPTIONS = [
     ),
     DiagnosticDescription("probe_layout_summary", "Probe Layout", enabled_default=True),
     DiagnosticDescription("active_transport", "Active Transport", enabled_default=True),
+    DiagnosticDescription(
+        "ble_poll_seconds",
+        "BLE Poll Interval",
+        native_unit="s",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
     DiagnosticDescription("local_lan_configured", "Local LAN Configured", enabled_default=True),
     DiagnosticDescription("local_lan_enabled", "Local LAN Enabled", enabled_default=True),
     DiagnosticDescription("local_lan_available", "Local LAN Available", enabled_default=True),

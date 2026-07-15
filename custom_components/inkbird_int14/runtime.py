@@ -16,6 +16,7 @@ from .auth import AUTH_CHALLENGE_REQUEST, auth_ack_ok, auth_challenge_from_frame
 from .cloud import CloudHistoryConfig, fetch_history_dps
 from .const import (
     BATTERY_UUID,
+    DEFAULT_BLE_POLL_SECONDS,
     LIVE_UUID,
     STATE_UUID,
     TRANSPORT_MODE_AUTO,
@@ -88,6 +89,7 @@ class Int14Runtime:
         cloud_history_config: CloudHistoryConfig | None = None,
         lan_config: TuyaLanConfig | None = None,
         model: str = DEFAULT_MODEL,
+        ble_poll_seconds: int = DEFAULT_BLE_POLL_SECONDS,
     ) -> None:
         self.hass = hass
         self.address = address
@@ -95,6 +97,7 @@ class Int14Runtime:
         self.transport_mode = transport_mode if transport_mode in TRANSPORT_MODES else TRANSPORT_MODE_AUTO
         self.cloud_history_config = cloud_history_config
         self.lan_config = lan_config
+        self.ble_poll_seconds = max(5, min(int(ble_poll_seconds), 300))
         self.data: dict[str, Any] = {}
         self.request_init_on_connect = False
         self._listeners: list[Callable[[], None]] = []
@@ -287,13 +290,13 @@ class Int14Runtime:
                         if self._client is client:
                             self._client = None
                         self._set_ble_connected(False)
-                await self._sleep_or_mode_change(RECONNECT_DELAY_SECONDS)
+                await self._sleep_or_mode_change(self._ble_reconnect_delay_seconds)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # noqa: BLE001
                 _LOGGER.warning("INT14 BLE loop failed: %s", exc)
                 self._set_ble_connected(False)
-                await self._sleep_or_mode_change(30)
+                await self._sleep_or_mode_change(max(10, self._ble_reconnect_delay_seconds))
 
     @property
     def ble_enabled(self) -> bool:
@@ -333,6 +336,12 @@ class Int14Runtime:
         return await establish_connection(BleakClient, device, self.profile.app_model, max_attempts=4, timeout=20.0)
 
     async def _listen(self, client: BleakClient) -> None:
+        if self.profile.continuous_gatt_polling:
+            while client.is_connected and self.ble_enabled:
+                await asyncio.sleep(self.ble_poll_seconds)
+                if client.is_connected and self.ble_enabled:
+                    await self._read_values(client, (LIVE_UUID, BATTERY_UUID))
+            return
         deadline = asyncio.get_running_loop().time() + SESSION_SECONDS
         while client.is_connected and self.ble_enabled and asyncio.get_running_loop().time() < deadline:
             await asyncio.sleep(1)
@@ -358,7 +367,10 @@ class Int14Runtime:
         await self._read_initial_values(client)
 
     async def _read_initial_values(self, client: BleakClient) -> None:
-        for uuid in READ_ON_CONNECT_UUIDS:
+        await self._read_values(client, READ_ON_CONNECT_UUIDS)
+
+    async def _read_values(self, client: BleakClient, uuids: tuple[str, ...]) -> None:
+        for uuid in uuids:
             try:
                 value = await client.read_gatt_char(uuid)
             except Exception as exc:  # noqa: BLE001
@@ -368,6 +380,10 @@ class Int14Runtime:
                 self._notification(uuid, bytearray(value))
 
     async def request_init(self) -> None:
+        client = self._client
+        if client is not None and client.is_connected:
+            await self._request_init_on_client(client)
+            return
         async with self._connection_lock:
             if self._client is not None and self._client.is_connected:
                 await self._request_init_on_client(self._client)
@@ -1350,6 +1366,7 @@ class Int14Runtime:
             "probe_layout_summary": self.profile.probe_layout_summary,
             "transport_mode": self.transport_mode,
             "ble_enabled": self.ble_enabled,
+            "ble_poll_seconds": self.ble_poll_seconds,
             "local_lan_enabled": self.lan_config is not None and self.lan_enabled,
             "cloud_enabled": self.cloud_enabled,
             "local_lan_configured": self.lan_config is not None,
@@ -1365,6 +1382,12 @@ class Int14Runtime:
         self.data.update(updates)
         if notify and changed:
             self._notify_listeners()
+
+    @property
+    def _ble_reconnect_delay_seconds(self) -> int:
+        if self.profile.continuous_gatt_polling:
+            return self.ble_poll_seconds
+        return RECONNECT_DELAY_SECONDS
 
     def _active_transport(self, ble_connected: bool) -> str:
         if not self.profile.has_live_runtime_data:

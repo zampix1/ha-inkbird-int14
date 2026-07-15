@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.6-beta.3
+
+- Keep the INT-12E-BW GATT connection open and read FF01 plus 2A19 directly at a configurable interval instead of reconnecting for every update.
+- Add a `BLE direct-read interval` option from 5 to 300 seconds, defaulting to 10 seconds for continuous GATT polling profiles.
+- Use the configured interval as the INT-12E reconnect delay after a dropped connection, reducing the previous 45-60 second recovery cycle.
+- Confirm from community hardware testing that all ten INT-12E temperature entities populate and that `Food 4` is the tip sensor on both probes.
+
 ## 0.2.6-beta.2
 
 - Add experimental read-only BLE polling for INT-12E-BW from a real-device community capture: two physical probes and ten live temperature channels (`Food 1-4` plus `Ambient` per probe).

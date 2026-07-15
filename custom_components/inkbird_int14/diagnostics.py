@@ -49,6 +49,7 @@ RUNTIME_DIAGNOSTIC_KEYS = {
     "base_temp_f_tenths",
     "ble_connected",
     "ble_enabled",
+    "ble_poll_seconds",
     "live_temperature_channel_count",
     "model",
     "model_profile",

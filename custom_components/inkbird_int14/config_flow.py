@@ -8,6 +8,7 @@ from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
     CONF_ADDRESS,
+    CONF_BLE_POLL_SECONDS,
     CONF_CLOUD_API_KEY,
     CONF_CLOUD_API_SECRET,
     CONF_CLOUD_BASE_URL,
@@ -27,6 +28,7 @@ from .const import (
     CONF_NAME,
     CONF_REQUEST_INIT_ON_CONNECT,
     CONF_TRANSPORT_MODE,
+    DEFAULT_BLE_POLL_SECONDS,
     DEFAULT_CLOUD_BASE_URL,
     DEFAULT_CLOUD_POLL_SECONDS,
     DEFAULT_LAN_POLL_SECONDS,
@@ -169,6 +171,10 @@ def _advanced_schema(defaults: dict[str, Any]) -> vol.Schema:
                 CONF_REQUEST_INIT_ON_CONNECT,
                 default=defaults.get(CONF_REQUEST_INIT_ON_CONNECT, True),
             ): bool,
+            vol.Optional(
+                CONF_BLE_POLL_SECONDS,
+                default=_default_int(defaults, CONF_BLE_POLL_SECONDS, DEFAULT_BLE_POLL_SECONDS),
+            ): vol.All(vol.Coerce(int), vol.Range(min=5, max=300)),
             vol.Optional(
                 CONF_TRANSPORT_MODE,
                 default=_default_choice(defaults, CONF_TRANSPORT_MODE, TRANSPORT_MODE_AUTO, TRANSPORT_MODES),
