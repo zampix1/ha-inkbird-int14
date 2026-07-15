@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.5
+
+- Redact the config entry `unique_id`, which is derived from the BLE address and remained visible after the v0.2.4 LAN-key fix.
+- Validate the generated diagnostics against a live Home Assistant config entry: no LAN credential, LAN identifier, top-level runtime address or config-entry BLE address remains exposed.
+
 ## 0.2.4
 
 - Fix diagnostics redaction for the actual Tuya LAN config-entry keys: `lan_host`, `lan_device_id` and `lan_local_key`.

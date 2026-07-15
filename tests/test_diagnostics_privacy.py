@@ -37,6 +37,7 @@ def test_diagnostics_redact_actual_tuya_lan_storage_keys() -> None:
     assert const.CONF_LAN_HOST in redaction_keys
     assert const.CONF_LAN_DEVICE_ID in redaction_keys
     assert const.CONF_LAN_LOCAL_KEY in redaction_keys
+    assert "unique_id" in redaction_keys
 
 
 def test_diagnostics_do_not_export_runtime_address_as_plain_string() -> None:

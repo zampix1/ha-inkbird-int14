@@ -41,6 +41,7 @@ TO_REDACT = {
     "ssid",
     "station_mac",
     "token",
+    "unique_id",
 }
 
 RUNTIME_DIAGNOSTIC_KEYS = {
