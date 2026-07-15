@@ -57,6 +57,13 @@ RECONNECT_DELAY_SECONDS = 25
 WRITE_RETRY_DELAY_SECONDS = 1.0
 AUTH_TIMEOUT_SECONDS = 3.0
 BATTERY_STALE_SECONDS = 6 * 60 * 60
+BLE_DIAGNOSTIC_CAPTURE_SECONDS = 8
+BLE_DIAGNOSTIC_MAX_NOTIFICATIONS = 64
+BLE_DIAGNOSTIC_HEX_LIMIT = 320
+
+
+def _normalize_ble_name(value: object) -> str:
+    return "".join(character for character in str(value or "").casefold() if character.isalnum())
 
 
 class Int14Runtime:
@@ -357,6 +364,203 @@ class Int14Runtime:
                 self._notify_listeners()
                 return
             await self._request_init_with_fresh_connection()
+
+    async def request_ble_diagnostics(self) -> None:
+        """Inspect a cataloged profile over GATT without sending Inkbird commands."""
+        if not self.profile.supports_ble_diagnostics:
+            self.data["ble_debug_status"] = "not_available_for_profile"
+            self.data["ble_debug_last_error"] = "BLE diagnostics are only exposed for cataloged profiles"
+            self._notify_listeners()
+            return
+        if self.transport_mode not in {TRANSPORT_MODE_AUTO, TRANSPORT_MODE_BLE_ONLY}:
+            self.data["ble_debug_status"] = "transport_mode_blocked"
+            self.data["ble_debug_last_error"] = f"BLE diagnostics are disabled in transport mode {self.transport_mode}"
+            self._notify_listeners()
+            return
+
+        async with self._connection_lock:
+            await self._request_ble_diagnostics_locked()
+
+    async def _request_ble_diagnostics_locked(self) -> None:
+        client = None
+        started_notify = []
+        self.data.update(
+            {
+                "ble_debug_last_run_epoch_s": int(time.time()),
+                "ble_debug_status": "starting",
+                "ble_debug_last_error": None,
+                "ble_debug_last_error_type": None,
+                "ble_debug_match_source": None,
+                "ble_debug_scanner_match_count": 0,
+                "ble_debug_active_scan_requested": False,
+                "ble_debug_service_uuids": [],
+                "ble_debug_characteristics": [],
+                "ble_debug_read_values": [],
+                "ble_debug_read_errors": [],
+                "ble_debug_notifications": [],
+                "ble_debug_notification_errors": [],
+                "ble_debug_service_count": 0,
+                "ble_debug_characteristic_count": 0,
+                "ble_debug_read_value_count": 0,
+                "ble_debug_notification_count": 0,
+                "ble_debug_application_commands_sent": 0,
+            }
+        )
+        self._notify_listeners()
+
+        try:
+            device, match_source, match_count = self._resolve_ble_diagnostic_device()
+            if device is None:
+                from homeassistant.components import bluetooth
+
+                request_active_scan = getattr(bluetooth, "async_request_active_scan", None)
+                if request_active_scan is not None:
+                    self.data["ble_debug_active_scan_requested"] = True
+                    await request_active_scan(self.hass)
+                    device, match_source, match_count = self._resolve_ble_diagnostic_device()
+            self.data["ble_debug_match_source"] = match_source
+            self.data["ble_debug_scanner_match_count"] = match_count
+            if device is None:
+                reachability_diagnostics = getattr(bluetooth, "async_address_reachability_diagnostics", None)
+                reachability_intent = getattr(bluetooth, "BluetoothReachabilityIntent", None)
+                if reachability_diagnostics is not None and reachability_intent is not None:
+                    self.data["ble_debug_reachability"] = reachability_diagnostics(
+                        self.hass,
+                        self.address,
+                        reachability_intent.CONNECTION,
+                    )
+                self.data["ble_debug_status"] = "scanner_not_seen" if match_count == 0 else "scanner_match_ambiguous"
+                self.data["ble_debug_last_error"] = (
+                    "Home Assistant has not seen a connectable advertisement for the configured address or model name"
+                    if match_count == 0
+                    else "More than one connectable advertisement matches this model name"
+                )
+                return
+
+            client = await establish_connection(
+                BleakClient,
+                device,
+                f"{self.profile.app_model} diagnostic",
+                max_attempts=2,
+                timeout=20.0,
+            )
+            self.data["ble_debug_status"] = "connected"
+
+            service_uuids: list[str] = []
+            characteristics: list[dict[str, Any]] = []
+            read_values: list[dict[str, Any]] = []
+            read_errors: list[dict[str, str]] = []
+            notify_candidates = []
+            for service in client.services:
+                service_uuid = service.uuid.lower()
+                service_uuids.append(service_uuid)
+                for characteristic in service.characteristics:
+                    properties = sorted(str(prop).lower() for prop in characteristic.properties)
+                    characteristic_uuid = characteristic.uuid.lower()
+                    characteristics.append(
+                        {
+                            "service_uuid": service_uuid,
+                            "uuid": characteristic_uuid,
+                            "properties": properties,
+                        }
+                    )
+                    if "read" in properties:
+                        try:
+                            value = bytes(await client.read_gatt_char(characteristic))
+                            read_values.append(
+                                {
+                                    "uuid": characteristic_uuid,
+                                    "length": len(value),
+                                    "hex": value.hex()[:BLE_DIAGNOSTIC_HEX_LIMIT],
+                                }
+                            )
+                        except Exception as exc:  # noqa: BLE001
+                            read_errors.append({"uuid": characteristic_uuid, "error_type": type(exc).__name__})
+                    if "notify" in properties or "indicate" in properties:
+                        notify_candidates.append(characteristic)
+
+            self.data["ble_debug_service_uuids"] = sorted(set(service_uuids))
+            self.data["ble_debug_characteristics"] = characteristics
+            self.data["ble_debug_read_values"] = read_values
+            self.data["ble_debug_read_errors"] = read_errors
+            self.data["ble_debug_service_count"] = len(set(service_uuids))
+            self.data["ble_debug_characteristic_count"] = len(characteristics)
+            self.data["ble_debug_read_value_count"] = len(read_values)
+
+            for characteristic in notify_candidates:
+                try:
+                    await client.start_notify(characteristic, self._ble_diagnostic_notification)
+                    started_notify.append(characteristic)
+                except Exception as exc:  # noqa: BLE001
+                    self.data["ble_debug_notification_errors"].append(
+                        {"uuid": characteristic.uuid.lower(), "error_type": type(exc).__name__}
+                    )
+
+            if started_notify:
+                await asyncio.sleep(BLE_DIAGNOSTIC_CAPTURE_SECONDS)
+            self.data["ble_debug_notification_count"] = len(self.data["ble_debug_notifications"])
+            self.data["ble_debug_status"] = "complete"
+        except Exception as exc:  # noqa: BLE001
+            self.data["ble_debug_status"] = "failed"
+            self.data["ble_debug_last_error_type"] = type(exc).__name__
+            self.data["ble_debug_last_error"] = str(exc)[:200]
+            _LOGGER.warning("Inkbird cataloged-profile BLE diagnostic failed: %s", exc)
+        finally:
+            if client is not None:
+                for characteristic in started_notify:
+                    try:
+                        await client.stop_notify(characteristic)
+                    except Exception as exc:  # noqa: BLE001
+                        _LOGGER.debug("BLE diagnostic notification stop failed for %s: %s", characteristic.uuid, exc)
+                try:
+                    if client.is_connected:
+                        await client.disconnect()
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.debug("BLE diagnostic disconnect failed: %s", exc)
+            self._notify_listeners()
+
+    def _resolve_ble_diagnostic_device(self):
+        from homeassistant.components import bluetooth
+
+        device = bluetooth.async_ble_device_from_address(self.hass, self.address, connectable=True)
+        if device is not None:
+            return device, "configured_address", 1
+
+        expected_name = _normalize_ble_name(self.profile.app_model)
+        matching_infos = []
+        for info in bluetooth.async_discovered_service_info(self.hass, connectable=True):
+            names = {
+                _normalize_ble_name(getattr(info, "name", None)),
+                _normalize_ble_name(getattr(info, "local_name", None)),
+            }
+            if expected_name and any(name == expected_name or name.startswith(expected_name) for name in names):
+                matching_infos.append(info)
+
+        if len(matching_infos) != 1:
+            return None, "model_name", len(matching_infos)
+        info = matching_infos[0]
+        device = getattr(info, "device", None) or bluetooth.async_ble_device_from_address(
+            self.hass,
+            info.address,
+            connectable=True,
+        )
+        return device, "unique_model_name", 1 if device is not None else 0
+
+    def _ble_diagnostic_notification(self, sender: int | str, data: bytearray) -> None:
+        notifications = self.data.setdefault("ble_debug_notifications", [])
+        if len(notifications) >= BLE_DIAGNOSTIC_MAX_NOTIFICATIONS:
+            return
+        sender_uuid = getattr(sender, "uuid", None)
+        raw = bytes(data)
+        notifications.append(
+            {
+                "uuid": str(sender_uuid or sender).lower()[:120],
+                "length": len(raw),
+                "hex": raw.hex()[:BLE_DIAGNOSTIC_HEX_LIMIT],
+            }
+        )
+        self.data["ble_debug_notification_count"] = len(notifications)
+        self._notify_listeners()
 
     async def _request_init_on_client(self, client: BleakClient) -> None:
         if not self.profile.supports_ble_snapshot:

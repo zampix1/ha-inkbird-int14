@@ -69,3 +69,11 @@ def test_no_private_research_terms_in_public_docs() -> None:
         text = path.read_text(encoding="utf-8", errors="ignore").lower()
         for term in forbidden_terms:
             assert term not in text, f"{term} found in {path.relative_to(ROOT)}"
+
+
+def test_cataloged_ble_diagnostics_do_not_send_gatt_writes() -> None:
+    runtime = (ROOT / "custom_components" / "inkbird_int14" / "runtime.py").read_text(encoding="utf-8")
+    diagnostic_block = runtime.split("    async def request_ble_diagnostics", 1)[1].split("    async def _request_init_on_client", 1)[0]
+    assert "write_gatt_char" not in diagnostic_block
+    assert "_request_auth" not in diagnostic_block
+    assert "init_command_chunks" not in diagnostic_block

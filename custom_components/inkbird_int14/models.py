@@ -109,6 +109,11 @@ class InkbirdIntModelProfile:
         return self.supports_ble_snapshot or self.supports_lan or self.supports_cloud_history
 
     @property
+    def supports_ble_diagnostics(self) -> bool:
+        """Allow non-live GATT inspection without claiming model support."""
+        return self.support_status == "cataloged"
+
+    @property
     def probe_layout_summary(self) -> str:
         return "; ".join(probe.summary for probe in self.probe_layout)
 

@@ -214,6 +214,7 @@ See `custom_components/inkbird_int14/services.yaml`.
 - `docs/model_profiles.md`
 - `docs/cloud_history_experimental.md`
 - `docs/bluetooth_proxy.md`
+- `docs/ble_diagnostics.md`
 
 ## Privacy And Security
 

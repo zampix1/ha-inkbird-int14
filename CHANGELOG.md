@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.3-beta.1
+
+- Add an opt-in BLE diagnostic capture button for cataloged profiles. It discovers the station through Home Assistant Bluetooth, enumerates GATT, reads readable characteristics and captures unsolicited notifications without sending Inkbird application commands.
+- Keep cataloged profiles non-live and write-blocked: diagnostic capture does not create temperature entities or claim parser support.
+- Include sanitized runtime BLE diagnostic data in Home Assistant diagnostic downloads.
+
 ## 0.2.2
 
 - Add INT-11I-B GATT-poll BLE parsing from community validation: FF01 temperature in Fahrenheit hundredths and 2A19 base/probe battery.

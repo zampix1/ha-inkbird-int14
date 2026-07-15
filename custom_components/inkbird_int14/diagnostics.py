@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
@@ -39,6 +40,32 @@ TO_REDACT = {
     "token",
 }
 
+RUNTIME_DIAGNOSTIC_KEYS = {
+    "active_transport",
+    "ble_connected",
+    "ble_enabled",
+    "live_temperature_channel_count",
+    "model",
+    "model_profile",
+    "model_support_status",
+    "probe_count",
+    "probe_layout_summary",
+    "temperature_channel_count",
+    "transport_mode",
+}
+MAC_PATTERN = re.compile(r"(?i)(?:[0-9a-f]{2}[:-]){5}[0-9a-f]{2}")
+IPV4_PATTERN = re.compile(r"(?<!\d)(?:\d{1,3}\.){3}\d{1,3}(?!\d)")
+
+
+def _sanitize_runtime_value(value: Any) -> Any:
+    if isinstance(value, str):
+        return IPV4_PATTERN.sub("**REDACTED_IP**", MAC_PATTERN.sub("**REDACTED_MAC**", value))
+    if isinstance(value, list):
+        return [_sanitize_runtime_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _sanitize_runtime_value(item) for key, item in value.items()}
+    return value
+
 
 async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: ConfigEntry) -> dict[str, Any]:
     """Return redacted config entry diagnostics."""
@@ -49,6 +76,8 @@ async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: ConfigE
     }
     if runtime is not None:
         payload["runtime_type"] = type(runtime).__name__
+        runtime_data = {key: value for key, value in runtime.data.items() if key in RUNTIME_DIAGNOSTIC_KEYS or key.startswith("ble_debug_")}
+        payload["runtime"] = async_redact_data(_sanitize_runtime_value(runtime_data), TO_REDACT)
         for attr in ("address", "session", "device", "config"):
             value = getattr(runtime, attr, None)
             if value is not None:

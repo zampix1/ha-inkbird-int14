@@ -118,3 +118,15 @@ def test_transport_capabilities_are_not_overstated() -> None:
         assert profile.supports_lan is False
         assert profile.supports_cloud_history is False
         assert profile.write_support == "not_supported"
+        assert profile.supports_ble_diagnostics is True
+
+
+def test_ble_diagnostics_do_not_enable_live_support() -> None:
+    models = _load_models_module()
+    for profile_key in ("int14s_bw", "int12e_bw"):
+        profile = models.model_profile(profile_key)
+        assert profile.supports_ble_diagnostics is True
+        assert profile.supports_ble_snapshot is False
+        assert profile.has_live_runtime_data is False
+        assert profile.live_temperature_channel_count == 0
+        assert profile.write_support == "not_supported"
