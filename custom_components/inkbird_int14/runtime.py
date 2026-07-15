@@ -787,6 +787,84 @@ class Int14Runtime:
             self._set_ble_connected(False)
             self._notify_listeners()
 
+    async def request_unit_write_validation(self, unit: str) -> None:
+        """Run the narrow, reversible INT-14S unit write validation."""
+        unit = unit.upper()
+        if self.profile.key != MODEL_INT14S_BW:
+            raise ValueError("Unit write validation is available only for INT-14S-BW")
+        if unit not in {"C", "F"}:
+            raise ValueError("unit must be C or F")
+        if not self.ble_enabled:
+            raise ValueError(f"INT14S BLE write validation is disabled in transport mode {self.transport_mode}")
+
+        async with self._connection_lock:
+            await self._request_unit_write_validation_locked(unit)
+
+    async def _request_unit_write_validation_locked(self, unit: str) -> None:
+        client = None
+        self.data.update(
+            {
+                "ble_write_validation_active": True,
+                "ble_write_validation_last_run_epoch_s": int(time.time()),
+                "ble_write_validation_requested_unit": unit,
+                "ble_write_validation_status": "starting",
+                "ble_write_validation_error": None,
+                "ble_write_validation_command_sent": False,
+                "ble_write_validation_original_readback_unit": None,
+                "ble_write_validation_readback_unit": None,
+                "ble_write_validation_readback_matches": None,
+                "ble_write_validation_notification_count": 0,
+                "ble_write_validation_notifications": [],
+            }
+        )
+        self._notify_listeners()
+        try:
+            client = await self._connect()
+            self._client = client
+            self._set_ble_connected(True)
+            self.data["ble_write_validation_status"] = "connected"
+            await self._subscribe(client)
+            if self.data.get("ble_auth_ok") is not True:
+                error = self.data.get("last_ble_auth_error") or "authentication_not_confirmed"
+                raise RuntimeError(str(error))
+
+            self.data["ble_write_validation_status"] = "authenticated"
+            self.data["ble_write_validation_original_readback_unit"] = self.data.get("unit")
+            if not await self._write_command(build_unit_command(unit)):
+                raise RuntimeError("unit_command_write_failed")
+            self.data["ble_write_validation_command_sent"] = True
+            self.data["ble_write_validation_status"] = "command_sent"
+            self._notify_listeners()
+
+            await asyncio.sleep(0.5)
+            for payload in diagnostic_snapshot_query_chunks():
+                if not await self._write_command(payload):
+                    raise RuntimeError("post_write_snapshot_query_failed")
+                await asyncio.sleep(0.3)
+            await asyncio.sleep(1)
+            await self._read_initial_values(client)
+
+            readback_unit = self.data.get("unit")
+            self.data["ble_write_validation_readback_unit"] = readback_unit
+            self.data["ble_write_validation_readback_matches"] = readback_unit == unit if readback_unit is not None else None
+            self.data["ble_write_validation_status"] = "confirmed_by_readback" if readback_unit == unit else "awaiting_visual_confirmation"
+        except Exception as exc:  # noqa: BLE001
+            self.data["ble_write_validation_status"] = "failed"
+            self.data["ble_write_validation_error"] = str(exc)[:200]
+            raise
+        finally:
+            self.data["ble_write_validation_active"] = False
+            if client is not None:
+                try:
+                    if client.is_connected:
+                        await client.disconnect()
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.debug("INT14S unit validation disconnect failed: %s", exc)
+            if self._client is client:
+                self._client = None
+            self._set_ble_connected(False)
+            self._notify_listeners()
+
     async def write_ble_command(self, payload: bytes, *, request_readback: bool = True) -> bool:
         if self.profile.write_support == "not_supported":
             raise ValueError(f"INT14 writes are not implemented for {self.profile.display_name}")
@@ -1018,6 +1096,12 @@ class Int14Runtime:
         self.data["last_ble_update_epoch_s"] = int(time.time())
         self._record_raw(sender, data)
         raw = bytes(data)
+        sender_text = str(getattr(sender, "uuid", None) or sender).lower()
+        if self.data.get("ble_write_validation_active"):
+            notifications = self.data.setdefault("ble_write_validation_notifications", [])
+            if len(notifications) < BLE_DIAGNOSTIC_MAX_NOTIFICATIONS:
+                notifications.append(self._ble_diagnostic_value(sender_text, raw))
+                self.data["ble_write_validation_notification_count"] = len(notifications)
         if challenge := auth_challenge_from_frame(raw):
             response = build_auth_response(challenge)
             self.data["last_ble_auth_challenge_epoch_s"] = int(time.time())
@@ -1032,7 +1116,6 @@ class Int14Runtime:
             if ok:
                 self.data["last_ble_auth_error"] = None
             self._auth_ack_event.set()
-        sender_text = str(getattr(sender, "uuid", None) or sender).lower()
         parsed = parse_notification(bytes(data))
         if self.profile.key == MODEL_INT14S_BW and "ff01" in sender_text:
             current = parse_multisensor_temperature_payload(raw, self.profile.physical_probe_count)

@@ -121,3 +121,29 @@ def test_unvalidated_protocol_state_entities_are_profile_gated() -> None:
     assert "supports_protocol_state" in binary_sensor
     assert "DERIVED_PROBE_STATE_KEYS" in binary_sensor
     assert "DERIVED_BASE_STATE_KEYS" in binary_sensor
+
+
+def test_int14s_unit_write_validation_is_opt_in_and_narrow() -> None:
+    component = ROOT / "custom_components" / "inkbird_int14"
+    button = (component / "button.py").read_text(encoding="utf-8")
+    runtime = (component / "runtime.py").read_text(encoding="utf-8")
+    models = (component / "models.py").read_text(encoding="utf-8")
+    validation_block = runtime.split("    async def request_unit_write_validation", 1)[1].split("    async def write_ble_command", 1)[0]
+
+    assert "MODEL_INT14S_BW" in button
+    assert "_attr_entity_registry_enabled_default = False" in button
+    assert 'unit_name = "Celsius" if unit == "C" else "Fahrenheit"' in button
+    assert 'f"Validate BLE Write: Set {unit_name}"' in button
+    assert 'write_support="not_supported"' in models.split("MODEL_INT14S_BW:", 1)[1].split("MODEL_INT14P_BW:", 1)[0]
+    assert "MODEL_INT14S_BW" in validation_block
+    assert "build_unit_command" in validation_block
+    assert "diagnostic_snapshot_query_chunks" in validation_block
+    for forbidden_builder in (
+        "build_calibration_command",
+        "build_display_light_command",
+        "build_pre_alarm_command",
+        "build_target_command",
+        "build_timer_command",
+        "build_timer_reset_command",
+    ):
+        assert forbidden_builder not in validation_block

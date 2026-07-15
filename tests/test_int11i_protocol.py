@@ -130,3 +130,10 @@ def test_diagnostic_snapshot_queries_exclude_clock_sync_and_settings() -> None:
 
     assert [command.hex() for command in commands] == [frame[2:] for frame in protocol.INIT_STATIC_FRAMES]
     assert all(command[0] != 0x19 for command in commands)
+
+
+def test_unit_write_validation_frames_are_exact_and_station_wide() -> None:
+    protocol = _load_protocol_module()
+
+    assert protocol.build_unit_command("C") == bytes.fromhex("020343")
+    assert protocol.build_unit_command("F") == bytes.fromhex("020346")

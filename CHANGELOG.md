@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.6-beta.1
+
+- Add two disabled-by-default INT-14S-BW diagnostic buttons for a controlled, reversible BLE unit write test: set Celsius and set Fahrenheit.
+- Authenticate the BLE session before sending the unit opcode, issue only read/snapshot queries afterward and record command/readback status in sanitized diagnostics.
+- Keep normal INT-14S writes blocked: target, preset, alarm, timer, calibration, display and pairing controls remain unavailable.
+- Include the complete diagnostics privacy fixes released in v0.2.4 and v0.2.5.
+
 ## 0.2.5
 
 - Redact the config entry `unique_id`, which is derived from the BLE address and remained visible after the v0.2.4 LAN-key fix.

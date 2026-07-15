@@ -49,4 +49,15 @@ The live parser was introduced in `v0.2.3-beta.3` and community validated for st
 
 The downloaded diagnostic includes sanitized service/characteristic metadata, readable values and notification payloads. Bluetooth addresses and IPv4 addresses embedded in errors are redacted.
 
+## Experimental INT-14S unit write validation
+
+`v0.2.6-beta.1` adds two disabled-by-default diagnostic buttons for INT-14S-BW only:
+
+- `Validate BLE Write: Set Celsius`;
+- `Validate BLE Write: Set Fahrenheit`.
+
+These buttons do not enable the integration's normal write layer. Each run opens an authenticated BLE session, sends only the station-wide unit opcode, follows it with the already reviewed read/snapshot queries and records whether a unit readback was available. BLE accepting the command is not proof that the station changed, so the tester must still compare the station display before and after pressing the button.
+
+For a reversible test, note the current unit, press the opposite-unit button, confirm the display changed, then press the original-unit button and confirm it was restored. Download fresh integration diagnostics after each press. Do not test target, alarm, timer, calibration, display or pairing writes with this prerelease; those remain blocked.
+
 Do not post unredacted Home Assistant logs. Before sharing diagnostics or screenshots, verify that they contain no addresses, network names, device IDs, local keys, tokens, account data or private entity IDs.
