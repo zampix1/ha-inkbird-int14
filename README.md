@@ -216,6 +216,7 @@ See `custom_components/inkbird_int14/services.yaml`.
 
 - `docs/lan_setup.md`
 - `docs/model_profiles.md`
+- `docs/int12e_dashboard.md`
 - `docs/cloud_history_experimental.md`
 - `docs/bluetooth_proxy.md`
 - `docs/ble_diagnostics.md`
