@@ -1,0 +1,140 @@
+# Community INT-12E-BW dashboard example.
+# Replace every sensor.example_int12e_* entity with your own entity IDs.
+# Copy int12e-probe-black.png to /config/www/ before using this card.
+
+type: grid
+cards:
+  - type: heading
+    heading: Probe 1
+    heading_style: title
+
+  - type: picture-elements
+    image: /local/int12e-probe-black.png
+    grid_options:
+      columns: full
+    elements:
+      - type: state-label
+        entity: sensor.example_int12e_probe_1_food_4_temperature
+        tap_action:
+          action: more-info
+        style:
+          left: 11.7%
+          top: 29.5%
+          color: "#2478c8"
+          font-size: 14px
+          font-weight: "700"
+          line-height: "1"
+          white-space: nowrap
+
+      - type: state-label
+        entity: sensor.example_int12e_probe_1_food_1_temperature
+        tap_action:
+          action: more-info
+        style:
+          left: 27.1%
+          top: 74%
+          color: "#7669bf"
+          font-size: 14px
+          font-weight: "700"
+          line-height: "1"
+          white-space: nowrap
+
+      - type: state-label
+        entity: sensor.example_int12e_probe_1_food_3_temperature
+        tap_action:
+          action: more-info
+        style:
+          left: 37.7%
+          top: 29.5%
+          color: "#bd9411"
+          font-size: 14px
+          font-weight: "700"
+          line-height: "1"
+          white-space: nowrap
+
+      - type: state-label
+        entity: sensor.example_int12e_probe_1_food_2_temperature
+        tap_action:
+          action: more-info
+        style:
+          left: 46.6%
+          top: 74%
+          color: "#49aeba"
+          font-size: 14px
+          font-weight: "700"
+          line-height: "1"
+          white-space: nowrap
+
+      - type: state-label
+        entity: sensor.example_int12e_probe_1_ambient_temperature
+        tap_action:
+          action: more-info
+        style:
+          left: 87.4%
+          top: 29.5%
+          color: "#9344a1"
+          font-size: 14px
+          font-weight: "700"
+          line-height: "1"
+          white-space: nowrap
+
+  - type: tile
+    entity: sensor.example_int12e_probe_1_food_4_temperature
+    name: Tip
+    grid_options:
+      columns: full
+    features_position: bottom
+
+  - type: tile
+    entity: sensor.example_int12e_probe_1_food_1_temperature
+    name: Food 1
+    grid_options:
+      columns: full
+    features_position: bottom
+
+  - type: tile
+    entity: sensor.example_int12e_probe_1_food_3_temperature
+    name: Food 3
+    grid_options:
+      columns: full
+    features_position: bottom
+
+  - type: tile
+    entity: sensor.example_int12e_probe_1_food_2_temperature
+    name: Food 2
+    grid_options:
+      columns: full
+    features_position: bottom
+
+  - type: tile
+    entity: sensor.example_int12e_probe_1_ambient_temperature
+    name: Ambient
+    grid_options:
+      columns: full
+    features_position: bottom
+
+  - type: tile
+    entity: sensor.example_int12e_probe_1_battery
+    name: Probe battery
+    grid_options:
+      columns: full
+    features_position: bottom
+
+  - type: heading
+    icon: mdi:chart-timeline-variant
+    heading: Last hour
+    heading_style: title
+
+  - type: history-graph
+    hours_to_show: 1
+    entities:
+      - entity: sensor.example_int12e_probe_1_food_4_temperature
+        name: Tip
+      - entity: sensor.example_int12e_probe_1_food_1_temperature
+        name: Food 1
+      - entity: sensor.example_int12e_probe_1_food_3_temperature
+        name: Food 3
+      - entity: sensor.example_int12e_probe_1_food_2_temperature
+        name: Food 2
+      - entity: sensor.example_int12e_probe_1_ambient_temperature
+        name: Ambient
