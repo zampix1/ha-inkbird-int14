@@ -13,7 +13,7 @@ Modern Inkbird probes are not always one probe equals one temperature. Some prob
 | `ing14` | `ING14` | 4 | 8 | 8 | yes | yes | DP109 read-only | experimental |
 | `int14s_bw` | `INT-14S-BW` | 4 | 20 | 20 | yes | DP109/DP103/DP104 read-only | no | community validated, read-only |
 | `int14p_bw` | `INT-14P-BW` | 4 | 8 | 8 | yes | yes | DP109 read-only | experimental |
-| `int12_bw` | `INT-12-BW` | 2 | 3 | 3 | experimental in v0.2.11-beta.1 | unvalidated | unvalidated | experimental |
+| `int12_bw` | `INT-12-BW` | 2 | 3 | 3 | beta readings confirmed; reconnect testing in beta.2 | unvalidated | unvalidated | experimental |
 | `int12i_bw` | `INT-12I-BW` | 2 | 4 | 4 | yes | yes | DP109 read-only | experimental |
 | `int12e_bw` | `INT-12E-BW` | 2 | 10 | 10 | yes | no | no | community validated, read-only |
 | `int11i_b` | `INT-11I-B` | 1 | 1 | 1 | yes | no | no | experimental |
@@ -61,7 +61,7 @@ Cataloged profiles are selectable only so owners can report the exact model and 
 
 ## INT-12-BW BLE Fix In Testing
 
-[Issue #7](https://github.com/zampix1/ha-inkbird-int14/issues/7) exposed a real gap in the experimental profile: authentication worked, but the decoder expected the INT-14-BW's 18-byte temperatures and five-byte battery. The INT-12-BW reports ten and three bytes respectively. This correction is available for testing in `v0.2.11-beta.1`, not in stable `v0.2.10`. See the [BLE test guide](int12_bw_beta_test.md).
+[Issue #7](https://github.com/zampix1/ha-inkbird-int14/issues/7) exposed a real gap in the experimental profile: authentication worked, but the decoder expected the INT-14-BW's 18-byte temperatures and five-byte battery. The INT-12-BW reports ten and three bytes respectively. Beta.1 fixed that decoding; @gilgamezh confirmed the readings, batteries and docking state on hardware. `v0.2.11-beta.2` now tests reconnect recovery with the same parser. Neither change is in stable `v0.2.10`. See the [BLE test guide](int12_bw_beta_test.md).
 
 The app's INT-12-BW decoder explains the unusual temperature packet. Probe 1 food and ambient occupy bytes 0-3; probe 2 food occupies bytes 5-6. These are signed little-endian Celsius tenths. Bytes 8-9 hold station temperature in Fahrenheit tenths. The app skips bytes 4 and 7 and marks probe 2 ambient as absent, so this integration does not turn those bytes into extra temperatures. Missing/docked values stay unavailable.
 
@@ -69,7 +69,9 @@ The beta maps three probe temperature entities, plus station temperature. Existi
 
 Packets are now routed by their GATT characteristic. Seven-byte FF03 basic connection/charging/pairing status cannot overwrite the battery, and FF02 settings replies are checked as length-prefixed frames rather than guessed from their total length. Malformed replies are discarded. A 100% report is still a device report, not proof of actual remaining capacity.
 
-Replay tests cover the submitted room-temperature and docked/hand-warmed captures. The fixed build still needs testing on the owner's station, including comparing both probe screens in the official app. Please use `int12_bw`, not `int12e_bw`: the latter is a different multisensor format. There is no new claim of LAN, cloud-history, alarm-bit or write validation here, and no change to connection timing or write commands. Those experimental paths have not been validated on this model; keep this test BLE-only and do not test settings writes yet.
+The reporter confirmed the asymmetric layout against both probe screens in the app and observed correct readings after repeated reconnections. Long reconnect gaps remain under investigation. Beta.2 stops deliberately ending sessions after 20 seconds, wakes on disconnect, uses a five-second reconnect pause (ten seconds after a failed cycle), and refreshes HA's scanner device between cycles. Fallback reads of FF01, FF03 and 2A19 use the configured interval, 10 seconds by default, without throttling notifications. Backend retries and scanner availability can still extend the gap.
+
+The profile remains experimental while wake-up/reconnect recovery is tested. Please use `int12_bw`, not `int12e_bw`: the latter is a different multisensor format. There is no new claim of LAN, cloud-history, alarm-bit or write validation, and write commands are unchanged. Keep this test BLE-only and do not test settings writes yet.
 
 ## INT-12E-BW Community-Validated BLE
 

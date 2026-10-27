@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.11-beta.2
+
+- Keep INT-12-BW BLE sessions open instead of ending them after 20 seconds. Notifications still update immediately; fallback reads now use the configured interval (10 seconds by default) for temperatures, basic state and batteries.
+- Wake the INT-12-BW loop on disconnect and retry after a five-second pause. Failed connection cycles retain a ten-second pause and ask Home Assistant for the current scanner device again; ordinary connection errors/timeouts no longer accumulate four attempts inside one cycle.
+- Bound INT-12-BW subscription, fallback-read and disconnect waits. Release runtime state and the connection lock even when disconnect cleanup fails. Add connection counters, timestamps and error types to sanitized diagnostics.
+- Record @gilgamezh's beta.1 hardware confirmation: the asymmetric three-channel layout matches the app, docking clears readings, and batteries no longer get overwritten. The parser and entity IDs are unchanged in beta.2.
+- Keep INT-12-BW experimental until reconnect/wake-up testing is complete. No new write commands or LAN/cloud validation; other models retain their existing connection policy. See the updated [reconnect test guide](docs/int12_bw_beta_test.md).
+
 ## 0.2.11-beta.1
 
 - Fix experimental INT-12-BW BLE decoding using issue #7 captures and the model-specific app layout: ten-byte FF01 temperatures, three-byte 2A19 battery and seven-byte FF03 basic status.

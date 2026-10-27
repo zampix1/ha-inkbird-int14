@@ -1,6 +1,6 @@
 # Release Audit
 
-Last reviewed: 2026-10-26
+Last reviewed: 2026-10-27
 
 ## Public Positioning
 
@@ -16,6 +16,10 @@ Last reviewed: 2026-10-26
 The integration supports local BLE, local Tuya LAN where the model and DP map have been validated, and optional experimental read-only cloud history for DP109. It does not support live cloud control or cloud writes.
 
 ## Release State
+
+Prerelease `v0.2.11-beta.2` targets INT-12-BW reconnect recovery. The beta.1
+parser has a positive community hardware report; beta.2 changes still need
+station/proxy testing. Stable remains `v0.2.10`. See the dated beta.2 audit below.
 
 Release `v0.2.10` adds the optional INT-14-BW Cook Control bundle, native Alexa/TV notification routing, bilingual setup guides and real dashboard screenshots. HACS still installs only the integration; the optional ZIP is installed separately. Runtime Python files are unchanged from `v0.2.7`; only the manifest version is bumped. The release retains the model photo gallery, Options/reload fixes and existing model-support boundaries.
 
@@ -106,6 +110,18 @@ The `v0.2.8` presentation review on 2026-10-19 passed all 68 tests, Ruff formatt
 - HACS, hassfest and release packaging must pass again before the next stable tag.
 
 ## INT-12-BW Prerelease, 2026-10-27
+
+### Beta.2 Reconnect Recovery
+
+- @gilgamezh confirmed beta.1 on INT-12-BW station V1.2.7 / probes v1.1.4 through ESPHome proxies, including the app's asymmetric layout, three probe temperatures, station temperature, batteries and docking. The report also describes long reconnect gaps; these are not dismissed as normal standby.
+- Beta.2 removes this model's timed session cutoff, wakes its loop on disconnect, uses configured fallback reads for FF01/FF03/2A19 and refreshes HA's scanner device between failed connection cycles. Normal disconnects wait five seconds; failed cycles wait ten. Connector/backend retries can take longer, so these are not end-to-end recovery guarantees.
+- The connector gets one ordinary connection-error/timeout attempt per INT-12-BW cycle; transient retry handling stays in the library. Missing HA scanner devices are retried without fabricating an empty device. Subscription setup, fallback-read batches and disconnect cleanup are bounded. Cleanup always clears the runtime client reference and releases the lock, including transport changes and cancellation.
+- All 199 tests pass: production methods exercised with HA/radio boundary doubles cover disconnect callbacks, wake-up, timeout recovery, cancellation, transport switching, polling intervals and unchanged INT-14/INT-12E policies. Parser regression tests and Cook Control Node tests pass. Ruff format/lint and external-cache compilation pass. These are not live beta.2 hardware tests.
+- Diagnostics expose only connection counts, timestamps, session duration and an error type/code; no raw backend messages were added. Gitleaks and TruffleHog report no secrets. Detect-secrets reports the same eight reviewed field-name/UI-label matches, not credentials.
+- The manual ZIP uses the same explicit runtime/license/test-guide allowlist as beta.1, excluding tests, tools, captures, home configuration and dashboards. Verify deterministic rebuilds, committed-file content and the downloaded release hash before announcing it. Require successful Tests/HACS/Hassfest on main and tag.
+- INT-12-BW stays experimental pending the new reconnect report. Parser code, valid entity IDs, device writes and other model connection policies are unchanged. No production HA deployment/restart, IHT-2PB change or unrelated README draft is part of this release.
+
+### Beta.1 Parser Fix
 
 - `v0.2.11-beta.1` addresses issue #7 only: dedicated ten-byte FF01 temperature parsing, three-byte 2A19 battery and seven-byte FF03 basic status, with strict characteristic-based routing. FF02 settings replies cannot overwrite battery data.
 - The app decoder and sanitized captures support an asymmetric mapping: probe 1 food/ambient, probe 2 food, and station temperature separately. Bytes 4 and 7 remain unmapped. No new device-control commands, session timing or other model parsers are introduced.

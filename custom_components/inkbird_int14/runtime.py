@@ -76,6 +76,9 @@ READ_ON_CONNECT_UUIDS = (LIVE_UUID, WRITE_UUID, STATE_UUID, BATTERY_UUID)
 SESSION_SECONDS = 20
 RECONNECT_DELAY_SECONDS = 25
 CONTINUOUS_GATT_RECONNECT_DELAY_SECONDS = 5
+INT12_SUBSCRIBE_TIMEOUT_SECONDS = 30
+INT12_READ_TIMEOUT_SECONDS = 10
+INT12_DISCONNECT_TIMEOUT_SECONDS = 10
 WRITE_RETRY_DELAY_SECONDS = 1.0
 AUTH_TIMEOUT_SECONDS = 3.0
 BATTERY_STALE_SECONDS = 6 * 60 * 60
@@ -118,6 +121,7 @@ class Int14Runtime:
         self._lan_write_lock = asyncio.Lock()
         self._target_write_validation_lock = asyncio.Lock()
         self._mode_changed = asyncio.Event()
+        self._ble_disconnected = asyncio.Event()
         self._auth_challenge_event = asyncio.Event()
         self._auth_ack_event = asyncio.Event()
         self._refresh_transport_state(notify=False)
@@ -288,20 +292,27 @@ class Int14Runtime:
                     client = await self._connect()
                     try:
                         if not self.ble_enabled:
-                            await client.disconnect()
                             continue
                         self._client = client
                         self._set_ble_connected(True)
-                        await self._subscribe(client)
+                        if self.profile.key == MODEL_INT12_BW:
+                            await asyncio.wait_for(self._subscribe(client), INT12_SUBSCRIBE_TIMEOUT_SECONDS)
+                        else:
+                            await self._subscribe(client)
                         if self.request_init_on_connect:
                             await self._request_init_on_client(client)
                         await self._listen(client)
                     finally:
-                        if client.is_connected:
-                            await client.disconnect()
-                        if self._client is client:
-                            self._client = None
-                        self._set_ble_connected(False)
+                        try:
+                            if client.is_connected:
+                                if self.profile.key == MODEL_INT12_BW:
+                                    await asyncio.wait_for(client.disconnect(), INT12_DISCONNECT_TIMEOUT_SECONDS)
+                                else:
+                                    await client.disconnect()
+                        finally:
+                            if self._client is client:
+                                self._client = None
+                            self._set_ble_connected(False)
                 await self._sleep_or_mode_change(self._ble_reconnect_delay_seconds)
             except asyncio.CancelledError:
                 raise
@@ -343,11 +354,48 @@ class Int14Runtime:
         from homeassistant.components import bluetooth
 
         device = bluetooth.async_ble_device_from_address(self.hass, self.address, connectable=True)
+        if self.profile.key == MODEL_INT12_BW:
+            self.data["ble_last_connect_attempt_epoch_s"] = int(time.time())
+            disconnected = asyncio.Event()
+
+            def on_disconnect(client: BleakClient) -> None:
+                if not client.is_connected:
+                    disconnected.set()
+
+            try:
+                if device is None:
+                    self.data["ble_last_connect_error"] = "device_not_seen"
+                    raise RuntimeError("INT-12-BW is not visible to a connectable Home Assistant Bluetooth scanner")
+                # Return after one timeout/connect error, then ask HA for a fresh
+                # device on the next cycle. The connector still handles transient errors.
+                client = await establish_connection(
+                    BleakClient, device, self.profile.app_model, disconnected_callback=on_disconnect, max_attempts=1, timeout=20.0
+                )
+            except Exception as exc:
+                self.data["ble_connect_failure_count"] = self.data.get("ble_connect_failure_count", 0) + 1
+                if device is not None:
+                    self.data["ble_last_connect_error"] = type(exc).__name__
+                raise
+            disconnected.clear()
+            self._ble_disconnected = disconnected
+            self.data["ble_last_connect_error"] = None
+            return client
         if device is None:
             device = BLEDevice(self.address, self.profile.app_model, {})
         return await establish_connection(BleakClient, device, self.profile.app_model, max_attempts=4, timeout=20.0)
 
     async def _listen(self, client: BleakClient) -> None:
+        if self.profile.key == MODEL_INT12_BW:
+            disconnected = self._ble_disconnected
+            while client.is_connected and self.ble_enabled:
+                try:
+                    await asyncio.wait_for(disconnected.wait(), self.ble_poll_seconds)
+                    return
+                except asyncio.TimeoutError:
+                    pass
+                if client.is_connected and self.ble_enabled:
+                    await asyncio.wait_for(self._read_values(client, (LIVE_UUID, STATE_UUID, BATTERY_UUID)), INT12_READ_TIMEOUT_SECONDS)
+            return
         if self.profile.continuous_gatt_polling:
             while client.is_connected and self.ble_enabled:
                 await asyncio.sleep(self.ble_poll_seconds)
@@ -1588,6 +1636,14 @@ class Int14Runtime:
         self.data["battery_report_quality"] = quality
 
     def _set_ble_connected(self, connected: bool) -> None:
+        if self.profile.key == MODEL_INT12_BW and connected != bool(self.data.get("ble_connected")):
+            now = int(time.time())
+            if connected:
+                self.data["ble_connection_count"] = self.data.get("ble_connection_count", 0) + 1
+                self.data["ble_last_connected_epoch_s"] = now
+            else:
+                self.data["ble_last_disconnected_epoch_s"] = now
+                self.data["ble_last_session_seconds"] = max(0, now - self.data.get("ble_last_connected_epoch_s", now))
         self.data["ble_connected"] = connected
         self._refresh_transport_state()
 

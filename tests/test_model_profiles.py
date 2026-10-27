@@ -73,6 +73,7 @@ def test_int12_bw_has_asymmetric_app_layout_and_remains_experimental() -> None:
     assert profile.temperature_channel_count == profile.live_temperature_channel_count == 3
     assert [[channel.key for channel in probe.channels] for probe in profile.probe_layout] == [["food", "ambient"], ["food"]]
     assert profile.support_status == "experimental"
+    assert profile.continuous_gatt_polling is True
 
 
 def test_modern_multi_sensor_layouts_match_app_model_family() -> None:

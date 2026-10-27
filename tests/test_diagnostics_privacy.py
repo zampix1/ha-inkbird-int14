@@ -45,3 +45,23 @@ def test_diagnostics_do_not_export_runtime_address_as_plain_string() -> None:
 
     assert 'for attr in ("address", "session", "device", "config")' not in source
     assert 'payload["address"]' not in source
+
+
+def test_reconnect_diagnostics_allow_counters_but_not_raw_backend_messages() -> None:
+    tree = ast.parse((COMPONENT / "diagnostics.py").read_text(encoding="utf-8"))
+    keys = next(
+        ast.literal_eval(node.value)
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "RUNTIME_DIAGNOSTIC_KEYS" for target in node.targets)
+    )
+    assert {
+        "ble_connection_count",
+        "ble_connect_failure_count",
+        "ble_last_connect_attempt_epoch_s",
+        "ble_last_connect_error",
+        "ble_last_connected_epoch_s",
+        "ble_last_disconnected_epoch_s",
+        "ble_last_session_seconds",
+    } <= keys
+    assert not {"last_ble_error", "last_raw_hex", "address", "local_key"} & keys

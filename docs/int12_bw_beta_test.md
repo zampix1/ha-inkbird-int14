@@ -1,52 +1,61 @@
-# INT-12-BW: First BLE Test
+# INT-12-BW: Reconnect Test
 
-This is for **v0.2.11-beta.1** and the **INT-12-BW**, not the INT-12E-BW. It fixes the missing temperatures and incorrect battery decoding reported in [issue #7](https://github.com/zampix1/ha-inkbird-int14/issues/7). The packets now pass replay tests, but we still need the readings checked on a real station. The profile stays experimental.
+This is for **v0.2.11-beta.2** and the **INT-12-BW**, not INT-12E-BW. In [issue #7](https://github.com/zampix1/ha-inkbird-int14/issues/7#issuecomment-6447166597), @gilgamezh confirmed the beta.1 temperatures, batteries and docking state on a real station. The app also confirmed that only the black probe has an ambient reading. There is no need to repeat that whole mapping exercise.
+
+What remains is recovery: the reporter saw gaps of up to two minutes and one roughly five-minute gap that ended after pressing Snapshot. This beta changes connection handling, not the parser. The profile stays experimental until the wake-up/reconnect checks pass on hardware.
 
 ## Install
 
 Make a Home Assistant backup first. Do this with the thermometer idle, not during a cook you are relying on.
 
-In HACS, open **Inkbird INT**, choose **Redownload**, and select **v0.2.11-beta.1** in the version selector. Enable beta/prerelease versions if your HACS view requires it. If the version is missing, use **Update information** first. Restart Home Assistant after downloading.
+In HACS, open **Inkbird INT**, choose **Redownload**, and select **v0.2.11-beta.2**. Enable prerelease versions if your HACS view requires it. If the version is missing, use **Update information** first. Restart Home Assistant after downloading.
 
-Keep your existing entry, select profile **int12_bw** and transport **BLE only**. There is no need to delete the integration, reset the station, pair it again or enter Wi-Fi credentials. Do not use int12e_bw for this test.
+Keep your existing entry, profile **int12_bw** and transport **BLE only**. Leave **BLE fallback direct-read interval** at **10 seconds** in the integration options. Do not delete the entry, reset/re-pair the station or use the int12e_bw profile.
 
-For a manual install, download `inkbird-int14-v0.2.11-beta.1.zip` from the [prerelease](https://github.com/zampix1/ha-inkbird-int14/releases/tag/v0.2.11-beta.1). It contains `custom_components/inkbird_int14/`, license notices and this guide. Copy that component directory into your Home Assistant `config/custom_components/` directory, replacing the previous component files, then restart. The ZIP does not contain your configuration or a dashboard.
+For manual installation, download `inkbird-int14-v0.2.11-beta.2.zip` from the [prerelease](https://github.com/zampix1/ha-inkbird-int14/releases/tag/v0.2.11-beta.2). Copy its `custom_components/inkbird_int14/` directory into your Home Assistant `config/custom_components/`, replacing the previous component files, then restart. The ZIP also contains license notices and this guide, not a dashboard or home configuration.
 
-## What Should Appear
+## What Changed
 
-The app decoder we examined maps these readings:
+- HA no longer deliberately ends this model's connection after 20 seconds.
+- Notifications update readings immediately. Direct reads of temperatures, basic state and batteries run at the configured fallback interval while connected; 10 seconds is not a throttle on notifications.
+- A disconnect wakes the loop without waiting for the next scheduled read. It waits five seconds before starting another connection cycle.
+- After a failed connection cycle it waits ten seconds, then asks HA for the current Bluetooth scanner device again. There is no fabricated scanner device fallback when HA cannot see the station. The connector is configured for one ordinary error/timeout attempt per cycle, but can still retry lower-level transient failures.
+- Subscription setup, a fallback-read batch and disconnect cleanup have limits of 30, 10 and 10 seconds respectively. A stalled operation returns control to recovery instead of holding the session indefinitely.
 
-| Reading | Expected in this beta |
+Those pauses are **not promises of five- or ten-second total downtime**. Discovery, proxy connection slots, connection attempts and firmware behavior add their own delays. This build cannot keep an unreachable or sleeping station connected, and the station may still close a session itself.
+
+## Three Checks
+
+Keep the station close to the same proxy and fully close the Inkbird app. Start with the usual two-proxy setup; do not change proxy firmware, radio settings or the poll interval at the same time.
+
+1. **Both probes out, station awake, for 10-15 minutes.** Let HA run without pressing Snapshot. Check that temperatures and batteries keep updating. If connections still end around 30 seconds, note that, along with the longest gap before readings return. A stable temperature alone does not mean updates stopped.
+2. **Both probes docked for about five minutes, then remove one and wake the station normally.** Note the wake-up time and the time the first valid temperature returns. Do not press Snapshot for the first two minutes: that is the automatic recovery test. If it still has not returned, download diagnostics before pressing Snapshot, then note whether Snapshot helps.
+3. **Switch the station off and back on using its normal power control, with one probe out.** Check that HA recovers without a reload, restart, re-pair or Snapshot. Skip this if you cannot safely do it while idle; do not reset the station.
+
+No heat source, target changes, device alarms, calibration or pairing tests are needed. Existing experimental write controls remain unvalidated: leave them alone. Normal BLE authentication still happens; this beta adds no settings-write commands.
+
+## Readings To Keep An Eye On
+
+| Reading | Expected |
 | --- | --- |
-| Probe 1 food/internal | Temperature when the probe reports a reading |
-| Probe 1 ambient | Temperature when the probe reports a reading |
-| Probe 2 food/internal | Temperature when the probe reports a reading |
-| Probe 2 ambient | Not exposed: the app decoder marks it absent |
-| Base/station | Temperature |
-| Battery | Station, probe 1, probe 2, in that order |
+| Black probe 1 | Food/internal and ambient when reporting |
+| White probe 2 | Food/internal only; no ambient entity |
+| Base/station | Separate temperature |
+| Battery | Station, probe 1, probe 2 |
+| Docking | Probe temperatures clear when the station sends the absence sentinel; charging state follows the station |
 
-The layout diagnostics should show **2 physical probes and 3 mapped probe temperature channels**. Station temperature is additional. The old, unmapped probe 2 ambient temperature entity is removed on setup; the other valid temperature IDs remain unchanged.
-
-Please check both probe pages in the official app as well. If your app shows an ambient reading for probe 2, that is important: send a redacted screenshot rather than assuming the table above must fit your firmware. We deliberately do not interpret the two unidentified bytes as extra temperatures.
-
-## Three Short Checks
-
-Fully close the official app before each HA check, keep the station awake and nearby, and press **Snapshot** if needed. If you open the app for comparison, note the reading and time, close it again, then allow HA to reconnect. The app and HA may compete for the BLE connection.
-
-1. **Both probes out at room temperature.** Check that the three probe temperatures, station temperature and batteries populate. Compare with the app. The percentages need not match the old capture; they should reflect what the station reports now.
-2. **Black probe 1 docked, white probe 2 in your hand.** Warm the metal tip gently with your hand for about a minute. Check that probe 2 internal rises and probe 1 does not keep a false live temperature when the station reports the docked sentinel.
-3. **Swap them.** Dock the white probe and gently warm the black probe. Check which HA and app readings change. This is the missing cross-check for the asymmetric layout and probe numbering.
-
-No flame, boiling water, alarms, calibration, target changes or pairing tests are needed. Existing experimental setting controls are not newly validated by this beta; leave them alone. This is a reading test only, although the existing BLE session still uses its normal authentication and snapshot exchange. Connection timing is unchanged, so the beta does not promise to eliminate the station's short BLE sessions.
+Diagnostics still show **2 physical probes and 3 mapped probe temperature channels**. Valid entity IDs and the beta.1 decoder are unchanged. A device-reported 100% battery is not a measured capacity estimate.
 
 ## Send Back
 
-Reply in [issue #7](https://github.com/zampix1/ha-inkbird-int14/issues/7) with the installed version, a small table of HA/app readings for the three checks, and whether readings resume after a reconnect. Include one sanitized diagnostics file and redacted app screenshots showing both probe pages if possible. Note which probe was docked at capture time.
+Reply in [issue #7](https://github.com/zampix1/ha-inkbird-int14/issues/7) with the installed version, results of the three checks, approximate session lengths and the longest reconnect gap. One sanitized diagnostics file after a gap is more useful than another large log dump. If a gap persists, include the nearby error lines and timestamps, not your entire HA log.
 
-Do not post real BLE addresses, device IDs, local keys, tokens, Wi-Fi names or personal information. There is no need to enable broad Bluetooth logging unless a reading still fails.
+The new runtime fields include `ble_connection_count`, `ble_connect_failure_count`, `ble_last_connect_attempt_epoch_s`, `ble_last_connected_epoch_s`, `ble_last_disconnected_epoch_s`, `ble_last_session_seconds` and `ble_last_connect_error`. Counters reset when the integration reloads; Snapshot also uses a connection, so note any manual presses. Error diagnostics contain an error type or `device_not_seen`, not the raw backend message. The session length includes setup and cleanup, not just temperature listening. Disconnect timestamps record HA's cleanup, not an exact over-the-air termination time.
 
-We will validate the read path after those results agree. LAN, cloud history, device alarms and settings writes are separate work, not part of this test.
+Inspect diagnostics before posting. Remove real addresses, device IDs, local keys, tokens, Wi-Fi names and personal details. No need to enable broad Bluetooth logging unless we need a narrower follow-up.
+
+Once recovery is confirmed, we can add INT-12-BW to the community-validated **BLE read** models. That does not validate Wi-Fi, cloud, device alarm semantics or settings writes.
 
 ## Roll Back
 
-Select **v0.2.10** in HACS and restart Home Assistant. Keep the integration entry and pairing. Its old INT-12-BW temperature/battery limitations will return; this is a software rollback, not a reset of the thermometer. The tested INT-14-BW baseline is unchanged by this beta.
+Select **v0.2.11-beta.1** in HACS and restart HA to retain the fixed decoding with the previous session behavior. Or select stable **v0.2.10**, whose old INT-12-BW temperature/battery limitations will return. Keep the entry and pairing. Other models, including the tested INT-14-BW baseline, retain their connection policy.

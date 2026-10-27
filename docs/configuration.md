@@ -61,6 +61,12 @@ INT-12E-BW instead keeps a read-only GATT loop, processes notifications
 immediately and uses direct reads as a fallback. The station may end the
 session after about 30 seconds; the integration reconnects automatically.
 
+INT-12-BW uses a continuous session in `v0.2.11-beta.2`, with notifications
+and fallback reads of temperatures, basic state and batteries. Its beta.1
+readings have been confirmed on hardware, but reconnect/wake-up recovery
+still needs validation. Use the [INT-12-BW beta test guide](int12_bw_beta_test.md)
+before trying it; Wi-Fi and settings writes are not validated by this test.
+
 See [local Wi-Fi setup](lan_setup.md), [Bluetooth proxies](bluetooth_proxy.md)
 and [cloud history](cloud_history_experimental.md) for their requirements.
 

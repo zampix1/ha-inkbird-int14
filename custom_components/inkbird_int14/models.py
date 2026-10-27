@@ -272,7 +272,8 @@ MODEL_PROFILES: dict[str, InkbirdIntModelProfile] = {
         supports_cloud_history=True,
         write_support="experimental",
         support_status="experimental",
-        notes="Experimental INT-12-BW parser: probe 1 food/ambient, probe 2 food, three-byte battery. App layout and issue #7 captures agree; live fix still needs confirmation. LAN, cloud and writes remain unvalidated.",
+        notes="INT-12-BW BLE readings confirmed in issue #7: probe 1 food/ambient, probe 2 food, batteries and docking state. Continuous sessions and reconnect recovery are under beta validation. LAN, cloud and writes remain unvalidated.",
+        continuous_gatt_polling=True,
     ),
     MODEL_INT12I_BW: InkbirdIntModelProfile(
         key=MODEL_INT12I_BW,
