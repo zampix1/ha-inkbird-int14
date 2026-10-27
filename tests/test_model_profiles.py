@@ -67,6 +67,14 @@ def test_probe_counts_match_profile_family() -> None:
     assert models.model_profile("int33_bw").probe_count == 3
 
 
+def test_int12_bw_has_asymmetric_app_layout_and_remains_experimental() -> None:
+    profile = _load_models_module().model_profile("int12_bw")
+    assert profile.physical_probe_count == 2
+    assert profile.temperature_channel_count == profile.live_temperature_channel_count == 3
+    assert [[channel.key for channel in probe.channels] for probe in profile.probe_layout] == [["food", "ambient"], ["food"]]
+    assert profile.support_status == "experimental"
+
+
 def test_modern_multi_sensor_layouts_match_app_model_family() -> None:
     models = _load_models_module()
     cases = {

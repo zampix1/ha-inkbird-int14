@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.11-beta.1
+
+- Fix experimental INT-12-BW BLE decoding using issue #7 captures and the model-specific app layout: ten-byte FF01 temperatures, three-byte 2A19 battery and seven-byte FF03 basic status.
+- Route INT-12-BW data by characteristic UUID and parse FF02 settings strictly, preventing status/settings packets from overwriting battery percentages.
+- Map probe 1 food/ambient and probe 2 food only. Preserve existing valid temperature IDs and remove the previously unmapped probe 2 ambient temperature entity on setup.
+- Add capture replay and runtime regression tests. The fix still needs live confirmation from the reporter; INT-12-BW remains experimental. No changes to INT-14-BW parsing, write commands or reconnect timing.
+- Include a [short BLE test guide](docs/int12_bw_beta_test.md) and a runtime-only manual installation ZIP with license notices. Stable users can remain on v0.2.10.
+
 ## 0.2.10
 
 - Add optional Inkbird INT Cook Control for one INT-14-BW: single-prefix discovery/setup, English/Italian core labels, two-sensor probe diagrams, responsive controls and real HA screenshots.

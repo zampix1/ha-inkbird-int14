@@ -261,7 +261,10 @@ MODEL_PROFILES: dict[str, InkbirdIntModelProfile] = {
         display_name="Inkbird INT-12-BW",
         app_model="INT-12-BW",
         product_id="lkrzzdaex96sysha",
-        probe_layout=_two_channel_layout(2),
+        probe_layout=(
+            ProbeLayout(index=1, channels=(CHANNEL_FOOD_MAPPED, CHANNEL_AMBIENT_MAPPED)),
+            ProbeLayout(index=2, channels=(CHANNEL_FOOD_MAPPED,)),
+        ),
         asset_family="int12bw",
         ble_auth_mode=AUTH_MODE_BW,
         supports_ble_snapshot=True,
@@ -269,7 +272,7 @@ MODEL_PROFILES: dict[str, InkbirdIntModelProfile] = {
         supports_cloud_history=True,
         write_support="experimental",
         support_status="experimental",
-        notes="App uses the same FF00/FF02 BLE service family with two probes.",
+        notes="Experimental INT-12-BW parser: probe 1 food/ambient, probe 2 food, three-byte battery. App layout and issue #7 captures agree; live fix still needs confirmation. LAN, cloud and writes remain unvalidated.",
     ),
     MODEL_INT12I_BW: InkbirdIntModelProfile(
         key=MODEL_INT12I_BW,

@@ -54,14 +54,14 @@ def probe_mask(probe: int) -> int:
     return 1 << (probe - 1)
 
 
-def split_frames(payload: bytes) -> list[bytes]:
+def split_frames(payload: bytes, *, strict: bool = False) -> list[bytes]:
     out: list[bytes] = []
     pos = 0
     while pos < len(payload):
         size = payload[pos]
         pos += 1
         if size == 0 or pos + size > len(payload):
-            return [payload]
+            return [] if strict else [payload]
         out.append(payload[pos : pos + size])
         pos += size
     return out
@@ -378,6 +378,87 @@ def parse_current_temp_payload(raw: bytes) -> dict[str, Any] | None:
         "base_temp_raw": base_temp_f_tenths,
         "base_temp_f_tenths": base_temp_f_tenths,
     }
+
+
+def parse_int12_temperature_payload(raw: bytes) -> dict[str, Any] | None:
+    """Decode INT-12-BW FF01, whose two probe blocks are asymmetric."""
+    if len(raw) != 10:
+        return None
+    probes = parse_probe_temperature_block(raw[:4])
+    internal_c = le_i16(raw[5:7])
+    probes.append(
+        {
+            "probe": 2,
+            "internal_f_tenths": abs(internal_c) if abs(internal_c) in SENTINELS else c_tenths_to_f_tenths(internal_c),
+            "ambient_f_tenths": None,
+        }
+    )
+    # The app skips bytes 4 and 7 and marks probe 2 ambient as absent.
+    base_temp = int.from_bytes(raw[8:10], "little")
+    return {
+        "probes": probes,
+        "base_temp_raw": base_temp,
+        "base_temp_f_tenths": None if base_temp >= 1310 else base_temp,
+    }
+
+
+def parse_int12_state_payload(raw: bytes) -> dict[str, Any] | None:
+    """Read the basic INT-12-BW FF03 status fields, not inferred alarm bits."""
+    if len(raw) != 7:
+        return None
+    bits = bits_lsb_per_byte(raw)
+    return {
+        "probes": [
+            {
+                "probe": index + 1,
+                "connect": bool(bits[index * 16]),
+                "charging": bool(bits[index * 16 + 1]),
+                "paired": bool(bits[index * 16 + 12]),
+                "pair_request": bool(bits[index * 16 + 13]),
+                "battery_alarm": bool(bits[index * 16 + 14]),
+            }
+            for index in range(2)
+        ],
+        "base_charging": bool(bits[32]),
+        "wifi_switch": bool(bits[33]),
+        "wifi_state": (raw[4] >> 2) & 0x0F,
+        "verify": bool(bits[40]),
+    }
+
+
+def parse_int12_ble_notification(raw: bytes, characteristic: str) -> dict[str, Any]:
+    """Route INT-12-BW packets by UUID; their lengths are not INT-14's."""
+    result: dict[str, Any] = {"raw_hex": raw.hex(), "frames": []}
+    characteristic = characteristic.lower()
+    if characteristic == "0000ff01-0000-1000-8000-00805f9b34fb":
+        current = parse_int12_temperature_payload(raw)
+        if current:
+            result["frames"].append({"name": "current_temp_candidate", "transport": "raw_ff01_int12", **current})
+    elif characteristic == "00002a19-0000-1000-8000-00805f9b34fb":
+        battery = parse_battery_payload(raw, probe_count=2) if len(raw) == 3 else None
+        if battery:
+            result["frames"].append({"name": "battery_candidate", "transport": "raw_2a19_int12", "raw_hex": raw.hex(), **battery})
+    elif characteristic == "0000ff03-0000-1000-8000-00805f9b34fb":
+        state = parse_int12_state_payload(raw)
+        if state:
+            result["frames"].append({"name": "state_candidate", "transport": "raw_ff03_int12", **state})
+    elif characteristic == "0000ff02-0000-1000-8000-00805f9b34fb":
+        parsed = parse_notification(raw, framed_only=True)
+        # FF02 carries settings replies, not raw battery/temperature/state data.
+        # In particular 0A is calibration here, not a temperature snapshot.
+        allowed = {
+            "target_candidate",
+            "unit_candidate",
+            "display_light_candidate",
+            "sound_candidate",
+            "pre_alarm_candidate",
+            "timer_candidate",
+            "auth_challenge",
+            "auth_ack",
+            "init_ack_or_error",
+        }
+        result["frames"] = [item for item in parsed["frames"] if item.get("name") in allowed]
+    return result
 
 
 def parse_multisensor_temperature_payload(raw: bytes, probe_count: int) -> dict[str, Any] | None:
@@ -781,24 +862,24 @@ def parse_cloud_dps(dps: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-def parse_notification(raw: bytes) -> dict[str, Any]:
+def parse_notification(raw: bytes, *, framed_only: bool = False) -> dict[str, Any]:
     result: dict[str, Any] = {"raw_hex": raw.hex(), "frames": []}
-    if len(raw) == 18:
+    if not framed_only and len(raw) == 18:
         current = parse_current_temp_payload(raw)
         if current:
             result["frames"].append({"name": "current_temp_candidate", "transport": "raw_ff01", **current})
             return result
-    if len(raw) == 5:
+    if not framed_only and len(raw) == 5:
         battery = parse_battery_payload(raw)
         if battery:
             result["frames"].append({"name": "battery_candidate", "transport": "raw_2a19", "raw_hex": raw.hex(), **battery})
             return result
-    if len(raw) == 11:
+    if not framed_only and len(raw) == 11:
         state = parse_state_payload(raw)
         if state:
             result["frames"].append({"name": "state_candidate", "transport": "raw_ff03", **state})
             return result
-    for command in split_frames(raw):
+    for command in split_frames(raw, strict=framed_only):
         if not command:
             continue
         opcode = command[0]

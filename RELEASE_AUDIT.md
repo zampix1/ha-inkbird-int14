@@ -104,3 +104,13 @@ The `v0.2.8` presentation review on 2026-10-19 passed all 68 tests, Ruff formatt
 - Battery percentages are station-reported values and may remain at 100% for long periods.
 - Cataloged models still need sanitized hardware captures before live support can be enabled honestly.
 - HACS, hassfest and release packaging must pass again before the next stable tag.
+
+## INT-12-BW Prerelease, 2026-10-27
+
+- `v0.2.11-beta.1` addresses issue #7 only: dedicated ten-byte FF01 temperature parsing, three-byte 2A19 battery and seven-byte FF03 basic status, with strict characteristic-based routing. FF02 settings replies cannot overwrite battery data.
+- The app decoder and sanitized captures support an asymmetric mapping: probe 1 food/ambient, probe 2 food, and station temperature separately. Bytes 4 and 7 remain unmapped. No new device-control commands, session timing or other model parsers are introduced.
+- INT-12-BW remains experimental. This is capture replay and code validation, not a real-device confirmation of the fixed build. The test guide asks for both app probe screens, a room-temperature comparison, both dock/hand-warming permutations and recovery after reconnect. LAN, cloud history, writes and alarm-bit semantics are not validated by this prerelease. Existing experimental controls are not part of the requested test.
+- All 178 tests pass, including production runtime replay and INT-14-BW baseline regressions. Ruff format/check, compileall with bytecode outside the repository, Cook Control Node checks and the cache audit pass.
+- Gitleaks and TruffleHog find no secrets. Detect-secrets flags only the eight existing `cloud_api_key` / `cloud_api_secret` constants and UI labels, inspected as non-secret field names. Public tests contain only temperature/status/settings fixtures, not hardware addresses or device-info payloads containing private identifiers.
+- The manual ZIP is built from the release commit using an explicit file allowlist: the integration directory, LICENSE, THIRD_PARTY_NOTICES.md and the INT-12-BW test guide. It excludes dashboards, tests, private captures, tools, credentials and caches. HACS still uses the tagged source with the existing hacs.json format.
+- The unrelated README presentation draft is excluded. No local Home Assistant installation, restart, integration reload or device operation is performed. IHT-2PB is untouched. v0.2.10 remains stable; tag CI and downloadable asset verification are required before announcing the beta.

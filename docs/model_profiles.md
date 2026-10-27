@@ -13,7 +13,7 @@ Modern Inkbird probes are not always one probe equals one temperature. Some prob
 | `ing14` | `ING14` | 4 | 8 | 8 | yes | yes | DP109 read-only | experimental |
 | `int14s_bw` | `INT-14S-BW` | 4 | 20 | 20 | yes | DP109/DP103/DP104 read-only | no | community validated, read-only |
 | `int14p_bw` | `INT-14P-BW` | 4 | 8 | 8 | yes | yes | DP109 read-only | experimental |
-| `int12_bw` | `INT-12-BW` | 2 | 4 | 4 | yes | yes | DP109 read-only | experimental |
+| `int12_bw` | `INT-12-BW` | 2 | 3 | 3 | experimental in v0.2.11-beta.1 | unvalidated | unvalidated | experimental |
 | `int12i_bw` | `INT-12I-BW` | 2 | 4 | 4 | yes | yes | DP109 read-only | experimental |
 | `int12e_bw` | `INT-12E-BW` | 2 | 10 | 10 | yes | no | no | community validated, read-only |
 | `int11i_b` | `INT-11I-B` | 1 | 1 | 1 | yes | no | no | experimental |
@@ -27,6 +27,7 @@ Modern Inkbird probes are not always one probe equals one temperature. Some prob
 | Profile | Expected physical layout |
 | --- | --- |
 | `int14_bw` | 4 probes, each with food/internal and ambient channels. |
+| `int12_bw` | Probe 1 food/internal + ambient; probe 2 food/internal only in the app parser. Hardware confirmation of this layout is pending. |
 | `int14s_bw` | 4 probes, each expected to expose `food_1`, `food_2`, `food_3`, `food_4` and `ambient`. |
 | `int12e_bw` | 2 probes, each expected to expose `food_1`, `food_2`, `food_3`, `food_4` and `ambient`. |
 | `int31_bw` | 1 probe expected to expose `food_1`, `food_2`, `food_3`, `food_4` and `ambient`. |
@@ -57,6 +58,18 @@ Cloud live data and cloud writes are not supported for any profile. Cloud histor
 Cataloged profiles are selectable only so owners can report the exact model and so Home Assistant creates the right device identity while testing. They do not enable live BLE parsing, Tuya LAN, cloud history or writes yet.
 
 `INT-11S-B`, `INT-31-BW` and `INT-33-BW` remain in this conservative state because the vendor app contains dedicated product/model definitions for them. That is useful evidence for naming and expected channel layout, but not enough to reuse another model's parser safely.
+
+## INT-12-BW BLE Fix In Testing
+
+[Issue #7](https://github.com/zampix1/ha-inkbird-int14/issues/7) exposed a real gap in the experimental profile: authentication worked, but the decoder expected the INT-14-BW's 18-byte temperatures and five-byte battery. The INT-12-BW reports ten and three bytes respectively. This correction is available for testing in `v0.2.11-beta.1`, not in stable `v0.2.10`. See the [BLE test guide](int12_bw_beta_test.md).
+
+The app's INT-12-BW decoder explains the unusual temperature packet. Probe 1 food and ambient occupy bytes 0-3; probe 2 food occupies bytes 5-6. These are signed little-endian Celsius tenths. Bytes 8-9 hold station temperature in Fahrenheit tenths. The app skips bytes 4 and 7 and marks probe 2 ambient as absent, so this integration does not turn those bytes into extra temperatures. Missing/docked values stay unavailable.
+
+The beta maps three probe temperature entities, plus station temperature. Existing IDs for those readings are preserved; setup removes only the obsolete probe 2 ambient temperature entity. Battery order is station, probe 1, probe 2. The reported `50 64 64` therefore means 80%, 100%, 100%, not the bogus percentages previously produced by misreading a status reply.
+
+Packets are now routed by their GATT characteristic. Seven-byte FF03 basic connection/charging/pairing status cannot overwrite the battery, and FF02 settings replies are checked as length-prefixed frames rather than guessed from their total length. Malformed replies are discarded. A 100% report is still a device report, not proof of actual remaining capacity.
+
+Replay tests cover the submitted room-temperature and docked/hand-warmed captures. The fixed build still needs testing on the owner's station, including comparing both probe screens in the official app. Please use `int12_bw`, not `int12e_bw`: the latter is a different multisensor format. There is no new claim of LAN, cloud-history, alarm-bit or write validation here, and no change to connection timing or write commands. Those experimental paths have not been validated on this model; keep this test BLE-only and do not test settings writes yet.
 
 ## INT-12E-BW Community-Validated BLE
 

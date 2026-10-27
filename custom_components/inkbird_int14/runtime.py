@@ -32,6 +32,7 @@ from .models import (
     AUTH_MODE_SCAN_ONLY,
     DEFAULT_MODEL,
     MODEL_INT11I_B,
+    MODEL_INT12_BW,
     MODEL_INT12E_BW,
     MODEL_INT14S_BW,
     InkbirdIntModelProfile,
@@ -59,6 +60,7 @@ from .protocol import (
     parse_cloud_dps,
     parse_int11i_battery_payload,
     parse_int11i_temperature_payload,
+    parse_int12_ble_notification,
     parse_int14s_lan_dps,
     parse_int14s_lan_target_dp_value,
     parse_multisensor_temperature_payload,
@@ -1366,7 +1368,7 @@ class Int14Runtime:
             if ok:
                 self.data["last_ble_auth_error"] = None
             self._auth_ack_event.set()
-        parsed = parse_notification(bytes(data))
+        parsed = parse_int12_ble_notification(raw, sender_text) if self.profile.key == MODEL_INT12_BW else parse_notification(raw)
         if self.profile.key in {MODEL_INT12E_BW, MODEL_INT14S_BW} and "ff01" in sender_text:
             current = parse_multisensor_temperature_payload(raw, self.profile.physical_probe_count)
             if current:

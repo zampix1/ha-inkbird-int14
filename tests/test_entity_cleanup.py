@@ -88,3 +88,11 @@ def test_profile_cleanup_runs_before_platform_setup() -> None:
 
     assert "obsolete_profile_unique_ids" in setup_block
     assert setup_block.index("registry.async_remove") < setup_block.index("async_forward_entry_setups")
+
+
+def test_int12_cleanup_removes_only_the_unmapped_probe2_ambient_temperature() -> None:
+    models, cleanup = _load_models_and_cleanup()
+    obsolete = cleanup.obsolete_profile_unique_ids("REDACTED", models.model_profile("int12_bw"))
+    assert "REDACTED_probe_2_ambient_temp" in obsolete
+    for key in ("probe_1_internal_temp", "probe_1_ambient_temp", "probe_2_internal_temp", "base_temp", "base_battery", "probe_2_battery"):
+        assert f"REDACTED_{key}" not in obsolete
