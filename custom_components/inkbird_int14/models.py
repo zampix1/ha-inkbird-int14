@@ -320,8 +320,9 @@ MODEL_PROFILES: dict[str, InkbirdIntModelProfile] = {
         supports_cloud_history=False,
         write_support="not_supported",
         support_status="experimental",
-        notes="Community report validates connectable GATT reads: FF01 two-byte temperature and 2A19 two-byte base/probe battery. Writes are not enabled.",
+        notes="Community reports validate connectable GATT reads: FF01 two-byte temperature and 2A19 two-byte base/probe battery. Continuous read-only polling avoids timed client disconnects; the station may still end its own session. Writes are not enabled.",
         supports_base_temperature=False,
+        continuous_gatt_polling=True,
     ),
     MODEL_INT11P_B: InkbirdIntModelProfile(
         key=MODEL_INT11P_B,

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.11-beta.3
+
+- Enable continuous read-only GATT polling for INT-11I-B following @tolixx's local-adapter and ESPHome proxy measurements in issue #9. Do not deliberately end its session after 20 seconds; use the existing five-second normal reconnect pause and ten-second minimum pause after a failed connection cycle. The station can still disconnect itself, and connection attempts can extend recovery time.
+- Keep INT-11I-B temperature/battery decoding, entity IDs, experimental status and read-only restrictions unchanged. Other models retain their beta.2 behavior. Stable remains v0.2.10.
+- Add a focused [INT-11I-B reconnect test](docs/int11i_b_beta_test.md). The reporter's local patch is encouraging; this packaged beta still needs the same station/proxy follow-up before calling recovery validated.
+
 ## 0.2.11-beta.2
 
 - Keep INT-12-BW BLE sessions open instead of ending them after 20 seconds. Notifications still update immediately; fallback reads now use the configured interval (10 seconds by default) for temperatures, basic state and batteries.

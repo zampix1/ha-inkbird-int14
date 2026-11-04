@@ -353,7 +353,7 @@ def test_connection_metrics_are_transition_based_and_private_error_free(monkeypa
     assert runtime.data["ble_last_session_seconds"] == 27
 
 
-@pytest.mark.parametrize("model, delay", [("int14_bw", 25), ("int14s_bw", 25), ("int12e_bw", 5)])
+@pytest.mark.parametrize("model, delay", [("int14_bw", 25), ("int14s_bw", 25), ("int12e_bw", 5), ("int11i_b", 5)])
 def test_other_models_keep_existing_connect_policy(monkeypatch, model, delay):
     async def scenario():
         runtime, ns, _ = _runtime(monkeypatch, model)
@@ -361,6 +361,67 @@ def test_other_models_keep_existing_connect_policy(monkeypatch, model, delay):
         assert runtime._ble_reconnect_delay_seconds == delay
         assert ns["establish_connection"].await_args.kwargs == {"max_attempts": 4, "timeout": 20.0}
         assert "ble_last_connect_attempt_epoch_s" not in runtime.data
+
+    asyncio.run(scenario())
+
+
+def test_int11i_keeps_polling_past_old_session_limit_without_device_commands(monkeypatch):
+    async def scenario():
+        runtime, ns, _ = _runtime(monkeypatch, "int11i_b")
+        client = _client()
+        intervals = []
+        reads = []
+
+        async def sleep(seconds):
+            intervals.append(seconds)
+
+        async def read_values(actual, uuids):
+            assert actual is client
+            reads.append(uuids)
+            if len(reads) == 4:
+                client.is_connected = False
+
+        runtime.ble_poll_seconds = 7
+        runtime._read_values = read_values
+        ns["asyncio"] = SimpleNamespace(sleep=sleep)
+        await runtime._listen(client)
+        assert intervals == [7] * 4  # 28 seconds: beyond the former 20-second limit.
+        assert reads == [(ns["LIVE_UUID"], ns["BATTERY_UUID"])] * 4
+        client.disconnect.assert_not_awaited()
+        assert runtime.profile.write_support == "not_supported"
+        assert runtime.profile.supports_lan is False
+        assert runtime.profile.supports_cloud_history is False
+
+    asyncio.run(scenario())
+
+
+def test_int11i_remote_drop_and_connect_error_use_separate_retry_pauses(monkeypatch):
+    async def scenario():
+        runtime, _, _ = _runtime(monkeypatch, "int11i_b")
+        client = _client()
+        runtime._connect = AsyncMock(side_effect=[TimeoutError("test connection failure"), client])
+        runtime._subscribe = AsyncMock()
+        runtime.request_init_on_connect = False
+
+        async def remote_drop(actual):
+            actual.is_connected = False
+
+        pauses = []
+
+        async def pause(seconds):
+            pauses.append(seconds)
+            if len(pauses) == 2:
+                raise asyncio.CancelledError
+
+        runtime._listen = remote_drop
+        runtime._sleep_or_mode_change = pause
+        with pytest.raises(asyncio.CancelledError):
+            await runtime._run()
+        assert pauses == [10, 5]
+        assert runtime._connect.await_count == 2
+        client.disconnect.assert_not_awaited()
+        assert runtime._client is None
+        assert not runtime._connection_lock.locked()
 
     asyncio.run(scenario())
 

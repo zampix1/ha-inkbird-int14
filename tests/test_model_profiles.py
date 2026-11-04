@@ -119,6 +119,8 @@ def test_transport_capabilities_are_not_overstated() -> None:
     assert models.model_profile("int11i_b").supports_ble_snapshot is True
     assert models.model_profile("int11i_b").write_support == "not_supported"
     assert models.model_profile("int11i_b").supports_base_temperature is False
+    assert models.model_profile("int11i_b").continuous_gatt_polling is True
+    assert models.model_profile("int11i_b").ble_auth_mode == models.AUTH_MODE_GATT_POLL
     assert models.model_profile("int11p_b").write_support == "not_supported"
     for profile_key in ("int11s_b", "int31_bw", "int33_bw"):
         profile = models.model_profile(profile_key)

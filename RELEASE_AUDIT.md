@@ -1,6 +1,6 @@
 # Release Audit
 
-Last reviewed: 2026-10-27
+Last reviewed: 2026-11-04
 
 ## Public Positioning
 
@@ -15,11 +15,26 @@ Last reviewed: 2026-10-27
 
 The integration supports local BLE, local Tuya LAN where the model and DP map have been validated, and optional experimental read-only cloud history for DP109. It does not support live cloud control or cloud writes.
 
+## INT-11I-B Reconnect Beta, 2026-11-04
+
+- `v0.2.11-beta.3` sets `continuous_gatt_polling=True` for INT-11I-B. Runtime changes versus beta.2 are limited to this profile metadata and the manifest version; the shared connection implementation is unchanged.
+- Regression tests cover polling beyond the former 20-second limit, normal versus failed-cycle retry pauses, existing connector arguments, cleanup and unchanged read-only capabilities. Other profiles retain their beta.2 policy.
+- The isolated release tree passes 202 tests, Ruff formatting/lint, Cook Control frontend checks and compilation with bytecode outside the tree. No test, Ruff or bytecode caches are included.
+- Gitleaks and TruffleHog found no secrets. Detect-secrets found eight existing field-name/label matches for `cloud_api_key` and `cloud_api_secret`; manual inspection confirmed no credential values.
+- The optional manual ZIP contains only the component, license notices and the INT-11I-B test guide. Pending local dashboard changes and household configuration are excluded.
+- No Home Assistant deployment, restart or live-device changes were part of this release check. @tolixx's local-patch measurements support trying the packaged beta, but do not replace its follow-up hardware test. INT-11I-B remains experimental and read-only; station-initiated disconnects and longer failed-connect gaps remain possible.
+- Publication is gated on Tests, HACS and Hassfest for the commit and tag, with the uploaded ZIP checked against the local package. Stable remains `v0.2.10`.
+
 ## Release State
 
-Prerelease `v0.2.11-beta.2` targets INT-12-BW reconnect recovery. The beta.1
-parser has a positive community hardware report; beta.2 changes still need
-station/proxy testing. Stable remains `v0.2.10`. See the dated beta.2 audit below.
+Prerelease `v0.2.11-beta.3` enables continuous read-only GATT polling for
+INT-11I-B, following @tolixx's measurements in issue #9. Its decoder, entity
+IDs, experimental status and write restrictions are unchanged. This is a
+profile-level change; other models retain their beta.2 behavior. The
+packaged update still needs the reporter's follow-up on real hardware.
+
+The beta also retains the INT-12-BW parser and reconnect work from beta.1
+and beta.2. Stable remains `v0.2.10`. See the dated audits below.
 
 Release `v0.2.10` adds the optional INT-14-BW Cook Control bundle, native Alexa/TV notification routing, bilingual setup guides and real dashboard screenshots. HACS still installs only the integration; the optional ZIP is installed separately. Runtime Python files are unchanged from `v0.2.7`; only the manifest version is bumped. The release retains the model photo gallery, Options/reload fixes and existing model-support boundaries.
 

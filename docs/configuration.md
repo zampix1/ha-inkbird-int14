@@ -61,6 +61,14 @@ INT-12E-BW instead keeps a read-only GATT loop, processes notifications
 immediately and uses direct reads as a fallback. The station may end the
 session after about 30 seconds; the integration reconnects automatically.
 
+Prerelease `v0.2.11-beta.3` also enables this continuous read-only policy for INT-11I-B
+after the [issue #9](https://github.com/zampix1/ha-inkbird-int14/issues/9) hardware report.
+It removes the client-imposed 20-second limit and uses a five-second normal retry
+pause. It cannot prevent the station's own roughly 31-second disconnects. Detection,
+connection attempts and a ten-second minimum backoff after a failed cycle can make
+the actual gap longer. See the [short reconnect test](int11i_b_beta_test.md).
+This change is not in stable v0.2.10 or v0.2.11-beta.2.
+
 INT-12-BW uses a continuous session in `v0.2.11-beta.2`, with notifications
 and fallback reads of temperatures, basic state and batteries. Its beta.1
 readings have been confirmed on hardware, but reconnect/wake-up recovery
