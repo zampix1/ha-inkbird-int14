@@ -15,6 +15,34 @@ Last reviewed: 2026-11-04
 
 The integration supports local BLE, local Tuya LAN where the model and DP map have been validated, and optional experimental read-only cloud history for DP109. It does not support live cloud control or cloud writes.
 
+## Cook Control 1.1.0, 2026-11-04
+
+- `v0.2.11-beta.4` publishes the previously local INT/IHT selector, source-specific
+  temperature/history/battery handling and guarded HA-only cook reset. A repeat
+  selection of the active thermometer is a no-op. Same-named devices are distinct.
+- The optional dashboard follows one cook, not simultaneous independent sessions.
+  INT-14-BW and IHT-2PB retain their separate integrations and model-specific
+  layouts. Normal dashboard targets never write physical thermometer settings.
+- 275 Python tests, frontend Node checks, Ruff format/lint and external-cache
+  compilation pass. Tests cover source changes, stale/missing readings, reminders,
+  upgrade-safe helpers, same-device selection and notification routing.
+- The read-only HA check preserved all 87 protected settings and all three
+  deployed package/module hashes. No service calls, threshold changes, restart,
+  reload or deployment. No fresh hardware readings were available on this date.
+  Earlier INT and IHT delivery tests remain bounded as described in VALIDATION.md.
+- Gitleaks and TruffleHog find no secrets. Detect-secrets reports only eight
+  reviewed field-name/UI-label matches, not credentials. Generated caches were
+  removed. Public screenshots exclude home navigation, account and speaker IDs.
+- English/Italian guides include simple upgrade steps, reset-on-switch behavior,
+  independent device alarms and separate stable-compatible dashboard installation.
+  The optional ZIP uses the existing 12-file allowlist and reproducible metadata.
+- Integration runtime differs from beta.3 only in the manifest version. The
+  INT-11I-B / INT-12-BW reconnect work is not promoted to stable by this release.
+  IHT-2PB's integration repository is untouched; stable remains v0.2.10.
+- Publication requires green Tests/HACS/Hassfest on the commit and tag and a
+  downloaded-package hash match. The HACS README is updated for beta.4; stable
+  installations can keep their runtime and download just the dashboard asset.
+
 ## INT-11I-B Reconnect Beta, 2026-11-04
 
 - `v0.2.11-beta.3` sets `continuous_gatt_polling=True` for INT-11I-B. Runtime changes versus beta.2 are limited to this profile metadata and the manifest version; the shared connection implementation is unchanged.
@@ -27,7 +55,13 @@ The integration supports local BLE, local Tuya LAN where the model and DP map ha
 
 ## Release State
 
-Prerelease `v0.2.11-beta.3` enables continuous read-only GATT polling for
+Prerelease `v0.2.11-beta.4` adds the separate optional Cook Control 1.1.0 bundle,
+with INT-14-BW / IHT-2PB selection, bilingual upgrade guides and an updated
+showcase. Integration runtime is unchanged from beta.3 apart from the manifest
+version. The bundle also works with the stable integration and does not require
+installing the Bluetooth beta. See [Cook Control validation](examples/cook_control/VALIDATION.md).
+
+Prerelease `v0.2.11-beta.3` enabled continuous read-only GATT polling for
 INT-11I-B, following @tolixx's measurements in issue #9. Its decoder, entity
 IDs, experimental status and write restrictions are unchanged. This is a
 profile-level change; other models retain their beta.2 behavior. The

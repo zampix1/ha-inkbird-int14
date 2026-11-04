@@ -1,22 +1,26 @@
-# Inkbird INT Cook Control
+# Inkbird Cook Control
 
-Four probes, food and ambient temperatures, a graph of the cook and an alert you
-can actually hear. Cook Control is an optional dashboard maintained here alongside
-the Inkbird INT integration. You can keep using your own dashboards instead.
+Pick your thermometer, set a target and let the Echo tell you when it is reached.
+Cook Control brings INT-14-BW and IHT-2PB readings, graphs and alerts into one
+optional dashboard. You can keep using your own dashboards instead.
 
 [Guida in italiano](README.it.md) | [Test results and limits](VALIDATION.md)
 
-**Optional dashboard, available with integration release v0.2.10.** This version is for
-**one INT-14-BW station**. Its two-channel probe diagram is deliberately different
-from the five-channel INT-14S/INT-12E layout. Do not force another model into it.
+**Cook Control 1.1.0 adds an IHT-2PB thermometer picker.** Choose an INT-14-BW
+or an IHT-2PB already configured in HA. This is still one cook at a time, not
+independent simultaneous cooks. Other INT profiles are not mapped by this dashboard.
+
+This ZIP works with the stable integration. It is attached to integration release
+v0.2.11-beta.4 for download; installing that Bluetooth beta is not required.
 
 ## Install
 
-Start with the Inkbird INT integration working and all eight food/ambient entities
-enabled. Install **button-card**, **card-mod** and **mini-graph-card** from HACS.
+Start with either Inkbird INT and its eight INT-14-BW temperatures, or the separate
+[IHT-2PB integration](https://github.com/zampix1/ha-inkbird-iht2pb-local) and its three
+temperature entities. Install **button-card**, **card-mod** and **mini-graph-card** from HACS.
 This package was tested on HA **2026.10.4**.
 
-**[Download Cook Control](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.10/inkbird-int-cook-control.zip)**
+**[Download Cook Control 1.1.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11-beta.4/inkbird-cook-control-1.1.0.zip)**
 
 Extract the ZIP first. The HA configuration directory is the folder containing
 `configuration.yaml` (normally `/config`). Merge the two folders into it; do not
@@ -46,10 +50,10 @@ it does not need to be copied into HA.
      packages: !include_dir_named packages
    ```
 
-   Check the configuration, then restart HA. Different include layout? See the
+   Check the configuration, then restart HA when no cook depends on it. Different include layout? See the
    [HA package guide](https://www.home-assistant.io/docs/configuration/packages/).
 3. In **Settings > Dashboards > Resources**, add the JavaScript module
-   `/local/inkbird-int/inkbird-int-cook-control.js?v=1.0.4`.
+   `/local/inkbird-int/inkbird-int-cook-control.js?v=1.1.0`.
    Enable Advanced mode in your HA profile if Resources is hidden. When upgrading,
    edit the existing resource URL instead of adding a duplicate. Reload the browser.
 4. Add **Inkbird Cook Control** from the Community dashboards section. If that
@@ -62,18 +66,41 @@ it does not need to be copied into HA.
    views: []
    ```
 
-5. On first opening, confirm **Use this thermometer**. With one INT-14-BW, it is
-   detected automatically. This sets the shared prefix once, not in several files.
+5. Select your device in **Thermometer**. Existing devices are listed separately,
+   even when two have the same model. This sets the shared prefix once, not in several files.
    No thermometer settings are written.
 
 If discovery is ambiguous, add `prefix: sensor.your_inkbird` under `strategy:`.
-Find it by removing `_probe_1_internal_temperature` from your probe 1 food entity.
+For INT, remove `_probe_1_internal_temperature` from your probe 1 food entity.
+For IHT, remove `_built_in_temperature` from the built-in temperature entity.
 A different configured model is rejected. This package has one shared set of
-helpers; multiple independent stations are not supported yet.
+helpers. Switching thermometer disarms all alerts, cancels pending reminders and
+clears the old cook's HA targets. Enter the new targets and arm only the channels
+you use. This prevents a hot new thermometer triggering the previous cook's alarm.
+
+### Already Using Cook Control?
+
+Wait until the cook is finished, make a backup, then replace `packages/inkbird_bbq.yaml`
+and the three files under `www/inkbird-int`. Keep the same helper IDs, dashboard and
+resource entry; update that entry's URL to `?v=1.1.0`. Check the configuration,
+restart HA and refresh the browser. Do not add a second package or resource.
+
+Your current thermometer, targets, names and notification settings are retained.
+There is no need to select the same thermometer again. **Only a confirmed switch
+to a different thermometer clears the cook's targets and disarms its alerts.**
+
+### IHT-2PB Channels
+
+The three cards are **built-in tip**, **external 1** and **external 2**, in that order.
+There is no ambient channel or fourth probe. An unplugged external probe remains
+unavailable; it is not replaced with a zero. Battery is the integration's raw level,
+not a made-up percentage. Readings older than 120 seconds cannot trigger a new alert.
+Echo and TV use the same notification router as INT-14-BW; changing the thermometer
+does not change the speaker or TV selection. HA targets do not write device alarms.
 
 HACS installs the integration, **not this optional package**. There is no second
 custom integration to install. Maintainers can produce the copy-ready ZIP with
-`python examples/cook_control/build_bundle.py --output /path/to/inkbird-int-cook-control.zip`.
+`python examples/cook_control/build_bundle.py --output /path/to/inkbird-cook-control-1.1.0.zip`.
 
 ## Start A Cook
 
@@ -129,8 +156,9 @@ while it is down. These are advisory alerts, not safety systems.
 
 ## Sources And Rollback
 
-**zampix1/ha-inkbird-int14** supplies device communication, protocol handling and
-probe entities. This project maintains the adapted presentation and alarms.
+**zampix1/ha-inkbird-int14** supplies INT device communication and probe entities;
+**zampix1/ha-inkbird-iht2pb-local** supplies IHT readings. They remain separate
+integrations. This project maintains the adapted presentation and alarms.
 The visual base comes from Remco's MIT-licensed `remb0/inkbird-dashboard` v1.4.3.
 The generic Alexa/TV patch is also offered in
 [upstream PR #4](https://github.com/remb0/inkbird-dashboard/pull/4).

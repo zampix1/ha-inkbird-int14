@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.11-beta.4
+
+- Publish optional **Cook Control 1.1.0** with an INT-14-BW / IHT-2PB thermometer picker. IHT uses its separate integration and shows built-in tip, external 1 and external 2, without invented ambient readings or a fourth probe.
+- Keep one active cook. A confirmed thermometer change disarms alerts, cancels reminders and clears old HA targets before changing source; selecting the already active device does nothing. Existing helper IDs, targets and notification settings survive an upgrade.
+- Add source guards for delayed readings and reminders, model-aware history and battery displays, and distinct names for multiple IHT devices. No thermometer writes or integration/domain merge.
+- Update the GitHub/HACS showcase, real IHT screenshot, English/Italian installation and upgrade guides, and test notes. The Cook Control ZIP works with stable integrations and is installed separately from HACS.
+- Thermometer runtime is unchanged from beta.3 apart from the manifest version. INT-11I-B / INT-12-BW reconnect validation remains pending; stable stays v0.2.10.
+
 ## 0.2.11-beta.3
 
 - Enable continuous read-only GATT polling for INT-11I-B following @tolixx's local-adapter and ESPHome proxy measurements in issue #9. Do not deliberately end its session after 20 seconds; use the existing five-second normal reconnect pause and ten-second minimum pause after a failed connection cycle. The station can still disconnect itself, and connection attempts can extend recovery time.
