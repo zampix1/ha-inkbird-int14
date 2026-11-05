@@ -16,7 +16,7 @@ const states={'input_select.bbq_language':{state:'Italiano'}};
 const copy=structuredClone(states),result=await Strategy.generate({}, {states});
 assert.deepEqual(states,copy);
 assert.deepEqual(result.views.map(v=>v.path),['cook','history','settings']);
-assert.equal(result.views[0].cards[0].type,'custom:inkbird-cook-panel');
+assert.equal(result.views[0].cards[0].type,'custom:inkbird-cook-card');
 assert.equal(result.views[1].cards[0].history,true);
 assert.ok(Strategy.shouldRegenerate({}, {states:{}}, {states}));
 assert.equal(registry.has('ll-strategy-dashboard-inkbird-bbq'),false);

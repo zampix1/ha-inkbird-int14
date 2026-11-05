@@ -1,5 +1,5 @@
 import {escape as e, selectedDevice, formatTemperature as temp, csv, loadHistory, series} from './inkbird-cook-session.mjs?v=1.2.0';
-import {probeColor,probeFigure,dial,sparkline} from './inkbird-cook-visuals.mjs?v=1.2.0';
+import {probeColor,probeFigure,dial,sparkline} from './inkbird-cook-visuals.mjs?v=1.2.0-release.1';
 
 const style = `
 :host{display:block;color:var(--primary-text-color);font:14px system-ui;letter-spacing:0;max-width:1400px;margin:0 auto;padding:12px 20px 28px}
@@ -153,4 +153,5 @@ class CookPanel extends HTMLElement {
     };this.resize=new ResizeObserver(paint);this.resize.observe(canvas);paint();
   }
 }
-if(!customElements.get('inkbird-cook-panel'))customElements.define('inkbird-cook-panel',CookPanel);
+customElements.define('inkbird-cook-card',CookPanel);
+if(!customElements.get('inkbird-cook-panel'))customElements.define('inkbird-cook-panel',class extends CookPanel{});
