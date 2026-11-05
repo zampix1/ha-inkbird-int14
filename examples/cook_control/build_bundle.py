@@ -15,6 +15,8 @@ FILES = {
     "www/inkbird-int/inkbird-cook-visuals.mjs": "www/inkbird-int/inkbird-cook-visuals.mjs",
     "custom_components/inkbird_cook_control/__init__.py": "custom_components/inkbird_cook_control/__init__.py",
     "custom_components/inkbird_cook_control/engine.py": "custom_components/inkbird_cook_control/engine.py",
+    "custom_components/inkbird_cook_control/delivery.py": "custom_components/inkbird_cook_control/delivery.py",
+    "custom_components/inkbird_cook_control/services.yaml": "custom_components/inkbird_cook_control/services.yaml",
     "custom_components/inkbird_cook_control/manifest.json": "custom_components/inkbird_cook_control/manifest.json",
     "dashboard.yaml": "cook-control/dashboard.yaml",
     "README.md": "cook-control/README.md",

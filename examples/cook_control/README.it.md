@@ -3,10 +3,46 @@
 Station e due IHT accesi insieme? Ognuno ha le proprie soglie e i propri avvisi.
 Cambiare termometro cambia solo la vista: le altre cotture continuano.
 
-**[Scarica Cook Control 1.2.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11/inkbird-cook-control-1.2.0.zip)**.
-Il pacchetto in anteprima e' allegato alla stabile v0.2.11 e funziona anche con
-la v0.2.10. Il vecchio ZIP 1.1.0 segue ancora una cottura alla volta.
+**[Scarica Cook Control 1.2.1](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.12-rc.1/inkbird-cook-control-1.2.1.zip)**.
+E' un'anteprima, allegata alla v0.2.12-rc.1. Puoi tenere l'integrazione stabile
+v0.2.10 o v0.2.11 e installare solo questo ZIP. Il pacchetto 1.2.0 e' stato ritirato.
 [English guide](README.md).
+
+## Cosa Cambia Nella 1.2.1
+
+Questa versione sostituisce il primo pacchetto multi-cottura. I test automatici
+sui tre dispositivi e la verifica d'installazione sono passati. Manca ancora
+la prova di superamento soglia sui tre termometri accesi, con conferma Echo/TV.
+
+**Allarme HA** arma solo la sonda scelta, non il cicalino o la soglia fisica.
+Soglia raggiunta, invio in coda, errore e richiesta accettata sono stati distinti.
+L'accettazione del servizio non prova che una persona abbia sentito il messaggio.
+Gli errori espliciti hanno al massimo tre tentativi; timeout e invii interrotti
+richiedono verifica e reinvio manuale della singola uscita. Un servizio lento
+non blocca letture e comandi degli altri termometri. Niente variazioni di volume,
+accensione TV o cambio ingresso.
+
+In **Stallo e riposo**, sotto ogni sonda, puoi ereditare o cambiare attivazione,
+durata, variazione massima e temperatura minima dello stallo. La durata include
+l'osservazione: 45 minuti non diventano 56. Dati assenti o variazioni eccessive
+fanno ricominciare la verifica, come un riavvio che non puo' contare dati mancanti.
+Il riposo automatico torna disponibile dopo la soglia, con scelta per sonda.
+Durata vuota eredita il valore generale, zero disabilita. Un timer gia' avviato
+continua anche senza sonda; Termina cottura cancella solo i timer di quel termometro.
+
+**Sonde e termometro** riporta connessione, batteria base e controlli effettivi
+del driver, distinti dagli allarmi HA. C/F, colore, stile e scala dei grafici
+tornano nelle Impostazioni. Il trend richiede uno storico recente.
+Il preset viene salvato atomicamente, senza cambiare la soglia live.
+
+Le vecchie azioni su helper condivisi si fermano prima di scrivere quando il
+backend e' attivo. Per le automazioni usa `inkbird_cook_control.configure` con
+`device_id`, `channel`, `settings`, oppure le azioni start/finish/rest/snooze.
+Le nuove prove Echo/TV sono separate per termometro e marcate TEST: non cambiano
+soglie, nomi, attivazioni o storico. Non sono un superamento reale di temperatura.
+Lo storico aperto segue nuovi campioni e l'export rilegge uno snapshot coerente.
+Gli archivi vecchi restano leggibili; i nuovi sono segmentati. Includi tutta la
+`.storage` nel backup, non solo un file di sessione.
 
 ## Installazione
 
@@ -33,7 +69,7 @@ facoltativo da installare con i passaggi qui sotto.
 4. Controlla la configurazione e riavvia. Il package carica il piccolo backend
    facoltativo `inkbird_cook_control`; i driver INT e IHT restano separati e intatti.
 5. Aggiorna la risorsa JavaScript esistente in
-   `/local/inkbird-int/inkbird-int-cook-control.js?v=1.2.0`, poi ricarica il browser.
+   `/local/inkbird-int/inkbird-int-cook-control.js?v=1.2.1`, poi ricarica il browser.
 6. Nella configurazione grezza della plancia esistente usa [dashboard.yaml](dashboard.yaml):
 
    ```yaml
@@ -53,10 +89,10 @@ serve attualmente un account **amministratore HA**.
 ### Compare Ancora "Cambiare Termometro?"
 
 L'avviso che parla di azzerare le soglie appartiene alla 1.1.0. Controlla che
-ci sia una sola risorsa Cook Control, aggiornata a `?v=1.2.0`, e che la strategia
+ci sia una sola risorsa Cook Control, aggiornata a `?v=1.2.1`, e che la strategia
 sia `custom:inkbird-cook-control`. Poi chiudi le vecchie schede HA e riapri l'app.
 Non serve eliminare l'integrazione, rifare il pairing o azzerare la cottura.
-Nella 1.2.0 il cambio vista non modifica soglie e avvisi.
+Nella 1.2.1 il cambio vista non modifica soglie e avvisi.
 
 ## Nomi, Soglie E Cotture
 

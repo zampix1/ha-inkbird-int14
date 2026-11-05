@@ -1,4 +1,4 @@
-import './inkbird-cook-panel.js?v=1.2.0-release.1';
+import './inkbird-cook-panel.js?v=1.2.1';
 
 class InkbirdIntCookControl extends HTMLElement {
   static getCreateSuggestions(){return {title:'Inkbird Cook Control',icon:'mdi:grill'};}
@@ -7,20 +7,24 @@ class InkbirdIntCookControl extends HTMLElement {
     const it=hass.states['input_select.bbq_language']?.state==='Italiano';
     return {title:'Cook Control',views:[
       {title:it?'Cotture':'Cooks',path:'cook',type:'panel',icon:'mdi:grill',cards:[{type:'custom:inkbird-cook-card'}]},
+      {title:it?'Sonde e termometro':'Probes and device',path:'probes',type:'panel',icon:'mdi:thermometer-probe',cards:[{type:'custom:inkbird-cook-card',device:true}]},
       {title:it?'Storico':'History',path:'history',type:'panel',icon:'mdi:chart-timeline-variant',cards:[{type:'custom:inkbird-cook-card',history:true}]},
       {title:it?'Impostazioni':'Settings',path:'settings',icon:'mdi:cog-outline',cards:[
-        {type:'entities',title:it?'Annunci Echo e avvisi TV':'Echo announcements and TV notifications',entities:[
+        {type:'entities',show_header_toggle:false,title:it?'Annunci Echo e avvisi TV':'Echo announcements and TV notifications',entities:[
           'input_select.bbq_language','input_text.bbq_notify_service','input_select.bbq_notify_target',
           'input_boolean.bbq_tts_alerts','input_select.bbq_tts_engine','input_select.bbq_tts_speaker',
           'input_text.bbq_alexa_group_name','input_text.bbq_alexa_group_targets',
           'input_boolean.bbq_tv_alerts','input_text.bbq_tv_notify_service','input_text.bbq_tv_entity',
+        ]},
+        {type:'entities',show_header_toggle:false,title:it?'Valori predefiniti degli avvisi':'Alert defaults',entities:[
           'input_number.bbq_snooze_minutes','input_number.bbq_rest_minutes',
           'input_boolean.bbq_battery_alerts','input_number.bbq_battery_threshold','input_boolean.bbq_stall_alerts',
-          'input_text.bbq_custom_name','input_number.bbq_custom_target',
         ]},
-        {type:'button',name:it?'Prova Echo e TV':'Test Echo and TV',icon:'mdi:bullhorn-outline',tap_action:{action:'perform-action',perform_action:'script.bbq_notify',data:{
-          title:'Cook Control',message:it?'Prova avvisi, nessuna cottura.':'Notification test, no cook.',tts_message:it?'Prova Cook Control. Gli annunci funzionano.':'Cook Control test. Announcements are working.',tag:'cook_control_test',
-        }}},
+        {type:'entities',show_header_toggle:false,title:it?'Visualizzazione':'Display',entities:[
+          'input_select.inkbird_unit','input_select.bbq_accent','input_select.bbq_style','input_number.bbq_graph_max',
+        ]},
+        {type:'button',name:it?'Aggiorna lista speaker':'Refresh speaker list',icon:'mdi:refresh',tap_action:{action:'perform-action',perform_action:'script.bbq_refresh_media_targets'}},
+        {type:'custom:inkbird-cook-card',test:true},
       ]},
     ]};
   }

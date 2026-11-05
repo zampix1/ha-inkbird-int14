@@ -27,11 +27,15 @@ Use your **INT-14-BW and IHT-2PB thermometers together**. Each keeps its own foo
 
 **Keep the cook, not just the current temperature.** Start a named session, then revisit its graph, target changes and alerts in History. Download readings as CSV or the full session as JSON. Archives stay in HA, independently of Recorder cleanup.
 
-**[Download Cook Control 1.2.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11/inkbird-cook-control-1.2.0.zip)** &nbsp; / &nbsp; **[Install guide](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/README.md)** &nbsp; / &nbsp; **[Guida italiana](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/README.it.md)**
+**[Download Cook Control 1.2.1 preview](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.12-rc.1/inkbird-cook-control-1.2.1.zip)** &nbsp; / &nbsp; **[Install guide](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/README.md)** &nbsp; / &nbsp; **[Guida italiana](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/README.it.md)**
 
-Start with working thermometer entities. The ZIP contains the optional Cook Control backend, YAML package and dashboard files; the new cards do not need button-card, card-mod or mini-graph-card. **HACS installs the thermometer integration, not this separate bundle.** The ZIP is attached to stable v0.2.11 and also works with v0.2.10. You do not need the development branch's Bluetooth changes. The backend currently requires an administrator HA account.
+Start with working thermometer entities. The ZIP contains the optional Cook Control backend, YAML package and dashboard files; the new cards do not need button-card, card-mod or mini-graph-card. **HACS installs the thermometer integration, not this separate bundle.** Keep stable v0.2.10 or v0.2.11 if it works for you and install just the ZIP. The backend currently requires an administrator HA account.
 
-**Echo speaks; the TV shows silent text.** Use one Echo or an explicit announcement group, leaving bedrooms out. Native Alexa announcements use Alexa Media Player, not OpenAI. The new router test reached both chosen Echos and the LG popup, confirmed by the user. Three simultaneous sessions, view switching and history export were also checked on HA; a real threshold crossing with the new backend is still pending. Targets, completed-alert latches and reminder deadlines persist across restarts. See the [test notes](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/VALIDATION.md).
+**Echo speaks; the TV shows silent text.** Use one Echo or an explicit announcement group, leaving bedrooms out. Native Alexa announcements use Alexa Media Player, not OpenAI. Each output now has its own queue and result: a slow TV or Echo cannot hold up the other cooks. A failed output can be retried without repeating messages already accepted.
+
+**Stall and rest are back on each probe card.** Choose the stall duration, maximum temperature change and minimum temperature; set automatic rest locally or inherit the common default. The device page also restores the controls actually exposed by your thermometer's integration.
+
+**The first 1.2.0 bundle has been withdrawn.** This 1.2.1 preview fixes the audit findings. Three-device automated tests and installation checks on HA pass; fresh-device threshold crossings and physical Echo/TV confirmation are still pending. Targets and Echo/TV settings survive the upgrade. See the [test notes](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/VALIDATION.md).
 
 ## Find Your Model
 

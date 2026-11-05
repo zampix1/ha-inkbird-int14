@@ -2,6 +2,7 @@
 
 import ast
 import asyncio
+import importlib.util
 import re
 import time
 from copy import deepcopy
@@ -9,12 +10,16 @@ from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
+from uuid import uuid4
 
 import pytest
 from test_cook_sessions import MODULE, device
 
 SOURCE = Path(__file__).resolve().parents[1] / "examples/cook_control/custom_components/inkbird_cook_control/__init__.py"
 TREE = ast.parse(SOURCE.read_text(encoding="utf-8"))
+DELIVERY_SPEC = importlib.util.spec_from_file_location("cook_delivery", SOURCE.with_name("delivery.py"))
+DELIVERY = importlib.util.module_from_spec(DELIVERY_SPEC)
+DELIVERY_SPEC.loader.exec_module(DELIVERY)
 
 
 class MemoryStore:
@@ -42,10 +47,13 @@ def boundary(states=None, entities=None, devices=None):
         "timedelta": timedelta,
         "re": re,
         "time": time,
+        "uuid4": uuid4,
         "callback": lambda func: func,
         "Engine": MODULE.Engine,
         "number": MODULE.number,
         "announcement": MODULE.announcement,
+        "plan": DELIVERY.plan,
+        "send": DELIVERY.send,
         "Store": MemoryStore,
         "DOMAIN": "inkbird_cook_control",
         "LOGGER": SimpleNamespace(exception=lambda *_: None),
@@ -122,7 +130,7 @@ def test_manager_migration_is_once_only_and_keeps_current_values():
     assert len(restored.engine.data["index"]) == 1
 
 
-def test_notification_path_is_only_existing_router_and_speech_is_human():
+def test_notification_is_persisted_before_delivery_and_speech_is_human():
     MemoryStore.files = {}
     hass, ns = boundary({"input_select.bbq_language": ("Italiano", {})})
     manager = ns["Manager"](hass)
@@ -137,12 +145,12 @@ def test_notification_path_is_only_existing_router_and_speech_is_human():
         "generation": 2,
         "kind": "target",
     }
-    asyncio.run(manager.notify(notice))
-    args = hass.services.async_call.call_args
-    assert args.args[:2] == ("script", "bbq_notify")
-    assert args.args[2]["tts_message"] == "Musetto ha raggiunto 85 gradi."
-    assert "station" not in args.args[2]["actions"][0]["action"]
-    assert args.kwargs["blocking"] is True
+    identifier = manager.enqueue(notice)
+    assert not hass.services.async_call.called
+    event = manager.engine.data["outbox"][identifier]
+    assert event["outputs"]["ha"]["data"]["message"] == "Station BBQ: Musetto ha raggiunto 85 gradi."
+    assert event["outputs"]["ha"]["state"] == "queued"
+    assert event["outputs"]["tv"]["state"] == "disabled"
 
 
 def test_websocket_auth_and_archive_path_guards():

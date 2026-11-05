@@ -3,10 +3,40 @@
 One station, two handhelds, three different cooks. Each keeps its own targets and
 alerts. Switching thermometer only changes what you see.
 
-**[Download Cook Control 1.2.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11/inkbird-cook-control-1.2.0.zip)**.
-This preview bundle is attached to stable integration v0.2.11 and works with
-v0.2.10 too. The older 1.1.0 ZIP has the single-cook design.
+**[Download Cook Control 1.2.1](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.12-rc.1/inkbird-cook-control-1.2.1.zip)**.
+This is a preview, attached to v0.2.12-rc.1. You can keep stable integration
+v0.2.10 or v0.2.11 and install just this ZIP. The 1.2.0 bundle has been withdrawn.
 [Guida in italiano](README.it.md).
+
+## What Changed In 1.2.1
+
+This replaces the first multi-cook bundle. Automated three-device checks and
+installation checks pass. A fresh reading crossing the target on all three
+physical thermometers, with Echo/TV confirmation, is still pending.
+
+**HA alarm** arms only this probe, not the device buzzer or physical target.
+Target reached, queued, error and service acceptance are distinct states.
+Acceptance does not prove that someone heard or saw the message. Explicit errors
+have at most three attempts. Timeouts and interrupted sends need a delivery check
+and manual retry. Slow outputs do not block cooking controls. Volume, TV power
+and input remain untouched.
+
+Each probe has **Stall and rest** settings: enable/inherit, duration, maximum
+change rate and minimum temperature. Duration includes observation, without the
+old additional warm-up. Missing data and excessive variation reset observation.
+Automatic rest is restored, with a per-probe choice. Blank duration inherits the
+global default; zero disables it. Started rest timers work without the probe.
+
+**Probes and device** restores connection/base-battery details and controls
+actually exposed by the driver. Display C/F, accent, style and graph scale are
+available again, without changing device units. Custom preset save is atomic.
+Legacy shared-helper scripts fail before writing while the backend is active.
+Automations can use `inkbird_cook_control.configure` with explicit `device_id`,
+`channel` and `settings`, or the start/finish/reminder actions.
+
+Per-device TEST buttons do not arm, rename, start or modify cooks. Active history
+follows new samples and exports use a consistent snapshot. Older archives remain
+readable; new samples use segments. Back up the whole private `.storage` directory.
 
 ## Install
 
@@ -33,7 +63,7 @@ the separate Cook Control bundle installation below.
 4. Check the HA configuration and restart. The package loads the small optional
    `inkbird_cook_control` backend. INT and IHT driver folders are unchanged.
 5. Update the existing JavaScript module resource to
-   `/local/inkbird-int/inkbird-int-cook-control.js?v=1.2.0` and reload the browser.
+   `/local/inkbird-int/inkbird-int-cook-control.js?v=1.2.1` and reload the browser.
 6. In your existing dashboard's raw configuration, use [dashboard.yaml](dashboard.yaml):
 
    ```yaml
@@ -56,10 +86,10 @@ and archives. No extra account, cloud service or database is required.
 ### Still Seeing "Switch Thermometer?"
 
 That reset warning belongs to 1.1.0, not this version. Check that there is only
-one Cook Control module resource, its URL ends in `?v=1.2.0`, and the dashboard
+one Cook Control module resource, its URL ends in `?v=1.2.1`, and the dashboard
 strategy is `custom:inkbird-cook-control`. Close old HA tabs and reload the app.
 Do not reinstall or pair the thermometer, and do not reset your cook to fix a
-cached frontend. Changing view in 1.2.0 never clears targets or disarms alerts.
+cached frontend. Changing view in 1.2.1 never clears targets or disarms alerts.
 
 ## Cooks And Names
 

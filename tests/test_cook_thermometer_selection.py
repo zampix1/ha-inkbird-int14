@@ -124,6 +124,12 @@ def evaluate(value, values, variables):
 def run_sequence(sequence, values, variables, calls):
     """Small service recorder, not a Home Assistant execution-engine substitute."""
     for step in sequence:
+        if "if" in step:
+            if truth(step["if"], values, **variables):
+                run_sequence(step["then"], values, variables, calls)
+            continue
+        if "stop" in step:
+            raise ValueError(step["stop"])
         if "condition" in step:
             if not truth(step["value_template"], values, **variables):
                 return False

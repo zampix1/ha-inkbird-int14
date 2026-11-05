@@ -1,5 +1,28 @@
 # Cook Control Validation
 
+## Cook Control 1.2.1 Preview, 2026-11-05
+
+- Published as a prerelease, replacing the withdrawn 1.2.0 ZIP. Real INT-14-BW and two-IHT threshold/output validation is pending
+  while the owner is away; isolated tests are not reported as hardware passes.
+- All 256 Python tests, Node contracts and Ruff format/lint checks pass. Focused
+  tests cover delivery errors, lock isolation, timeout/unknown results,
+  restart recovery, per-output plans, zero/manual/auto rest, missing probes,
+  per-channel stall, battery deduplication, atomic preset save, safe legacy
+  commands and segmented archive roundtrips.
+- Edge desktop/mobile checks cover 4/3/3 channels, view selection without writes,
+  live readings during editing, C/F, preset save/apply, stall controls, device
+  views and active history refresh. TEST commands preserve cook settings/indexes.
+- Installed after backups and one authorized restart on HA 2026.11.0. The backend
+  reports 1.2.1, all three driver entries are loaded, and no backend errors were
+  logged. Protected targets, names, arming state, Echo/TV helper settings and all
+  three existing archives compare identically before and after.
+- The live HA UI renders all four views. Device selection shows the correct
+  4/3/3 layout and native driver cards; stall/rest controls and earlier archives
+  open correctly. No target/arming edits, announcement tests or physical writes
+  were made during this verification. Thermometers had no fresh readings.
+- The 1.2.0 physical Echo/TV confirmation below belongs to its earlier router test,
+  not this delivery implementation. New physical confirmation is still required.
+
 ## Cook Control 1.2.0 Preview, 2026-11-05
 
 - 316 Python tests pass on the development branch and 242 on the isolated stable-release branch. They cover independent three-device alert latches, per-channel edits, restart recovery, migration, history gaps, friendly spoken names, battery/stall guards and explicit Alexa group membership. These include isolated HA boundary tests, not a substitute for physical cooking tests.
@@ -114,10 +137,10 @@ metadata; it includes no live configuration or captured diagnostics.
 
 ## Publication Boundary
 
-Cook Control 1.2.0 is an optional preview bundle attached to stable v0.2.11. Integration
-runtime is unchanged from v0.2.10 apart from the manifest version. The INT-11I-B
-and INT-12-BW connection changes remain beta work; they are not needed for this
-dashboard. The bundle can also be installed alongside v0.2.10.
+The 1.2.0 ZIP was withdrawn. Cook Control 1.2.1 is an optional preview attached
+to v0.2.12-rc.1; it can also be installed alongside stable v0.2.10 or v0.2.11.
+Its integration runtime is unchanged from v0.2.10 apart from manifest metadata.
+The INT-11I-B and INT-12-BW connection changes remain separate beta work.
 
 HACS does not automatically install the dashboard: the package requires the
 documented configuration copy and resource registration. The IHT integration

@@ -464,6 +464,12 @@ script:
     alias: BBQ reset selected cook
     mode: restart
     sequence:
+    - if: "{{ has_value('sensor.inkbird_cook_control') }}"
+      then:
+      - stop: Use Cook Control finish with explicit device_id. Legacy helpers are not active cooks.
+        error: true
+    - variables:
+        prefix: '{{ states("input_text.inkbird_sensor_prefix") }}'
     - action: input_boolean.turn_off
       target:
         entity_id:
@@ -547,6 +553,10 @@ script:
             max: 300
             unit_of_measurement: °C
     sequence:
+    - if: "{{ has_value('sensor.inkbird_cook_control') }}"
+      then:
+      - stop: Use Cook Control configure with explicit device_id and channel. No settings were changed.
+        error: true
     - variables:
         probe: '{{ states(''input_select.inkbird_active_probe'') }}'
     - action: input_number.set_value
@@ -564,6 +574,10 @@ script:
     icon: mdi:tune-variant
     mode: single
     sequence:
+    - if: "{{ has_value('sensor.inkbird_cook_control') }}"
+      then:
+      - stop: Apply the saved preset from Cook Control to an explicit thermometer and probe.
+        error: true
     - variables:
         label: |
           {% set n = states('input_text.bbq_custom_name') %} {{ n if n not in ['unknown', 'unavailable', ''] else 'Custom' }}

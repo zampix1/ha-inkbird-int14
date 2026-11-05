@@ -15,7 +15,34 @@ Last reviewed: 2026-11-05
 
 The integration supports local BLE, local Tuya LAN where the model and DP map have been validated, and optional experimental read-only cloud history for DP109. It does not support live cloud control or cloud writes.
 
-## Cook Control 1.2.0, 2026-11-05
+## Cook Control 1.2.1 Preview, 2026-11-05
+
+- The optional 1.2.0 ZIP is withdrawn, backed up privately before removal. Stable
+  integration v0.2.11 remains published. The replacement is a separate 1.2.1 ZIP
+  attached to prerelease v0.2.12-rc.1, compatible with the stable driver.
+- Delivery uses persisted per-output queues and destination workers, outside
+  the cooking lock. Explicit errors have bounded retries; interrupted sends and
+  timeouts require manual delivery verification. No claim of physical delivery
+  follows merely from service acceptance.
+- Restore local stall/rest settings, automatic rest, device controls, preferences,
+  edit-safe live refresh and atomic presets. Legacy shared-helper commands stop
+  before writing when the backend is active. Archives use bounded segments with
+  backwards-compatible reads and snapshot exports.
+- Local Python and Node checks plus desktop/mobile UI fixtures cover three-device
+  isolation, slow/error/timeout outputs, recovery, rest without readings, stall
+  duration, explicit Echo destinations, TEST isolation and archive roundtrips.
+  The optional ZIP has 20 allowlisted entries.
+- Installed after backups and one authorized HA restart. HA 2026.11.0 loads backend
+  1.2.1 and all three thermometer entries, without backend log errors. Protected
+  cook settings, Echo/TV helpers and the three archives compare unchanged.
+  The live UI renders the native 4/3/3 layouts, stall/rest controls and old archives.
+- No new physical Echo/TV or fresh-device threshold test was possible while the
+  owner was away. No real announcement tests or thermometer writes were sent.
+  Those checks remain required before promoting Cook Control to validated stable.
+- Native integration runtime remains the v0.2.10 baseline apart from manifest
+  version metadata. Pending Bluetooth development stays outside this release.
+
+## Cook Control 1.2.0, 2026-11-05 (Withdrawn Bundle)
 
 - Optional preview bundle attached to stable `v0.2.11`. A small separate backend owns per-device cooks, target/notification latches and private archives; it reads registered INT/IHT entities and sends through the existing notification router. It never calls a thermometer write service.
 - Three simultaneous sessions on one INT-14-BW and two IHT-2PB devices were recorded, finished and exported on HA 2026.11.0. Legacy helper values were preserved. The user confirmed the two selected Echo announcements and silent LG popup; a true fresh-device threshold crossing remains pending.
@@ -64,11 +91,11 @@ The integration supports local BLE, local Tuya LAN where the model and DP map ha
 
 ## Release State
 
-Stable `v0.2.11` publishes optional Cook Control 1.2.0 with independent
-concurrent INT/IHT cooks, food-name announcements, persistent history and an
-updated showcase. Its integration runtime is unchanged from v0.2.10 apart from
-the manifest version. The bundle also works with v0.2.10 and does not require
-installing the Bluetooth beta. See [Cook Control validation](examples/cook_control/VALIDATION.md).
+Stable `v0.2.11` retains the v0.2.10 thermometer runtime apart from version
+metadata. Its optional Cook Control 1.2.0 ZIP was withdrawn after the dashboard
+audit. Use the corrected 1.2.1 preview attached to `v0.2.12-rc.1`; installing
+that separate ZIP does not require the Bluetooth development branch.
+See [Cook Control validation](examples/cook_control/VALIDATION.md).
 
 Prerelease `v0.2.11-beta.3` enabled continuous read-only GATT polling for
 INT-11I-B, following @tolixx's measurements in issue #9. Its decoder, entity
