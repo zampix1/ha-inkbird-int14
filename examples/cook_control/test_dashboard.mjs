@@ -1,54 +1,64 @@
 import assert from 'node:assert/strict';
+import {selectedDevice,csv,loadHistory,series,escape} from './www/inkbird-int/inkbird-cook-session.mjs';
+import {devices,channelEntity,connection,renderDiagram,devicePicker} from './www/inkbird-int/inkbird-int-cook-model.mjs';
+import {dial,probeFigure,sparkline,probeColor} from './www/inkbird-int/inkbird-cook-visuals.mjs';
 
-const registry = new Map();
-globalThis.HTMLElement = class {};
-globalThis.customElements = {get:name=>registry.get(name),define:(name,cls)=>registry.set(name,cls)};
-globalThis.window = {};
+const oldSingleCook=class{};
+const registry=new Map([['ll-strategy-dashboard-inkbird-int-cook-control',oldSingleCook]]);
+globalThis.HTMLElement=class{};
+globalThis.customElements={get:name=>registry.get(name),define:(name,cls)=>registry.set(name,cls)};
+globalThis.window={};
 await import('./www/inkbird-int/inkbird-int-cook-control.js');
-const Strategy = registry.get('ll-strategy-dashboard-inkbird-int-cook-control');
-const prefix = 'sensor.test_inkbird';
-const config = {prefix,model:'int14_bw'};
-const states = {'input_text.inkbird_sensor_prefix':{state:prefix}, 'input_select.bbq_language':{state:'English'}};
-for (let n=1;n<=4;n++) for (const channel of ['internal','ambient']) {
-  states[`${prefix}_probe_${n}_${channel}_temperature`] = {state:'22',attributes:{unit_of_measurement:'\u00b0C'}};
-}
-const result = await Strategy.generate(config,{states});
-assert.equal(result.inkbird_model,'int14_bw');
-const probes = JSON.stringify(result.views.find(v=>v.path==='probes'));
-assert.doesNotMatch(probes,/food_[1-4]_temperature|picture-elements/);
-for (const id of Object.keys(states).filter(id=>id.startsWith(prefix))) assert.ok(probes.includes(id));
-function styleCheck(node) {
-  if (!node || typeof node !== 'object') return;
-  if (node.styles) for (const [key,value] of Object.entries(node.styles)) {
-    for (const rules of key === 'custom_fields' ? Object.values(value) : [value]) {
-      assert.ok(Array.isArray(rules));
-      assert.ok(rules.every(rule=>rule && typeof rule === 'object' && !Array.isArray(rule)));
-    }
-  }
-  Object.values(node).forEach(styleCheck);
-}
-styleCheck(result);
-await assert.rejects(Strategy.generate({...config,model:'int14s_bw'},{states}),/requires/);
-await assert.rejects(Strategy.generate({...config,prefix:'invalid'},{states}),/requires/);
-await assert.rejects(Strategy.generate(config,{states:{}}),/YAML package/);
-await assert.rejects(Strategy.generate(config,{states:{'input_text.inkbird_sensor_prefix':{state:prefix}}}),/eight/);
-await assert.rejects(Strategy.generate(config,{states:{...states,[`${prefix}_configured_model_profile`]:{state:'int14s_bw'}}}),/only/);
+const Strategy=registry.get('ll-strategy-dashboard-inkbird-cook-control');
+assert.notEqual(Strategy,oldSingleCook,'The concurrent dashboard must not reuse a cached single-cook constructor');
+assert.equal(registry.get('ll-strategy-dashboard-inkbird-int-cook-control'),oldSingleCook);
+const states={'input_select.bbq_language':{state:'Italiano'}};
+const copy=structuredClone(states),result=await Strategy.generate({}, {states});
+assert.deepEqual(states,copy);
+assert.deepEqual(result.views.map(v=>v.path),['cook','history','settings']);
+assert.equal(result.views[0].cards[0].type,'custom:inkbird-cook-panel');
+assert.equal(result.views[1].cards[0].history,true);
+assert.ok(Strategy.shouldRegenerate({}, {states:{}}, {states}));
 assert.equal(registry.has('ll-strategy-dashboard-inkbird-bbq'),false);
-console.log('Cook Control preview: 8 channels, valid styles, model guards and isolated strategy registration passed.');
-const detected = {...states, [`${prefix}_configured_model_profile`]:{state:'int14_bw'}};
-assert.equal((await Strategy.generate({}, {states:detected})).inkbird_model,'int14_bw');
-detected['input_text.inkbird_sensor_prefix'] = {state:''};
-const setup = await Strategy.generate({}, {states:detected});
-assert.equal(setup.views[0].path,'setup');
-assert.equal(setup.views[0].cards[1].tap_action.data.value,prefix);
-assert.ok(Strategy.shouldRegenerate({}, {states}, {states:{...states,'input_select.bbq_language':{state:'Italiano'}}}));
-const {connection,renderDiagram,renderHeader} = window.InkbirdIntCookControl;
-const now = Date.now();
-const recent = {...states,[`${prefix}_last_ble_update_epoch`]:{state:String(now/1000-10)}};
-assert.equal(connection(recent,prefix,now).fresh,true);
-assert.equal(connection({...recent,[`${prefix}_last_ble_update_epoch`]:{state:String(now/1000-121)}},prefix,now).fresh,false);
-assert.equal(connection({...states,[`${prefix}_last_cloud_update_epoch`]:{state:String(now/1000)}},prefix,now).fresh,false);
-assert.equal((renderDiagram(recent,prefix,1).match(/<circle /g)||[]).length,2);
-assert.match(renderHeader(recent,prefix,1),/Alerts off/);
-assert.match(renderHeader({...recent,'input_select.bbq_language':{state:'Italiano'}},prefix,1),/Avvisi disattivati/);
-console.log('One-time setup, language regeneration, freshness and two-sensor diagram passed.');
+
+const list=[{id:'int',channels:{1:{target:85,armed:true}}},{id:'iht1',channels:{1:{target:60,armed:true}}},{id:'iht2',channels:{2:{target:70,armed:true}}}];
+const before=structuredClone(list);
+for(const id of ['iht1','int','iht2','int'])assert.equal(selectedDevice(list,id).id,id);
+assert.equal(selectedDevice(list,'removed').id,'int');
+assert.deepEqual(list,before,'Changing view must not mutate any cook or require a HA service');
+
+let pages=0;
+const history=await loadHistory(async(action,payload)=>{
+  assert.equal(action,'history');assert.equal(payload.session_id,'session');
+  pages++;
+  return {summary:{name:'Cook'},events:[],samples:[{at:1000+payload.offset,channels:{1:{temperature:pages===1?85:null,ambient:110,target:85,armed:true}}}],next_offset:pages===1?1000:null};
+},'session');
+assert.equal(pages,2);assert.equal(history.samples.length,2);
+assert.deepEqual(series(history,'1').map(p=>p.y),[85,null]);
+assert.match(csv(history),/temperature_c/);assert.match(csv(history),/"85"/);
+assert.equal(escape('<img onerror="bad">'),'&lt;img onerror=&quot;bad&quot;&gt;');
+assert.match(dial({temperature:83,target:85,armed:true,fresh:true,status:'cooking'},{target:'target',noTarget:'No target'}),/stroke-dasharray|83.0/);
+assert.equal(probeColor({temperature:83,target:85,armed:true,fresh:true,status:'cooking'}),'#b85a27');
+assert.equal(probeColor({temperature:90,target:85,armed:true,fresh:false,status:'ready'}),'#88988d');
+assert.doesNotMatch(dial({temperature:null,target:0},{target:'target',noTarget:'No target'}),/NaN|target 0/);
+assert.match(probeFigure('int14_bw','1','#abc'),/wireless probe/);
+assert.match(probeFigure('iht2pb','1','#abc'),/built-in tip/);
+assert.match(probeFigure('iht2pb','3','#abc'),/external probe/);
+assert.doesNotMatch(sparkline(history.samples,'1','#abc','Trend'),/NaN|undefined/);
+
+const prefix='sensor.test_station',ip='sensor.test_handheld',second='sensor.test_handheld_two',now=Date.now();
+for(let n=1;n<=4;n++)for(const channel of ['internal','ambient'])states[`${prefix}_probe_${n}_${channel}_temperature`]={state:'22'};
+states[`${prefix}_last_ble_update_epoch`]={state:String(now/1000-10)};
+for(const p of [ip,second])for(const channel of ['built_in','external_1','external_2'])states[`${p}_${channel}_temperature`]={state:'unknown'};
+states[`${ip}_last_update_epoch`]={state:String(now/1000-10)};
+assert.equal(devices(states).length,3);
+assert.equal(channelEntity(states,ip,4),null);
+assert.equal(channelEntity(states,ip,3),`${ip}_external_2_temperature`);
+assert.equal(connection(states,prefix,now).fresh,true);
+assert.equal(connection(states,ip,now).fresh,true);
+assert.equal(connection({...states,[`${ip}_last_update_epoch`]:{state:String(now/1000-121)}},ip,now).fresh,false);
+assert.equal((renderDiagram(states,prefix,1).match(/<circle /g)||[]).length,2);
+assert.equal((renderDiagram(states,ip,1).match(/<circle /g)||[]).length,1);
+for(const card of devicePicker(states).cards)assert.equal(card.tap_action.confirmation,undefined);
+assert.equal(devices({...states,[`${prefix}_configured_model_profile`]:{state:'int14s_bw'}}).length,2);
+console.log('Cook Control: three devices, view-only selection, correct probe layouts, freshness, history pagination/export and read-only strategy passed.');

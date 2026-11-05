@@ -1,5 +1,50 @@
 # Changelog
 
+## Unreleased - 0.2.12 Development
+
+- The development branch retains the pending INT-12-BW and INT-11I-B BLE work. It is not included in stable v0.2.11, which is built from the v0.2.10 thermometer runtime.
+
+## 0.2.11 - Cook Control 1.2.0
+
+- Retain illustrated probes, circular gauges, station alarm/battery details and per-probe mini-graphs above the new independent-cook backend. Restore the custom preset editor, with separate Save and Apply commands; opening or saving it does not change a live target.
+
+- Give each INT-14-BW and IHT-2PB its own cook, targets, food names and alarm latches. The thermometer selector changes only the browser view; it never disarms another device or clears its targets.
+- Add an optional `inkbird_cook_control` backend to the separate dashboard bundle. It reads existing HA entities and stores private session archives, sampled temperatures, target changes and notification results. INT/IHT protocol drivers and integration versions are unchanged.
+- Add friendly thermometer names and food-name announcements, concurrent-cook overview, history graphs and authenticated CSV/JSON export. Preserve the existing Echo/TV router and add an explicit multi-Echo announcement destination, separate from silent TV popups.
+- Migrate the formerly selected cook once, preserve existing helper values and retire the shared single-cook automations. Targets, completed alerts and reminder deadlines persist across restarts.
+- Use the new `custom:inkbird-cook-control` strategy so cached single-cook constructors cannot bring back the old reset-on-switch dialog. Update English/Italian install and cache-recovery steps, preview images and the HACS showcase.
+- Publish the optional dashboard ZIP separately; it works with stable integration v0.2.10 too. The stable release is built from v0.2.10 and changes no thermometer runtime code apart from the manifest version. Pending INT-11I-B / INT-12-BW Bluetooth work stays on the development branch.
+
+## 0.2.11-beta.4
+
+- Publish optional **Cook Control 1.1.0** with an INT-14-BW / IHT-2PB thermometer picker. IHT uses its separate integration and shows built-in tip, external 1 and external 2, without invented ambient readings or a fourth probe.
+- Keep one active cook. A confirmed thermometer change disarms alerts, cancels reminders and clears old HA targets before changing source; selecting the already active device does nothing. Existing helper IDs, targets and notification settings survive an upgrade.
+- Add source guards for delayed readings and reminders, model-aware history and battery displays, and distinct names for multiple IHT devices. No thermometer writes or integration/domain merge.
+- Update the GitHub/HACS showcase, real IHT screenshot, English/Italian installation and upgrade guides, and test notes. The Cook Control ZIP works with stable integrations and is installed separately from HACS.
+- Thermometer runtime is unchanged from beta.3 apart from the manifest version. INT-11I-B / INT-12-BW reconnect validation remains pending; stable stays v0.2.10.
+
+## 0.2.11-beta.3
+
+- Enable continuous read-only GATT polling for INT-11I-B following @tolixx's local-adapter and ESPHome proxy measurements in issue #9. Do not deliberately end its session after 20 seconds; use the existing five-second normal reconnect pause and ten-second minimum pause after a failed connection cycle. The station can still disconnect itself, and connection attempts can extend recovery time.
+- Keep INT-11I-B temperature/battery decoding, entity IDs, experimental status and read-only restrictions unchanged. Other models retain their beta.2 behavior. Stable remains v0.2.10.
+- Add a focused [INT-11I-B reconnect test](docs/int11i_b_beta_test.md). The reporter's local patch is encouraging; this packaged beta still needs the same station/proxy follow-up before calling recovery validated.
+
+## 0.2.11-beta.2
+
+- Keep INT-12-BW BLE sessions open instead of ending them after 20 seconds. Notifications still update immediately; fallback reads now use the configured interval (10 seconds by default) for temperatures, basic state and batteries.
+- Wake the INT-12-BW loop on disconnect and retry after a five-second pause. Failed connection cycles retain a ten-second pause and ask Home Assistant for the current scanner device again; ordinary connection errors/timeouts no longer accumulate four attempts inside one cycle.
+- Bound INT-12-BW subscription, fallback-read and disconnect waits. Release runtime state and the connection lock even when disconnect cleanup fails. Add connection counters, timestamps and error types to sanitized diagnostics.
+- Record @gilgamezh's beta.1 hardware confirmation: the asymmetric three-channel layout matches the app, docking clears readings, and batteries no longer get overwritten. The parser and entity IDs are unchanged in beta.2.
+- Keep INT-12-BW experimental until reconnect/wake-up testing is complete. No new write commands or LAN/cloud validation; other models retain their existing connection policy. See the updated [reconnect test guide](docs/int12_bw_beta_test.md).
+
+## 0.2.11-beta.1
+
+- Fix experimental INT-12-BW BLE decoding using issue #7 captures and the model-specific app layout: ten-byte FF01 temperatures, three-byte 2A19 battery and seven-byte FF03 basic status.
+- Route INT-12-BW data by characteristic UUID and parse FF02 settings strictly, preventing status/settings packets from overwriting battery percentages.
+- Map probe 1 food/ambient and probe 2 food only. Preserve existing valid temperature IDs and remove the previously unmapped probe 2 ambient temperature entity on setup.
+- Add capture replay and runtime regression tests. The fix still needs live confirmation from the reporter; INT-12-BW remains experimental. No changes to INT-14-BW parsing, write commands or reconnect timing.
+- Include a [short BLE test guide](docs/int12_bw_beta_test.md) and a runtime-only manual installation ZIP with license notices. Stable users can remain on v0.2.10.
+
 ## 0.2.10
 
 - Add optional Inkbird INT Cook Control for one INT-14-BW: single-prefix discovery/setup, English/Italian core labels, two-sensor probe diagrams, responsive controls and real HA screenshots.

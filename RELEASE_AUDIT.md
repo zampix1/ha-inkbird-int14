@@ -1,6 +1,6 @@
 # Release Audit
 
-Last reviewed: 2026-10-26
+Last reviewed: 2026-11-05
 
 ## Public Positioning
 
@@ -15,7 +15,69 @@ Last reviewed: 2026-10-26
 
 The integration supports local BLE, local Tuya LAN where the model and DP map have been validated, and optional experimental read-only cloud history for DP109. It does not support live cloud control or cloud writes.
 
+## Cook Control 1.2.0, 2026-11-05
+
+- Optional preview bundle attached to stable `v0.2.11`. A small separate backend owns per-device cooks, target/notification latches and private archives; it reads registered INT/IHT entities and sends through the existing notification router. It never calls a thermometer write service.
+- Three simultaneous sessions on one INT-14-BW and two IHT-2PB devices were recorded, finished and exported on HA 2026.11.0. Legacy helper values were preserved. The user confirmed the two selected Echo announcements and silent LG popup; a true fresh-device threshold crossing remains pending.
+- The Python suites cover isolation, migration, restart latches, reminders, histories, spoken food names and explicit Echo destinations. Node checks cover the canonical strategy even with a cached old constructor. Desktop/mobile checks verify 4/3/3 layouts, illustrated probes, circular gauges, no horizontal overflow, view-only selection, and custom preset save/apply isolation.
+- Upgrade instructions replace the strategy with `custom:inkbird-cook-control`, keep one versioned module resource, and explain the obsolete 1.1.0 confirmation dialog. Images are isolated previews with declared sample data, not screenshots of a private installation.
+- The deterministic optional bundle has 18 allowlisted entries, including the backend and visual module. No private device references, captures, tools, secrets or caches belong in it. Gitleaks and TruffleHog report no secrets; detect-secrets reports no findings in Cook Control and only existing reviewed field-name/UI-label matches elsewhere.
+- The stable release is prepared in an isolated branch based on v0.2.10. Its thermometer Python runtime is byte-identical to that baseline except for the manifest version. Main retains the pending BLE changes under 0.2.12 development. Publication is gated on Tests/HACS/Hassfest for the stable commit/tag and a downloaded-asset hash match.
+
+## Cook Control 1.1.0, 2026-11-04
+
+- `v0.2.11-beta.4` publishes the previously local INT/IHT selector, source-specific
+  temperature/history/battery handling and guarded HA-only cook reset. A repeat
+  selection of the active thermometer is a no-op. Same-named devices are distinct.
+- The optional dashboard follows one cook, not simultaneous independent sessions.
+  INT-14-BW and IHT-2PB retain their separate integrations and model-specific
+  layouts. Normal dashboard targets never write physical thermometer settings.
+- 275 Python tests, frontend Node checks, Ruff format/lint and external-cache
+  compilation pass. Tests cover source changes, stale/missing readings, reminders,
+  upgrade-safe helpers, same-device selection and notification routing.
+- The read-only HA check preserved all 87 protected settings and all three
+  deployed package/module hashes. No service calls, threshold changes, restart,
+  reload or deployment. No fresh hardware readings were available on this date.
+  Earlier INT and IHT delivery tests remain bounded as described in VALIDATION.md.
+- Gitleaks and TruffleHog find no secrets. Detect-secrets reports only eight
+  reviewed field-name/UI-label matches, not credentials. Generated caches were
+  removed. Public screenshots exclude home navigation, account and speaker IDs.
+- English/Italian guides include simple upgrade steps, reset-on-switch behavior,
+  independent device alarms and separate stable-compatible dashboard installation.
+  The optional ZIP uses the existing 12-file allowlist and reproducible metadata.
+- Integration runtime differs from beta.3 only in the manifest version. The
+  INT-11I-B / INT-12-BW reconnect work is not promoted to stable by this release.
+  IHT-2PB's integration repository is untouched; stable remains v0.2.10.
+- Publication requires green Tests/HACS/Hassfest on the commit and tag and a
+  downloaded-package hash match. The HACS README is updated for beta.4; stable
+  installations can keep their runtime and download just the dashboard asset.
+
+## INT-11I-B Reconnect Beta, 2026-11-04
+
+- `v0.2.11-beta.3` sets `continuous_gatt_polling=True` for INT-11I-B. Runtime changes versus beta.2 are limited to this profile metadata and the manifest version; the shared connection implementation is unchanged.
+- Regression tests cover polling beyond the former 20-second limit, normal versus failed-cycle retry pauses, existing connector arguments, cleanup and unchanged read-only capabilities. Other profiles retain their beta.2 policy.
+- The isolated release tree passes 202 tests, Ruff formatting/lint, Cook Control frontend checks and compilation with bytecode outside the tree. No test, Ruff or bytecode caches are included.
+- Gitleaks and TruffleHog found no secrets. Detect-secrets found eight existing field-name/label matches for `cloud_api_key` and `cloud_api_secret`; manual inspection confirmed no credential values.
+- The optional manual ZIP contains only the component, license notices and the INT-11I-B test guide. Pending local dashboard changes and household configuration are excluded.
+- No Home Assistant deployment, restart or live-device changes were part of this release check. @tolixx's local-patch measurements support trying the packaged beta, but do not replace its follow-up hardware test. INT-11I-B remains experimental and read-only; station-initiated disconnects and longer failed-connect gaps remain possible.
+- Publication is gated on Tests, HACS and Hassfest for the commit and tag, with the uploaded ZIP checked against the local package. Stable remains `v0.2.10`.
+
 ## Release State
+
+Stable `v0.2.11` publishes optional Cook Control 1.2.0 with independent
+concurrent INT/IHT cooks, food-name announcements, persistent history and an
+updated showcase. Its integration runtime is unchanged from v0.2.10 apart from
+the manifest version. The bundle also works with v0.2.10 and does not require
+installing the Bluetooth beta. See [Cook Control validation](examples/cook_control/VALIDATION.md).
+
+Prerelease `v0.2.11-beta.3` enabled continuous read-only GATT polling for
+INT-11I-B, following @tolixx's measurements in issue #9. Its decoder, entity
+IDs, experimental status and write restrictions are unchanged. This is a
+profile-level change; other models retain their beta.2 behavior. The
+packaged update still needs the reporter's follow-up on real hardware.
+
+The beta also retains the INT-12-BW parser and reconnect work from beta.1
+and beta.2. Those changes remain outside the stable v0.2.11 branch. See the dated audits below.
 
 Release `v0.2.10` adds the optional INT-14-BW Cook Control bundle, native Alexa/TV notification routing, bilingual setup guides and real dashboard screenshots. HACS still installs only the integration; the optional ZIP is installed separately. Runtime Python files are unchanged from `v0.2.7`; only the manifest version is bumped. The release retains the model photo gallery, Options/reload fixes and existing model-support boundaries.
 
@@ -104,3 +166,25 @@ The `v0.2.8` presentation review on 2026-10-19 passed all 68 tests, Ruff formatt
 - Battery percentages are station-reported values and may remain at 100% for long periods.
 - Cataloged models still need sanitized hardware captures before live support can be enabled honestly.
 - HACS, hassfest and release packaging must pass again before the next stable tag.
+
+## INT-12-BW Prerelease, 2026-10-27
+
+### Beta.2 Reconnect Recovery
+
+- @gilgamezh confirmed beta.1 on INT-12-BW station V1.2.7 / probes v1.1.4 through ESPHome proxies, including the app's asymmetric layout, three probe temperatures, station temperature, batteries and docking. The report also describes long reconnect gaps; these are not dismissed as normal standby.
+- Beta.2 removes this model's timed session cutoff, wakes its loop on disconnect, uses configured fallback reads for FF01/FF03/2A19 and refreshes HA's scanner device between failed connection cycles. Normal disconnects wait five seconds; failed cycles wait ten. Connector/backend retries can take longer, so these are not end-to-end recovery guarantees.
+- The connector gets one ordinary connection-error/timeout attempt per INT-12-BW cycle; transient retry handling stays in the library. Missing HA scanner devices are retried without fabricating an empty device. Subscription setup, fallback-read batches and disconnect cleanup are bounded. Cleanup always clears the runtime client reference and releases the lock, including transport changes and cancellation.
+- All 199 tests pass: production methods exercised with HA/radio boundary doubles cover disconnect callbacks, wake-up, timeout recovery, cancellation, transport switching, polling intervals and unchanged INT-14/INT-12E policies. Parser regression tests and Cook Control Node tests pass. Ruff format/lint and external-cache compilation pass. These are not live beta.2 hardware tests.
+- Diagnostics expose only connection counts, timestamps, session duration and an error type/code; no raw backend messages were added. Gitleaks and TruffleHog report no secrets. Detect-secrets reports the same eight reviewed field-name/UI-label matches, not credentials.
+- The manual ZIP uses the same explicit runtime/license/test-guide allowlist as beta.1, excluding tests, tools, captures, home configuration and dashboards. Verify deterministic rebuilds, committed-file content and the downloaded release hash before announcing it. Require successful Tests/HACS/Hassfest on main and tag.
+- INT-12-BW stays experimental pending the new reconnect report. Parser code, valid entity IDs, device writes and other model connection policies are unchanged. No production HA deployment/restart, IHT-2PB change or unrelated README draft is part of this release.
+
+### Beta.1 Parser Fix
+
+- `v0.2.11-beta.1` addresses issue #7 only: dedicated ten-byte FF01 temperature parsing, three-byte 2A19 battery and seven-byte FF03 basic status, with strict characteristic-based routing. FF02 settings replies cannot overwrite battery data.
+- The app decoder and sanitized captures support an asymmetric mapping: probe 1 food/ambient, probe 2 food, and station temperature separately. Bytes 4 and 7 remain unmapped. No new device-control commands, session timing or other model parsers are introduced.
+- INT-12-BW remains experimental. This is capture replay and code validation, not a real-device confirmation of the fixed build. The test guide asks for both app probe screens, a room-temperature comparison, both dock/hand-warming permutations and recovery after reconnect. LAN, cloud history, writes and alarm-bit semantics are not validated by this prerelease. Existing experimental controls are not part of the requested test.
+- All 178 tests pass, including production runtime replay and INT-14-BW baseline regressions. Ruff format/check, compileall with bytecode outside the repository, Cook Control Node checks and the cache audit pass.
+- Gitleaks and TruffleHog find no secrets. Detect-secrets flags only the eight existing `cloud_api_key` / `cloud_api_secret` constants and UI labels, inspected as non-secret field names. Public tests contain only temperature/status/settings fixtures, not hardware addresses or device-info payloads containing private identifiers.
+- The manual ZIP is built from the release commit using an explicit file allowlist: the integration directory, LICENSE, THIRD_PARTY_NOTICES.md and the INT-12-BW test guide. It excludes dashboards, tests, private captures, tools, credentials and caches. HACS still uses the tagged source with the existing hacs.json format.
+- The unrelated README presentation draft is excluded. No local Home Assistant installation, restart, integration reload or device operation is performed. IHT-2PB is untouched. v0.2.10 remains stable; tag CI and downloadable asset verification are required before announcing the beta.

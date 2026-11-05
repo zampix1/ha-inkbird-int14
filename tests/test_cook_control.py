@@ -27,7 +27,13 @@ class States:
         return str(self.values.get(key, "unknown"))
 
     def __getitem__(self, key):
-        return SimpleNamespace(state=self(key), last_changed=self.values.get(key + ":changed", NOW))
+        if key not in self.values:
+            return None
+        return SimpleNamespace(
+            state=self(key),
+            last_changed=self.values.get(key + ":changed", NOW),
+            context=SimpleNamespace(id=self.values.get(key + ":context", "test-context")),
+        )
 
     def __getattr__(self, domain):
         parent = self
@@ -45,6 +51,7 @@ def render(source, values=None, **variables):
     env = Environment(undefined=StrictUndefined)
     env.filters["regex_match"] = lambda value, pattern: re.match(pattern, value) is not None
     env.filters["bitwise_and"] = lambda a, b: a & b
+    env.tests["match"] = lambda value, pattern: re.match(pattern, value) is not None
 
     def is_number(value):
         try:
@@ -67,9 +74,17 @@ def render(source, values=None, **variables):
 def live_values(n=1):
     return {
         "input_text.inkbird_sensor_prefix": "sensor.test_inkbird",
+        "input_text.inkbird_sensor_prefix:changed": datetime(2025, 12, 31, tzinfo=timezone.utc),
+        f"input_text.inkbird_name_{n}": "Probe",
         "sensor.test_inkbird_last_ble_update_epoch": NOW.timestamp() - 10,
+        f"sensor.test_inkbird_probe_{n}_internal_temperature": "85",
         f"input_boolean.bbq_probe_{n}_enabled": "on",
         f"sensor.bbq_probe_{n}_control_temperature": "85",
+        f"sensor.bbq_probe_{n}_control_temperature:source_prefix": "sensor.test_inkbird",
+        f"sensor.bbq_probe_{n}_control_temperature:source_entity": f"sensor.test_inkbird_probe_{n}_internal_temperature",
+        f"sensor.bbq_probe_{n}_control_temperature:rate_valid_after": NOW.timestamp() - 1,
+        f"sensor.bbq_probe_{n}_status:source_prefix": "sensor.test_inkbird",
+        f"sensor.bbq_probe_{n}_status:source_entity": f"sensor.test_inkbird_probe_{n}_internal_temperature",
         f"input_number.inkbird_target_{n}": "85",
     }
 
@@ -108,7 +123,8 @@ def test_alarm_status(n, change, expected):
 def test_control_conversion_and_non_numeric():
     sensor = SENSORS["bbq_probe_1_control_temperature"]
     entity_id = "sensor.test_inkbird_probe_1_internal_temperature"
-    values = {"input_text.inkbird_sensor_prefix": "sensor.test_inkbird", entity_id: "185", entity_id + ":unit_of_measurement": "\u00b0F"}
+    values = live_values()
+    values.update({entity_id: "185", entity_id + ":unit_of_measurement": "\u00b0F"})
     assert float(render(sensor["state"], values)) == 85
     for invalid in ("unknown", "unavailable", "nan", "inf", "fault"):
         values[entity_id] = invalid
@@ -144,7 +160,8 @@ def test_dismiss_and_cancel_stop_both_reminders():
             script = PACKAGE["script"][f"bbq_{kind}_{n}"]
             assert script["mode"] == "restart"
             guard = script["sequence"][4]["value_template"]
-            values = {f"sensor.bbq_probe_{n}_status": "ready", f"input_boolean.bbq_probe_{n}_enabled": "on"}
+            values = live_values(n)
+            values[f"sensor.bbq_probe_{n}_status"] = "ready"
             assert render(guard, values, current_session="new", session_at_start="old") == "False"
             assert render(guard, values, current_session="same", session_at_start="same") == "True"
             values[f"sensor.bbq_probe_{n}_status"] = "idle"
@@ -218,7 +235,28 @@ def test_helpers_restore_and_no_default_devices():
     for domain in ("input_text", "input_number", "input_boolean", "input_select"):
         assert all("initial" not in helper for helper in PACKAGE[domain].values())
     assert PACKAGE["input_select"]["bbq_tts_speaker"]["options"] == ["none"]
-    assert PACKAGE["input_select"]["inkbird_dashboard_model"]["options"] == ["INT-14-BW"]
+    assert PACKAGE["input_select"]["inkbird_dashboard_model"]["options"] == ["INT-14-BW", "IHT-2PB"]
+
+
+def test_alexa_group_targets_are_exactly_configured_available_echoes():
+    variables = PACKAGE["script"]["bbq_notify"]["sequence"][-1]["then"][0]["variables"]
+    values = {
+        "input_text.bbq_alexa_group_targets": "media_player.test_living, media_player.test_dining",
+        "input_text.bbq_alexa_group_name": "Day zone",
+        "input_select.bbq_tts_speaker": "Day zone",
+        "media_player.test_living": "idle",
+        "media_player.test_dining": "idle",
+        "media_player.test_bedroom": "idle",
+    }
+
+    def entities(_):
+        return ["media_player.test_living", "media_player.test_dining", "media_player.test_bedroom"]
+
+    targets = render(variables["alexa_targets"], values, integration_entities=entities)
+    assert targets == "['media_player.test_living', 'media_player.test_dining']"
+    assert render(variables["alexa_group"], values, alexa_targets=["media_player.test_living", "media_player.test_dining"]) == "True"
+    values["input_text.bbq_alexa_group_targets"] += ", media_player.not_an_echo"
+    assert render(variables["alexa_targets"], values, integration_entities=entities) == "[]"
 
 
 def test_bundle_is_reproducible_and_has_no_household_or_development_files(tmp_path):
@@ -228,7 +266,7 @@ def test_bundle_is_reproducible_and_has_no_household_or_development_files(tmp_pa
     builder["build"](second)
     assert first.read_bytes() == second.read_bytes()
     with ZipFile(first) as archive:
-        assert len(archive.namelist()) == 12
+        assert len(archive.namelist()) == 18
         assert set(archive.namelist()) == set(builder["FILES"].values()) | {"cook-control/LICENSE.integration"}
         for filename in archive.namelist():
             assert ".." not in Path(filename).parts

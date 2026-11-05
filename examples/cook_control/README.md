@@ -1,143 +1,153 @@
-# Inkbird INT Cook Control
+# Inkbird Cook Control
 
-Four probes, food and ambient temperatures, a graph of the cook and an alert you
-can actually hear. Cook Control is an optional dashboard maintained here alongside
-the Inkbird INT integration. You can keep using your own dashboards instead.
+One station, two handhelds, three different cooks. Each keeps its own targets and
+alerts. Switching thermometer only changes what you see.
 
-[Guida in italiano](README.it.md) | [Test results and limits](VALIDATION.md)
-
-**Optional dashboard, available with integration release v0.2.10.** This version is for
-**one INT-14-BW station**. Its two-channel probe diagram is deliberately different
-from the five-channel INT-14S/INT-12E layout. Do not force another model into it.
+**[Download Cook Control 1.2.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11/inkbird-cook-control-1.2.0.zip)**.
+This preview bundle is attached to stable integration v0.2.11 and works with
+v0.2.10 too. The older 1.1.0 ZIP has the single-cook design.
+[Guida in italiano](README.it.md).
 
 ## Install
 
-Start with the Inkbird INT integration working and all eight food/ambient entities
-enabled. Install **button-card**, **card-mod** and **mini-graph-card** from HACS.
-This package was tested on HA **2026.10.4**.
+First install Inkbird INT for an INT-14-BW, or the separate
+[IHT-2PB integration](https://github.com/zampix1/ha-inkbird-iht2pb-local).
+Their temperature entities must already exist. You can use multiple IHT devices.
+Cook Control reads those entities; it does not connect to the thermometers itself.
 
-**[Download Cook Control](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.10/inkbird-int-cook-control.zip)**
+On HA 2026.11 or newer, HACS lives under **Settings > Marketplace**. It is already
+built in; do not reinstall the old HACS custom integration. This does not change
+the separate Cook Control bundle installation below.
 
-Extract the ZIP first. The HA configuration directory is the folder containing
-`configuration.yaml` (normally `/config`). Merge the two folders into it; do not
-put the entire ZIP or an extra `inkbird-int-cook-control` parent folder there:
-
-```text
-config/
-  configuration.yaml
-  packages/inkbird_bbq.yaml
-  www/inkbird-int/cook-base-v1.4.3.js
-  www/inkbird-int/inkbird-int-cook-model.mjs
-  www/inkbird-int/inkbird-int-cook-control.js
-```
-
-The ZIP's `cook-control` folder contains the guides, licenses and dashboard YAML;
-it does not need to be copied into HA.
-
-1. Make a HA backup. Copy `packages` and `www` from the Cook Control bundle into
-   your HA configuration directory. The source equivalents are beside this guide.
-   **Replace an existing `inkbird_bbq.yaml`; never load two BBQ packages.**
-   Existing helper IDs are preserved so upgrades retain targets and names.
-2. If packages are not configured, add this beneath the existing `homeassistant:`
-   section in `configuration.yaml`. Do not duplicate that section:
+1. Back up Home Assistant. Finish active cooks before upgrading from 1.1.0.
+2. Copy these folders from the matching bundle into the HA configuration folder:
+   `custom_components`, `packages`, and `www`. Merge folders; do not replace your
+   entire existing `custom_components` directory. There must be only one BBQ package.
+3. If packages are not enabled, add this under your existing `homeassistant:` key:
 
    ```yaml
    homeassistant:
      packages: !include_dir_named packages
    ```
 
-   Check the configuration, then restart HA. Different include layout? See the
-   [HA package guide](https://www.home-assistant.io/docs/configuration/packages/).
-3. In **Settings > Dashboards > Resources**, add the JavaScript module
-   `/local/inkbird-int/inkbird-int-cook-control.js?v=1.0.4`.
-   Enable Advanced mode in your HA profile if Resources is hidden. When upgrading,
-   edit the existing resource URL instead of adding a duplicate. Reload the browser.
-4. Add **Inkbird Cook Control** from the Community dashboards section. If that
-   choice is not shown, create an empty dashboard and paste [dashboard.yaml](dashboard.yaml)
-   into its raw configuration editor:
+4. Check the HA configuration and restart. The package loads the small optional
+   `inkbird_cook_control` backend. INT and IHT driver folders are unchanged.
+5. Update the existing JavaScript module resource to
+   `/local/inkbird-int/inkbird-int-cook-control.js?v=1.2.0` and reload the browser.
+6. In your existing dashboard's raw configuration, use [dashboard.yaml](dashboard.yaml):
 
    ```yaml
    strategy:
-     type: custom:inkbird-int-cook-control
+     type: custom:inkbird-cook-control
    views: []
    ```
 
-5. On first opening, confirm **Use this thermometer**. With one INT-14-BW, it is
-   detected automatically. This sets the shared prefix once, not in several files.
-   No thermometer settings are written.
+   Set its display name to **Cook Control**. The new strategy name prevents a
+   cached single-cook strategy from showing the former reset-on-switch dialog.
+   Completely reload the browser or reopen the Companion app after upgrading.
 
-If discovery is ambiguous, add `prefix: sensor.your_inkbird` under `strategy:`.
-Find it by removing `_probe_1_internal_temperature` from your probe 1 food entity.
-A different configured model is rejected. This package has one shared set of
-helpers; multiple independent stations are not supported yet.
+The new cards do not need button-card, card-mod or mini-graph-card. Those can stay
+installed for other dashboards. The old presentation files remain in the bundle
+for compatibility and attribution, but are not loaded by the new strategy.
 
-HACS installs the integration, **not this optional package**. There is no second
-custom integration to install. Maintainers can produce the copy-ready ZIP with
-`python examples/cook_control/build_bundle.py --output /path/to/inkbird-int-cook-control.zip`.
+The backend currently requires an **administrator HA account** for its controls
+and archives. No extra account, cloud service or database is required.
 
-## Start A Cook
+### Still Seeing "Switch Thermometer?"
 
-Give the probe a name, tap its card to edit the HA target, then turn on **Probe
-alerts** for the probes you use. Unused probes can show room temperature without
-announcing anything. For a new cook, switch that probe's alerts off and back on.
+That reset warning belongs to 1.1.0, not this version. Check that there is only
+one Cook Control module resource, its URL ends in `?v=1.2.0`, and the dashboard
+strategy is `custom:inkbird-cook-control`. Close old HA tabs and reload the app.
+Do not reinstall or pair the thermometer, and do not reset your cook to fix a
+cached frontend. Changing view in 1.2.0 never clears targets or disarms alerts.
 
-- **HA target** drives dashboard notifications. Recipe buttons change helpers,
-  not the thermometer's firmware alarm.
-- **Station alarm** displays the device's reported threshold. Its physical sound
-  switch and alarm remain independent of HA.
+## Cooks And Names
 
-A target alert fires after 30 continuous seconds at or above the target, once
-per armed cook rather than after every reconnect. Changing the name, target or
-thermometer cancels pending reminders. **Dismiss** cancels both snooze and the
-optional post-target reminder. A new **Snooze** replaces the previous one.
+Choose a thermometer at the top. Use the pencil to call it something useful,
+such as "Smoker" or "Kitchen thermometer". Each channel also has a food/probe name:
+"Brisket", "Chicken", or whatever is on that probe.
 
-The reminder is timed from the HA target, **not** from removal from heat.
-Targets and recipe presets are not food-safety assessments or guarantees of
-doneness. Check the cook yourself.
+Those are the names used in announcements. Alexa says "Brisket has reached
+85 degrees", not a device code or an entity ID. A channel without a food name
+uses its physical probe label and the thermometer's friendly name.
 
-## Echo And TV
+The probe cards keep their illustrated probe, circular temperature gauge and
+mini-graph. **Name and presets** opens the controls below each card. Choose
+**My preset** to edit its name and temperature. **Save** stores that preset
+without changing the cook; **Use on this probe** applies it only to that channel.
+Closing the editor does neither. The live mini-graphs show up to an hour of
+recent readings; the session archive keeps the whole recorded cook.
 
-In Settings, refresh devices, select your Echo, choose **Alexa (native)** and
-enable announcements. It needs a working **Alexa Media Player** installation,
-not OpenAI or a TTS API key.
+Set the HA target, then enable its alert. This also starts recording if that
+thermometer has no active cook. You can instead name a cook and start recording
+before enabling any alert. Targets are in Celsius, including when HA displays
+the source sensor in Fahrenheit.
 
-For TV text, enter its `media_player` entity and notify service name without
-`notify.`. Enable TV alerts and press **Test notification**. The tested LG webOS
-popup is brief and **silent**. Cook Control does not turn on the TV, change inputs,
-alter the volume or interrupt the programme with audio.
+INT-14-BW has four food channels plus their ambient readings. IHT-2PB has its
+built-in tip and two external channels, not an invented ambient sensor.
+An unplugged probe remains without a reading. Changing view never changes
+another cook, including from a second browser.
 
-Persistent HA notifications are created first. Optional phone, TV and speech
-outputs follow. Invalid speech settings produce a visible error. A successful
-service call is not proof of physical delivery: test your own outputs.
+The target must be reached for 30 continuous seconds with recent local readings.
+Each channel announces once per target/name/arming generation. Editing one
+channel cancels only its own pending reminders and allows a new target alert.
+Snooze and rest reminders belong to that cook and channel, not the visible card.
 
-Choose **English** or **Italiano** in Settings. Core labels and target announcements
-follow it; some inherited recipe and advanced-setting labels remain English.
+**Finish cook** archives that thermometer's session and disarms only its alerts.
+Targets and names remain available for next time. Nothing writes settings to the
+physical thermometer.
 
-## Connection And Timer Limits
+## Echo, TV And Phones
 
-The header distinguishes a normal BLE gap from stale data. After 120 seconds
-without a local packet, status stops qualifying for a new target alarm. HA's
-minute-based template clock can delay that boundary by up to a minute. Cloud
-history is not treated as a live cooking feed.
+Open Settings. Echo speech uses **Alexa (native)** and your existing Alexa Media
+Player integration. OpenAI is not involved. A single Echo can be selected directly.
+For several Echos, fill in an announcement group name and a comma-separated list
+of their media-player entities, refresh the page/device list, and select that group.
+This is an announcement destination list, not an Amazon multi-room music group.
 
-Battery percentages come from the station. Suspect reports are flagged and do
-not trigger a low-battery alert. Optional stall detection requires 45 continuous
-minutes of fresh, below-target data changing by less than 1 C/hour.
+TV alerts are separate, **silent on-screen text**. Configure the TV media-player
+entity and its notify service name without `notify.`. The TV is not an Alexa
+speaker. Cook Control never turns it on, changes inputs or adjusts any volume.
 
-Timers do not survive HA restarts or automation reloads. HA cannot notify you
-while it is down. These are advisory alerts, not safety systems.
+HA persistent notifications are created first. Optional phone, TV and speech
+outputs follow. Test the outputs in Settings: an accepted HA call alone does not
+prove that someone heard the Echo or saw the TV popup.
+
+## History
+
+The History tab shows active and finished cooks, their temperature graph, target
+changes and notification results. Download CSV for readings or JSON for the full
+session. Samples are recorded every 30 seconds while a cook is active; missing
+or stale readings produce gaps, not zero-degree samples.
+
+Archives live privately in HA `.storage`, independently of Recorder retention.
+Include them in HA backups. They contain names, times, internal device references
+and readings; review exports before sharing them. Old cooks cannot be reconstructed
+from the former shared helpers, so this archive starts with the upgrade.
+
+On the first start, only the formerly selected thermometer's settings are migrated.
+Other thermometers start with zero targets and alerts off. Existing Echo/TV
+preferences and legacy helper values are retained. The old shared alarm automations
+are disabled; do not re-enable them alongside the backend.
+
+Targets, completed-alert latches and reminder deadlines survive a restart. A
+partly completed 30-second wait starts again. HA cannot send alerts while it is
+down, and it does not replay completed target alerts after reconnecting.
+
+Local packets older than 120 seconds do not qualify for alarms. Unknown values
+and cloud history are not live cooking data. Optional battery warnings respect
+suspect-report flags; IHT raw battery levels are never treated as percentages.
+Optional stall warnings use a 12-minute trend and a further 45-minute stable period.
 
 ## Sources And Rollback
 
-**zampix1/ha-inkbird-int14** supplies device communication, protocol handling and
-probe entities. This project maintains the adapted presentation and alarms.
-The visual base comes from Remco's MIT-licensed `remb0/inkbird-dashboard` v1.4.3.
-The generic Alexa/TV patch is also offered in
-[upstream PR #4](https://github.com/remb0/inkbird-dashboard/pull/4).
-Remco credits Boris Pustilnik for Cook Control's **dashboard design**, not this
-integration's protocol implementation. See [third-party notices](THIRD_PARTY_NOTICES.md).
-No code is fetched from Remco's repository at runtime.
+The INT and IHT integrations provide all thermometer communication. Cook Control
+adds the dashboard, independent cooks, archive and notification routing.
+The earlier presentation builds on Remco's MIT-licensed dashboard v1.4.3;
+see [third-party notices](THIRD_PARTY_NOTICES.md). Design credits do not imply
+that another project supplied this integration's device protocol.
 
-To roll back, restore the previous package and dashboard, check the configuration
-and restart HA. Remove the resource only when no dashboard uses it. Do not delete
-the Inkbird integration or pair the station again.
+To roll back, restore the previous package, resource URL and frontend files, remove
+the `inkbird_cook_control:` package entry, then check configuration and restart.
+Keep the archives and backend storage in your backup. Settings changed in 1.2.0
+are not automatically copied back into the old single-cook helpers.
