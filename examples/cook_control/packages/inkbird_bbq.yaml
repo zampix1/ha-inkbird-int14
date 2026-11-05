@@ -1,4 +1,6 @@
 # Optional INT-14-BW / IHT-2PB Cook Control package. See ../README.md.
+inkbird_cook_control:
+
 input_text:
   inkbird_sensor_prefix:
     name: Inkbird sensor prefix
@@ -34,6 +36,15 @@ input_text:
   bbq_tv_entity:
     name: BBQ TV media player
     icon: mdi:television
+    max: 100
+  bbq_alexa_group_name:
+    name: BBQ Alexa announcement group name
+    max: 80
+  bbq_alexa_group_targets:
+    name: BBQ Alexa announcement group speakers (comma separated)
+    max: 255
+  bbq_saved_tts_speaker:
+    name: BBQ remembered announcement speaker
     max: 100
   bbq_last_alert_1:
     name: Probe 1 last alert session
@@ -443,11 +454,7 @@ script:
         {% else %}false{% endif %}
     - condition: template
       value_template: "{{ prefix != states('input_text.inkbird_sensor_prefix') }}"
-    - action: script.bbq_reset_cook
-      data:
-        prefix: '{{ prefix }}'
-    # Commit the identity last. The prefix automation skips this script's context,
-    # so no delayed reset can erase a recipe armed after this call completes.
+    # Compatibility view selector only. Per-device settings live in the backend.
     - action: input_text.set_value
       target:
         entity_id: input_text.inkbird_sensor_prefix
@@ -580,7 +587,12 @@ script:
           {% set selected = states('input_select.bbq_tts_speaker') %} {% set available = states.media_player
              | rejectattr('state', 'in', ['unknown', 'unavailable'])
              | map(attribute='entity_id') | list %}
-          {% set retained = [selected] if selected is match('^media_player[.][a-z0-9_]+$') else [] %} {{ ['none'] + ((available + retained) | unique | sort) }}
+          {% set group_name = states('input_text.bbq_alexa_group_name') %}
+          {% set group = [group_name] if group_name not in ['unknown', 'unavailable', ''] and states('input_text.bbq_alexa_group_targets') not in ['unknown', 'unavailable', ''] else [] %}
+          {% set saved = states('input_text.bbq_saved_tts_speaker') %}
+          {% set retained = [selected] if selected is match('^media_player[.][a-z0-9_]+$') else [] %}
+          {% set remembered = [saved] if saved is match('^media_player[.][a-z0-9_]+$') else [] %}
+          {{ ['none'] + ((available + retained + remembered + group) | unique | sort) }}
     - action: input_select.set_options
       target:
         entity_id: input_select.bbq_tts_engine
@@ -693,17 +705,26 @@ script:
           speaker: '{{ states(''input_select.bbq_tts_speaker'') }}'
           engine: '{{ states(''input_select.bbq_tts_engine'') }}'
           alexa_speaker: '{{ states(''input_select.bbq_tts_speaker'') in integration_entities(''alexa_media'') }}'
+          alexa_targets: >-
+            {% set configured = states('input_text.bbq_alexa_group_targets').split(',') | map('trim') | list %}
+            {% set valid = namespace(value=true, targets=[]) %}
+            {% for entity in configured %}
+              {% if not entity is match('^media_player[.][a-z0-9_]+$') or entity not in integration_entities('alexa_media') %}{% set valid.value = false %}
+              {% elif has_value(entity) %}{% set valid.targets = valid.targets + [entity] %}{% endif %}
+            {% endfor %}
+            {{ valid.targets if valid.value else [] }}
+          alexa_group: >-
+            {{ states('input_select.bbq_tts_speaker') == states('input_text.bbq_alexa_group_name') and alexa_targets | count > 0 }}
       - choose:
         - conditions: '{{ engine == ''none'' or speaker == ''none'' }}'
           sequence:
           - stop: Speech disabled by the device selector.
         - conditions: |
-            {{ engine == 'Alexa (native)' and alexa_speaker
-               and has_value(speaker) }}
+            {{ engine == 'Alexa (native)' and ((alexa_speaker and has_value(speaker)) or alexa_group | default(false)) }}
           sequence:
           - action: notify.alexa_media
             data:
-              target: '{{ [speaker] }}'
+              target: '{{ alexa_targets if alexa_group | default(false) else [speaker] }}'
               title: '{{ title }}'
               message: '{{ tts_message | default(message, true) }}'
               data:
@@ -972,7 +993,42 @@ script:
           ''minutes since reaching the HA target. Check the cook.'' }}'
         tag: inkbird_rest_4
 automation:
+- id: inkbird_cook_remember_speaker
+  alias: Cook Control remember announcement speaker
+  triggers:
+  - trigger: state
+    entity_id: input_select.bbq_tts_speaker
+  conditions:
+  - condition: template
+    value_template: >-
+      {{ trigger.from_state is not none and trigger.to_state is not none
+         and trigger.to_state.state not in ['unknown', 'unavailable']
+         and (trigger.to_state.state != 'none' or trigger.to_state.context.user_id is not none) }}
+  actions:
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.bbq_saved_tts_speaker
+    data:
+      value: '{{ trigger.to_state.state }}'
+- id: inkbird_cook_restore_speaker
+  alias: Cook Control restore announcement speaker after startup
+  triggers:
+  - trigger: homeassistant
+    event: start
+  actions:
+  - delay: '00:00:15'
+  - action: script.bbq_refresh_media_targets
+  - variables:
+      saved: '{{ states(''input_text.bbq_saved_tts_speaker'') }}'
+  - condition: template
+    value_template: '{{ saved in (state_attr(''input_select.bbq_tts_speaker'', ''options'') or []) }}'
+  - action: input_select.select_option
+    target:
+      entity_id: input_select.bbq_tts_speaker
+    data:
+      option: '{{ saved }}'
 - id: inkbird_bbq_thermometer_changed
+  initial_state: false
   alias: BBQ disarm on direct thermometer change
   mode: restart
   triggers:
@@ -993,6 +1049,7 @@ automation:
     data:
       prefix: '{{ trigger.to_state.state }}'
 - id: inkbird_bbq_probe_reached_target
+  initial_state: false
   alias: BBQ probe reached target
   description: Notifies when a BBQ probe reaches its target temperature.
   triggers:
@@ -1072,6 +1129,7 @@ automation:
       ~ trigger.id].last_changed), as_timestamp(states.input_text.inkbird_sensor_prefix.last_changed)] | join('':'')
       }}'
 - id: inkbird_bbq_rest_reminder
+  initial_state: false
   alias: BBQ rest reminder
   description: Optional reminder measured from the HA target, not from removal from heat.
   triggers:
@@ -1109,6 +1167,7 @@ automation:
       entity_id: '{{ ''script.bbq_rest_'' ~ trigger.id }}'
   mode: parallel
 - id: inkbird_bbq_probe_battery_low
+  initial_state: false
   alias: BBQ probe battery low
   description: |
     Warns when a probe battery drops below the threshold set on the dashboard's Settings page. Toggled by input_boolean.bbq_battery_alerts.
@@ -1200,6 +1259,7 @@ automation:
       tag: inkbird_battery_{{ idx }}
   mode: parallel
 - id: inkbird_bbq_probe_stalled
+  initial_state: false
   alias: BBQ probe stalled
   description: |
     Fires when a probe's rate of change sits between -1 and +1 °C/h for 45 minutes while still below target. Toggled by input_boolean.bbq_stall_alerts.
@@ -1265,10 +1325,15 @@ automation:
     event: start
   - trigger: time_pattern
     hours: /1
+  - trigger: state
+    entity_id:
+    - input_text.bbq_alexa_group_name
+    - input_text.bbq_alexa_group_targets
   actions:
   - action: script.bbq_refresh_media_targets
   mode: single
 - id: inkbird_bbq_notification_action
+  initial_state: false
   alias: BBQ notification action
   description: Handles the Snooze / Dismiss buttons on a BBQ notification.
   triggers:
@@ -1316,6 +1381,7 @@ automation:
   mode: queued
   max: 20
 - id: inkbird_bbq_cancel_pending
+  initial_state: false
   alias: BBQ cancel pending reminders
   mode: queued
   max: 30

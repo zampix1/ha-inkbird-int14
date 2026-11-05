@@ -15,24 +15,23 @@ Food thermometers in Home Assistant. Follow your probe temperatures, keep a hist
 
 ## Cook Control
 
-Choose your **INT-14-BW or IHT-2PB**, follow the cook and get an alert without watching the screen. Cook Control can announce a target through an Echo and show a text popup on your TV. Native Alexa announcements need Alexa Media Player, not OpenAI.
+Use your **INT-14-BW and IHT-2PB thermometers together**. Each keeps its own food names, targets and alerts. Switching thermometer changes only the view: the other cooks keep running.
 
 <p>
-  <a href="https://raw.githubusercontent.com/zampix1/ha-inkbird-int14/main/docs/images/cook-control-live.png"><img src="https://raw.githubusercontent.com/zampix1/ha-inkbird-int14/main/docs/images/cook-control-live.png" alt="Cook Control: four INT-14-BW probes during a real cook" width="600"></a>
-  <a href="https://raw.githubusercontent.com/zampix1/ha-inkbird-int14/main/docs/images/cook-control-iht-mobile.png"><img src="https://raw.githubusercontent.com/zampix1/ha-inkbird-int14/main/docs/images/cook-control-iht-mobile.png" alt="Cook Control on IHT-2PB: built-in tip, unplugged external 1 and external 2" width="220"></a>
+  <a href="https://raw.githubusercontent.com/zampix1/ha-inkbird-int14/main/docs/images/cook-control-multi-int.png"><img src="https://raw.githubusercontent.com/zampix1/ha-inkbird-int14/main/docs/images/cook-control-multi-int.png" alt="Cook Control 1.2: independent station and handheld cooks, with food names and per-probe alerts" width="900"></a>
 </p>
 
-*INT-14-BW on the left, IHT-2PB on the right. Real Home Assistant screenshots; tap to enlarge.*
+*Cook Control 1.2 preview with sample readings. Tap to enlarge, or see the [IHT-2PB mobile view](https://raw.githubusercontent.com/zampix1/ha-inkbird-int14/main/docs/images/cook-control-multi-iht.png).*
 
-**One selected thermometer, one cook at a time.** INT-14-BW shows four probes with food and ambient readings. IHT-2PB shows the built-in tip and two wired probes, through the [separate IHT integration](https://github.com/zampix1/ha-inkbird-iht2pb-local). Other INT layouts are not mapped by Cook Control yet.
+**Your food names, not device codes.** Call a probe "Brisket" and that is the name used in its announcement. INT-14-BW shows four probes with food and ambient readings. Each IHT-2PB shows its built-in tip and two wired probes, through the [separate IHT integration](https://github.com/zampix1/ha-inkbird-iht2pb-local). Other INT layouts are not mapped by Cook Control yet.
 
-Switching thermometer asks for confirmation, disarms alerts and clears the previous cook's HA targets. Updating the dashboard or opening it again does not reset them. Echo and TV choices stay in place. Dashboard targets are separate from the thermometer's own alarms.
+**Keep the cook, not just the current temperature.** Start a named session, then revisit its graph, target changes and alerts in History. Download readings as CSV or the full session as JSON. Archives stay in HA, independently of Recorder cleanup.
 
-**[Download Cook Control 1.1.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11-beta.4/inkbird-cook-control-1.1.0.zip)** &nbsp; / &nbsp; **[Install guide](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/README.md)** &nbsp; / &nbsp; **[Guida italiana](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/README.it.md)**
+**[Download Cook Control 1.2.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11-beta.5/inkbird-cook-control-1.2.0.zip)** &nbsp; / &nbsp; **[Install guide](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/README.md)** &nbsp; / &nbsp; **[Guida italiana](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/README.it.md)**
 
-Start with your thermometer's temperature entities working. Install **button-card**, **card-mod** and **mini-graph-card** from HACS, then follow the guide to copy the package and add the dashboard. Cook Control is optional and installed separately: HACS does not install it automatically. **You can use this ZIP with the stable integration**; its download is attached to beta.4, but you do not need the beta's Bluetooth changes to use the dashboard.
+Start with working thermometer entities. The ZIP contains the optional Cook Control backend, YAML package and dashboard files; the new cards do not need button-card, card-mod or mini-graph-card. **HACS installs the thermometer integration, not this separate bundle.** The ZIP works with the stable integration: its download is attached to beta.5, but you do not need the beta's Bluetooth changes to use it. The backend currently requires an administrator HA account.
 
-Echo speech and LG text were both confirmed on INT-14-BW. IHT-2PB also passed a real threshold-to-Echo test; its TV call completed, but nobody was watching the screen. See the [test notes](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/VALIDATION.md) for the remaining limits. Timers do not survive an HA restart.
+**Echo speaks; the TV shows silent text.** Use one Echo or an explicit announcement group, leaving bedrooms out. Native Alexa announcements use Alexa Media Player, not OpenAI. The new router test reached both chosen Echos and the LG popup, confirmed by the user. Three simultaneous sessions, view switching and history export were also checked on HA; a real threshold crossing with the new backend is still pending. Targets, completed-alert latches and reminder deadlines persist across restarts. See the [test notes](https://github.com/zampix1/ha-inkbird-int14/blob/main/examples/cook_control/VALIDATION.md).
 
 ## Find Your Model
 

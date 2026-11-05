@@ -46,8 +46,7 @@ export function devicePicker(s) {
   const current = state(s,'input_text.inkbird_sensor_prefix');
   return {type:'grid',title:tr(s,'Thermometer','Termometro'),columns:1,square:false,cards:devices(s).map(d => ({
     ...choiceStyle(), name:d.name,icon:d.prefix === current ? 'mdi:thermometer-check' : 'mdi:thermometer-probe',
-    tap_action:d.prefix === current ? {action:'none'} : {action:'perform-action',perform_action:'script.bbq_select_thermometer',data:{prefix:d.prefix},
-      confirmation:{text:tr(s,'Switch thermometer? Current alerts and HA targets will be cleared.','Cambiare termometro? Gli avvisi attuali saranno disattivati e le soglie HA azzerate.')}}
+    tap_action:d.prefix === current ? {action:'none'} : {action:'perform-action',perform_action:'script.bbq_select_thermometer',data:{prefix:d.prefix}}
   }))};
 }
 

@@ -159,7 +159,7 @@ def run_sequence(sequence, values, variables, calls):
 
 
 @pytest.mark.parametrize("model,count", [("int", 4), ("iht", 3)])
-def test_selector_resets_before_committing_prefix_without_arming(model, count):
+def test_compatibility_selector_changes_only_view_without_touching_cooks(model, count):
     values = source_values(model, 3)
     values["input_text.inkbird_sensor_prefix"] = "sensor.old_int"
     for n in range(1, 5):
@@ -169,19 +169,12 @@ def test_selector_resets_before_committing_prefix_without_arming(model, count):
         values[f"input_text.bbq_last_alert_{n}"] = "old-session"
     calls = []
     assert run_sequence(PACKAGE["script"]["bbq_select_thermometer"]["sequence"], values, {"prefix": PREFIX}, calls)
-    assert calls[0][0] == "input_boolean.turn_off"
-    assert calls[-1] == ("input_text.set_value", ["input_text.inkbird_sensor_prefix"], {"value": PREFIX})
-    assert values["input_select.inkbird_active_probe:options"] == [str(n) for n in range(1, count + 1)]
-    assert values["input_select.inkbird_active_probe"] == "1"
-    assert values["input_select.inkbird_dashboard_model"] == ("IHT-2PB" if model == "iht" else "INT-14-BW")
+    assert calls == [("input_text.set_value", ["input_text.inkbird_sensor_prefix"], {"value": PREFIX})]
     for n in range(1, 5):
-        assert values[f"input_boolean.bbq_probe_{n}_enabled"] == "off"
-        assert values[f"input_number.inkbird_target_{n}"] == 0
-        assert values[f"input_text.bbq_last_alert_{n}"] == ""
-        assert values[f"input_text.inkbird_name_{n}"] != "Previous cook"
-        for kind in ("snooze", "rest"):
-            assert values[f"script.bbq_{kind}_{n}"] == "off"
-    assert render(SENSORS["bbq_probe_3_status"]["state"], values) == "idle"
+        assert values[f"input_boolean.bbq_probe_{n}_enabled"] == "on"
+        assert values[f"input_number.inkbird_target_{n}"] == "85"
+        assert values[f"input_text.bbq_last_alert_{n}"] == "old-session"
+        assert values[f"input_text.inkbird_name_{n}"] == "Previous cook"
 
 
 @pytest.mark.parametrize("model", ("int", "iht"))
@@ -213,6 +206,13 @@ def test_selecting_current_thermometer_preserves_all_settings(model):
 def test_package_upgrade_does_not_force_helper_defaults():
     for domain in ("input_number", "input_text", "input_select", "input_boolean"):
         assert all("initial" not in settings for settings in PACKAGE[domain].values())
+
+
+def test_shared_legacy_alarms_are_retired_and_only_selector_refresh_runs():
+    assert "inkbird_cook_control" in PACKAGE
+    for key, automation in AUTOMATIONS.items():
+        if key.startswith("inkbird_bbq_") and key != "inkbird_bbq_sync_media_targets":
+            assert automation["initial_state"] is False, key
 
 
 @pytest.mark.parametrize(

@@ -1,136 +1,129 @@
 # Inkbird Cook Control
 
-Scegli il termometro, imposta la soglia e lascia che sia l'Echo ad avvisarti.
-Cook Control riunisce letture, grafici e avvisi di INT-14-BW e IHT-2PB in una
-dashboard facoltativa. L'integrazione funziona anche senza.
+Station e due IHT accesi insieme? Ognuno ha le proprie soglie e i propri avvisi.
+Cambiare termometro cambia solo la vista: le altre cotture continuano.
 
-**Cook Control 1.1.0 aggiunge IHT-2PB e la scelta del termometro.**
-La station INT-14-BW e ciascun IHT-2PB gia' configurato in HA compaiono separatamente.
-Si segue una cottura alla volta: non sono sessioni indipendenti contemporanee.
-
-Lo ZIP funziona anche con l'integrazione stabile. Lo trovi tra gli allegati di
-v0.2.11-beta.4, ma non serve installare la beta Bluetooth per usare la dashboard.
+**[Scarica Cook Control 1.2.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11-beta.5/inkbird-cook-control-1.2.0.zip)**.
+Il pacchetto in anteprima e' allegato alla prerelease, ma funziona anche con i
+driver stabili. Il vecchio ZIP 1.1.0 segue ancora una cottura alla volta.
+[English guide](README.md).
 
 ## Installazione
 
-Prima devono funzionare Inkbird INT e le otto temperature della station, oppure
-l'[integrazione separata IHT-2PB](https://github.com/zampix1/ha-inkbird-iht2pb-local)
-e i suoi tre canali di temperatura.
-Da HACS installa anche **button-card**, **card-mod** e **mini-graph-card**.
+Devono gia' funzionare Inkbird INT per la station INT-14-BW, oppure
+l'[integrazione IHT-2PB](https://github.com/zampix1/ha-inkbird-iht2pb-local).
+Cook Control usa le loro entita', senza cambiare come comunicano con i dispositivi.
 
-**[Scarica Cook Control 1.1.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11-beta.4/inkbird-cook-control-1.1.0.zip)**
-
-Estrai prima lo ZIP. La directory di configurazione HA e' quella che contiene
-`configuration.yaml`, normalmente `/config`. Unisci le due cartelle a quelle
-esistenti: non copiare lo ZIP intero o una cartella contenitore aggiuntiva.
-Alla fine la struttura deve essere questa:
-
-```text
-config/
-  configuration.yaml
-  packages/inkbird_bbq.yaml
-  www/inkbird-int/cook-base-v1.4.3.js
-  www/inkbird-int/inkbird-int-cook-model.mjs
-  www/inkbird-int/inkbird-int-cook-control.js
-```
-
-La cartella `cook-control` nello ZIP contiene guide, licenze e YAML della
-plancia: non serve copiarla in HA.
-
-1. Fai un backup HA. Copia `packages` e `www` del pacchetto nella directory di
-   configurazione. Se usi gia' il pacchetto BBQ di Remco, sostituiscilo:
-   **non caricare due copie**. Gli helper mantengono gli stessi ID.
-2. Se non usi gia' i package, aggiungi questa voce in `configuration.yaml`.
-   Se esiste gia' `homeassistant:`, aggiungi solo la riga `packages:` sotto
-   quella sezione, con due spazi davanti, senza duplicarla:
+1. Fai un backup HA. Per passare dalla 1.1.0, aspetta la fine delle cotture.
+2. Copia dal pacchetto le cartelle `custom_components`, `packages` e `www` nella
+   directory di configurazione HA, normalmente `/config`. Unisci le cartelle:
+   non sostituire l'intera cartella delle integrazioni. Non caricare due package BBQ.
+3. Se non usi gia' i package, aggiungi questa voce sotto `homeassistant:` in
+   `configuration.yaml`, senza duplicare la sezione:
 
    ```yaml
    homeassistant:
      packages: !include_dir_named packages
    ```
 
-   Controlla la configurazione e riavvia HA a cottura finita.
-3. In **Impostazioni > Plance > Risorse**, aggiungi il modulo JavaScript
-   `/local/inkbird-int/inkbird-int-cook-control.js?v=1.1.0`.
-   Se manca Risorse, abilita Modalita' avanzata nel profilo. Per aggiornare,
-   modifica la risorsa esistente invece di aggiungerne un'altra. Ricarica il browser.
-4. Aggiungi **Inkbird Cook Control** dalle dashboard della community. In
-   alternativa crea una plancia vuota e incolla [dashboard.yaml](dashboard.yaml)
-   nel suo editor di configurazione grezza:
+4. Controlla la configurazione e riavvia. Il package carica il piccolo backend
+   facoltativo `inkbird_cook_control`; i driver INT e IHT restano separati e intatti.
+5. Aggiorna la risorsa JavaScript esistente in
+   `/local/inkbird-int/inkbird-int-cook-control.js?v=1.2.0`, poi ricarica il browser.
+6. Nella configurazione grezza della plancia esistente usa [dashboard.yaml](dashboard.yaml):
 
    ```yaml
    strategy:
-     type: custom:inkbird-int-cook-control
+     type: custom:inkbird-cook-control
    views: []
    ```
 
-5. Scegli il dispositivo nel riquadro **Termometro** e scegli **Italiano**.
-   I termometri dello stesso modello restano distinguibili. Il prefisso si configura
-   una volta sola; non tocchiamo i parametri del termometro.
+   Come nome scegli **Cook Control**. Il nuovo identificativo evita di riusare
+   la vecchia interfaccia rimasta in memoria. Ricarica completamente il browser
+   oppure chiudi e riapri l'app Companion.
 
-Con un rilevamento ambiguo, vedi il [prefisso esplicito](README.md#install).
-Il pacchetto segue un termometro alla volta. HACS installa l'integrazione, non questa
-dashboard facoltativa.
+Le nuove schede non richiedono button-card, card-mod o mini-graph-card.
+Puoi lasciarli installati se servono ad altre plance. Per controlli e archivio
+serve attualmente un account **amministratore HA**.
 
-## Se Usi Gia' Cook Control
+### Compare Ancora "Cambiare Termometro?"
 
-A cottura finita, fai un backup e sostituisci `packages/inkbird_bbq.yaml` e i tre
-file in `www/inkbird-int`. Mantieni gli stessi helper e la stessa plancia.
-Nella risorsa gia' presente cambia solo il finale dell'URL in `?v=1.1.0`.
-Controlla la configurazione, riavvia HA e ricarica il browser. Non aggiungere
-una seconda copia del package o della risorsa.
+L'avviso che parla di azzerare le soglie appartiene alla 1.1.0. Controlla che
+ci sia una sola risorsa Cook Control, aggiornata a `?v=1.2.0`, e che la strategia
+sia `custom:inkbird-cook-control`. Poi chiudi le vecchie schede HA e riapri l'app.
+Non serve eliminare l'integrazione, rifare il pairing o azzerare la cottura.
+Nella 1.2.0 il cambio vista non modifica soglie e avvisi.
 
-Termometro selezionato, soglie, nomi e impostazioni Echo/TV vengono mantenuti.
-Non serve riselezionare lo stesso dispositivo. **Le soglie vengono azzerate
-solo quando confermi il passaggio a un altro termometro.**
+## Nomi, Soglie E Cotture
 
-## Cambiare Termometro
+Il selettore in alto mostra tutti i termometri riconosciuti. Con la matita puoi
+chiamarli "Station BBQ", "Termometro cucina" o come ti torna comodo.
+Nel campo della sonda scrivi la pietanza: "Musetto", "Pollo", "Brisket".
 
-Il cambio disattiva tutti gli avvisi, cancella i promemoria in attesa e azzera
-le vecchie soglie HA. Imposta quelle della nuova cottura e attiva i canali usati:
-una sonda gia' calda non deve far partire l'allarme della cottura precedente.
-Echo e TV restano quelli scelti nelle impostazioni.
+Alexa usera' quel nome: **"Musetto ha raggiunto 85 gradi"**. Modello e numero
+fisico della sonda restano visibili per orientarti, senza finire per forza
+nell'annuncio. Se lasci il nome generico, l'annuncio distingue sonda e termometro.
 
-Con IHT-2PB le tre schede sono **punta integrata**, **esterna 1**, **esterna 2**.
-Niente temperatura ambiente e niente quarta sonda inventata. Una sonda scollegata
-resta senza lettura. La batteria e' un livello raw, non una percentuale. Come per
-la station, le soglie HA non cambiano gli allarmi fisici del dispositivo.
+Imposta la soglia HA e attiva l'avviso. Parte anche la registrazione della cottura.
+Puoi avviare prima lo storico, dandogli un nome, senza attivare nessun allarme.
+Le soglie sono in Celsius; eventuali letture HA in Fahrenheit vengono convertite.
 
-## Cottura E Avvisi
+La station ha quattro sonde con cuore e ambiente. Ogni IHT ha punta integrata,
+esterna 1 ed esterna 2: niente ambiente o quarta sonda inventati.
 
-Dai un nome alla sonda, tocca la card per impostare la **soglia HA** e abilita
-gli avvisi solo sulle sonde usate. Per una nuova cottura disattivali e riattivali.
-La soglia HA serve agli annunci; l'**allarme station** e' quello riportato dal
-termometro. I preset non modificano l'allarme del dispositivo.
+Per l'avviso servono almeno 30 secondi sopra soglia con dati recenti. Ogni
+canale avvisa una volta per impostazione: cambiare nome, soglia o attivazione
+prepara un nuovo avviso e annulla soltanto i suoi promemoria precedenti.
+Cambiare termometro, invece, non modifica niente. Vale anche con due browser aperti.
 
-L'avviso parte dopo 30 secondi sopra soglia. La riconnessione non lo ripete.
-**Ignora/Dismiss** ferma rinvio e promemoria. Cambiare nome, soglia o termometro
-cancella i timer precedenti. Il promemoria decorre dalla soglia, non da quando
-togli il cibo dal fuoco. Le temperature dei preset non garantiscono sicurezza
-o cottura riuscita: continua a controllare il cibo.
+**Termina cottura** archivia quella sessione e spegne soltanto i suoi avvisi.
+Soglie e nomi rimangono. Le soglie HA non cambiano gli allarmi fisici del termometro.
 
-Per Echo seleziona il dispositivo, **Alexa (native)** e attiva gli annunci.
-Serve **Alexa Media Player**, non OpenAI. Per la TV configura entita' e servizio
-notify, poi prova il pulsante. La LG mostra un popup breve **senza audio**:
-non cambiamo volume, ingresso o stato di accensione.
+## Echo E TV
 
-Gli avvisi HA persistenti vengono creati per primi. Verifica di persona gli
-altri canali: una chiamata accettata non certifica che tu l'abbia sentita.
+In Impostazioni scegli **Alexa (native)** e l'Echo. Serve Alexa Media Player,
+non ChatGPT o una chiave OpenAI. Per piu' Echo, inserisci un nome per il gruppo
+annunci e le loro entita' `media_player`, separate da virgole. Aggiorna la lista
+e seleziona quel gruppo. E' una lista di destinatari per gli annunci, non un gruppo
+musicale Amazon: puoi includere la zona giorno e lasciare fuori le camere.
 
-## Limiti
+La TV e' indipendente: **popup di testo, senza audio**. Non fa parte del gruppo
+Echo. Configura la sua entita' e il servizio notify senza il prefisso `notify.`.
+Non accendiamo la TV, non cambiamo ingresso e non tocchiamo i volumi.
 
-- Oltre 120 secondi senza pacchetti locali, le letture non alimentano nuovi
-  allarmi; il controllo temporale HA puo' aggiungere fino a un minuto.
-- I timer non sopravvivono a riavvio HA o ricarica delle automazioni.
-- Le batterie sono quelle dichiarate dalla station. Un valore sospetto viene
-  segnalato, non sostituito con una percentuale inventata.
-- Stallo e batteria bassa sono avvisi facoltativi, non sistemi di sicurezza.
-- Prove reali e simulate sono distinte in [VALIDATION.md](VALIDATION.md).
+Il pulsante di prova serve proprio a controllare la consegna: una chiamata HA
+senza errori non dimostra che l'Echo abbia parlato o che il popup sia apparso.
 
-La base grafica deriva dal lavoro MIT di Remco, con i crediti di design
-conservati. Comunicazione e protocollo arrivano dalle integrazioni separate
-`zampix1/ha-inkbird-int14` e `zampix1/ha-inkbird-iht2pb-local`.
-Vedi [fonti e licenze](THIRD_PARTY_NOTICES.md).
+## Storico
 
-Per tornare indietro ripristina package e dashboard dal backup, controlla la
-configurazione e riavvia HA. Non serve rifare il pairing.
+Apri Storico per rivedere cotture attive e concluse, grafici, modifiche alle soglie
+ed esiti degli avvisi. Puoi scaricare letture in CSV o l'intera sessione in JSON.
+Si registra un campione ogni 30 secondi durante la cottura. Una sonda senza dati
+recenti lascia un vuoto nel grafico, non una falsa lettura a zero.
+
+L'archivio resta nella `.storage` privata di HA e non dipende dalla pulizia del
+Recorder. Includilo nei backup. Gli export contengono nomi, orari, riferimenti
+interni ai dispositivi e temperature: controllali prima di pubblicarli.
+Le vecchie cotture non vengono inventate o ricostruite: l'archivio parte da qui.
+
+Al primo avvio migriamo le impostazioni del termometro prima selezionato; gli
+altri partono con soglie a zero e avvisi spenti. Echo/TV e vecchi helper vengono
+conservati. Le vecchie automazioni condivise vengono disabilitate: non riattivarle
+insieme al backend.
+
+Soglie, avvisi gia' inviati e scadenze dei promemoria sopravvivono al riavvio.
+L'attesa dei 30 secondi ricomincia; HA spento non puo' inviare avvisi.
+Dati locali piu' vecchi di 120 secondi non fanno scattare nuove soglie.
+La batteria raw dell'IHT non viene spacciata per percentuale. Batteria bassa e
+stall rimangono avvisi opzionali; lo stall richiede uno storico recente e stabile.
+
+## Tornare Indietro
+
+Ripristina package, risorsa e frontend precedenti, rimuovi la voce
+`inkbird_cook_control:` dal package, controlla la configurazione e riavvia.
+Conserva l'archivio nel backup. Le soglie impostate nella 1.2.0 non vengono
+ricopiate automaticamente nei vecchi helper della versione a cottura singola.
+
+Per le origini della presentazione e le licenze vedi
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Comunicazione con i termometri
+e protocollo restano lavoro delle integrazioni INT/IHT, non del tema della dashboard.

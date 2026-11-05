@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.11-beta.5 - Cook Control 1.2.0
+
+- Give each INT-14-BW and IHT-2PB its own cook, targets, food names and alarm latches. The thermometer selector changes only the browser view; it never disarms another device or clears its targets.
+- Add an optional `inkbird_cook_control` backend to the separate dashboard bundle. It reads existing HA entities and stores private session archives, sampled temperatures, target changes and notification results. INT/IHT protocol drivers and integration versions are unchanged.
+- Add friendly thermometer names and food-name announcements, concurrent-cook overview, history graphs and authenticated CSV/JSON export. Preserve the existing Echo/TV router and add an explicit multi-Echo announcement destination, separate from silent TV popups.
+- Migrate the formerly selected cook once, preserve existing helper values and retire the shared single-cook automations. Targets, completed alerts and reminder deadlines persist across restarts.
+- Use the new `custom:inkbird-cook-control` strategy so cached single-cook constructors cannot bring back the old reset-on-switch dialog. Update English/Italian install and cache-recovery steps, preview images and the HACS showcase.
+- Publish the optional dashboard ZIP separately; it works with stable integration v0.2.10 too. Thermometer runtime differs from beta.4 only in the manifest version. This release does not promote the pending INT-11I-B / INT-12-BW Bluetooth work to stable.
+
 ## 0.2.11-beta.4
 
 - Publish optional **Cook Control 1.1.0** with an INT-14-BW / IHT-2PB thermometer picker. IHT uses its separate integration and shows built-in tip, external 1 and external 2, without invented ambient readings or a fourth probe.

@@ -51,6 +51,7 @@ def render(source, values=None, **variables):
     env = Environment(undefined=StrictUndefined)
     env.filters["regex_match"] = lambda value, pattern: re.match(pattern, value) is not None
     env.filters["bitwise_and"] = lambda a, b: a & b
+    env.tests["match"] = lambda value, pattern: re.match(pattern, value) is not None
 
     def is_number(value):
         try:
@@ -237,6 +238,27 @@ def test_helpers_restore_and_no_default_devices():
     assert PACKAGE["input_select"]["inkbird_dashboard_model"]["options"] == ["INT-14-BW", "IHT-2PB"]
 
 
+def test_alexa_group_targets_are_exactly_configured_available_echoes():
+    variables = PACKAGE["script"]["bbq_notify"]["sequence"][-1]["then"][0]["variables"]
+    values = {
+        "input_text.bbq_alexa_group_targets": "media_player.test_living, media_player.test_dining",
+        "input_text.bbq_alexa_group_name": "Day zone",
+        "input_select.bbq_tts_speaker": "Day zone",
+        "media_player.test_living": "idle",
+        "media_player.test_dining": "idle",
+        "media_player.test_bedroom": "idle",
+    }
+
+    def entities(_):
+        return ["media_player.test_living", "media_player.test_dining", "media_player.test_bedroom"]
+
+    targets = render(variables["alexa_targets"], values, integration_entities=entities)
+    assert targets == "['media_player.test_living', 'media_player.test_dining']"
+    assert render(variables["alexa_group"], values, alexa_targets=["media_player.test_living", "media_player.test_dining"]) == "True"
+    values["input_text.bbq_alexa_group_targets"] += ", media_player.not_an_echo"
+    assert render(variables["alexa_targets"], values, integration_entities=entities) == "[]"
+
+
 def test_bundle_is_reproducible_and_has_no_household_or_development_files(tmp_path):
     builder = runpy.run_path(str(ROOT / "examples/cook_control/build_bundle.py"))
     first, second = tmp_path / "first.zip", tmp_path / "second.zip"
@@ -244,7 +266,7 @@ def test_bundle_is_reproducible_and_has_no_household_or_development_files(tmp_pa
     builder["build"](second)
     assert first.read_bytes() == second.read_bytes()
     with ZipFile(first) as archive:
-        assert len(archive.namelist()) == 12
+        assert len(archive.namelist()) == 17
         assert set(archive.namelist()) == set(builder["FILES"].values()) | {"cook-control/LICENSE.integration"}
         for filename in archive.namelist():
             assert ".." not in Path(filename).parts
