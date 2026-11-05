@@ -1,4 +1,4 @@
-import './inkbird-cook-panel.js?v=1.2.0';
+import './inkbird-cook-panel.js?v=1.2.0-release.1';
 
 class InkbirdIntCookControl extends HTMLElement {
   static getCreateSuggestions(){return {title:'Inkbird Cook Control',icon:'mdi:grill'};}
@@ -6,8 +6,8 @@ class InkbirdIntCookControl extends HTMLElement {
   static async generate(config,hass){
     const it=hass.states['input_select.bbq_language']?.state==='Italiano';
     return {title:'Cook Control',views:[
-      {title:it?'Cotture':'Cooks',path:'cook',type:'panel',icon:'mdi:grill',cards:[{type:'custom:inkbird-cook-panel'}]},
-      {title:it?'Storico':'History',path:'history',type:'panel',icon:'mdi:chart-timeline-variant',cards:[{type:'custom:inkbird-cook-panel',history:true}]},
+      {title:it?'Cotture':'Cooks',path:'cook',type:'panel',icon:'mdi:grill',cards:[{type:'custom:inkbird-cook-card'}]},
+      {title:it?'Storico':'History',path:'history',type:'panel',icon:'mdi:chart-timeline-variant',cards:[{type:'custom:inkbird-cook-card',history:true}]},
       {title:it?'Impostazioni':'Settings',path:'settings',icon:'mdi:cog-outline',cards:[
         {type:'entities',title:it?'Annunci Echo e avvisi TV':'Echo announcements and TV notifications',entities:[
           'input_select.bbq_language','input_text.bbq_notify_service','input_select.bbq_notify_target',
