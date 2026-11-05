@@ -1,4 +1,5 @@
 import {escape as e, selectedDevice, formatTemperature as temp, csv, loadHistory, series} from './inkbird-cook-session.mjs?v=1.2.0';
+import {probeColor,probeFigure,dial,sparkline} from './inkbird-cook-visuals.mjs?v=1.2.0';
 
 const style = `
 :host{display:block;color:var(--primary-text-color);font:14px system-ui;letter-spacing:0;max-width:1400px;margin:0 auto;padding:12px 20px 28px}
@@ -13,16 +14,23 @@ h1{font-size:24px;margin:0}h2{font-size:18px;margin:0}h3{font-size:16px;margin:0
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 0 18px;border-bottom:1px solid var(--divider-color)}
 .toolbar,.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.toolbar select{max-width:100%;flex:1;min-width:190px}.toolbar{margin:18px 0}
 .overview{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.overview button{font-size:13px;text-align:left}.overview .chosen{border:2px solid var(--primary-color)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:18px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}
 article{background:var(--ha-card-background,var(--card-background-color,#fff));border:1px solid var(--divider-color);border-radius:8px;padding:18px;min-width:0;overflow-wrap:anywhere}
-.reading{font-size:38px;font-weight:650;margin:16px 0 8px}.stale .reading{color:var(--secondary-text-color)}.status{font-size:13px;font-weight:600;color:var(--primary-color)}
-.probe{width:100%;height:58px;margin:12px 0}.probe line{stroke:var(--secondary-text-color);stroke-width:5}.probe text{fill:var(--secondary-text-color);font:12px system-ui}.probe circle{fill:var(--primary-color)}
+.status{font-size:13px;font-weight:600;color:var(--probe-color)}
+.probe-card{border-top:3px solid var(--probe-color)}.probe-tag{color:var(--probe-color);font-weight:700;margin-right:8px}
+.instrument{display:grid;grid-template-columns:30px 144px minmax(0,1fr);gap:14px;align-items:center;min-height:170px;margin:8px 0}.probe-figure{width:30px;height:166px;display:block;margin:auto}
+.dial{position:relative;width:136px;height:136px;margin:auto}.dial svg{width:100%;height:100%;display:block}.dial-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}.dial-label strong{font:650 27px ui-monospace,monospace;white-space:nowrap}.dial-label small{font:13px system-ui}.dial-label span{font-size:12px;color:var(--secondary-text-color)}
+.metrics{display:grid;gap:7px;font-size:14px;min-width:0}.metrics div{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.metrics b{font-weight:600}.metrics small{font-size:12px}
+.spark{display:block;width:100%;height:64px;margin:8px 0}.spark-empty{height:64px;display:flex;align-items:center;font-size:12px;color:var(--secondary-text-color);border-bottom:1px solid var(--divider-color)}
+.probe-settings{border-top:1px solid var(--divider-color);padding-top:10px;margin-top:12px}.probe-settings summary{cursor:pointer;min-height:32px;color:var(--secondary-text-color)}.probe-settings .settings{padding-top:12px}.custom-preset{border-left:3px solid var(--primary-color);padding:12px;display:grid;gap:12px;background:var(--secondary-background-color)}
 .settings{display:grid;gap:14px}.error{border-left:4px solid var(--error-color,#c33);padding:12px;margin:12px 0;overflow-wrap:anywhere}
 .session{display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap;padding:16px 0;border-bottom:1px solid var(--divider-color)}.session .field{flex:1;min-width:180px}
 .history{width:100%;border-collapse:collapse;margin:16px 0}.history td,.history th{padding:12px 8px;border-bottom:1px solid var(--divider-color);text-align:left;overflow-wrap:anywhere}.history button{text-align:left}
 canvas{display:block;width:100%;height:260px}.legend{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0}.legend span{border-bottom:3px solid var(--line);padding:3px}
 .split{display:flex;justify-content:space-between;gap:8px;align-items:center}.split>*{min-width:0}.event{padding:8px 0;border-bottom:1px solid var(--divider-color)}
-@media(max-width:550px){h1{font-size:22px}.history th:nth-child(3),.history td:nth-child(3){display:none}.session button{flex:1}.reading{font-size:34px}.grid{gap:10px}article{padding:14px}}
+@media(max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:550px){h1{font-size:22px}.history th:nth-child(3),.history td:nth-child(3){display:none}.session button{flex:1}.grid{gap:10px}article{padding:14px}.instrument{grid-template-columns:26px 128px minmax(0,1fr);gap:9px}.dial{width:124px;height:124px}.metrics{font-size:13px;gap:6px}}
+@media(max-width:360px){:host{padding-left:10px;padding-right:10px}.instrument{grid-template-columns:24px 120px minmax(0,1fr);gap:6px}.dial{width:116px;height:116px}.metrics div{display:block}.metrics b{display:block}}
 `;
 
 class CookPanel extends HTMLElement {
@@ -61,6 +69,7 @@ class CookPanel extends HTMLElement {
   render(force=false){
     if(!this.config||(!force&&this.shadowRoot.activeElement?.matches('input:not([type=checkbox]),select')))return;
     const d=this.selected();
+    this.openCards=new Set([...this.shadowRoot.querySelectorAll('details[open]')].map(el=>el.closest('[data-channel]')?.dataset.channel));
     this.shadowRoot.innerHTML=`<style>${style}</style><header><h1>Cook Control</h1><ha-icon icon="mdi:grill"></ha-icon></header>
       ${this.error?`<div class="error" role="alert">${e(this.error)}</div>`:''}
       ${this.backendStatus!=='active'?`<div class="error" role="alert">${this.t('Cook Control backend is not active. Alerts are not being processed.','Il backend Cook Control non e attivo. Gli avvisi non vengono elaborati.')}</div>`:''}
@@ -81,17 +90,26 @@ class CookPanel extends HTMLElement {
   renderChannel(d,layout){
     const c=d.channels[layout.id],name=this.channelName(d,layout,c);
     const statuses={off:this.t('Alert off','Avviso spento'),stale:this.t('Waiting for fresh readings','In attesa di letture recenti'),cooking:this.t('Alert on','Avviso attivo'),ready:this.t('Above target','Sopra soglia'),notified:this.t('Notification sent','Avviso inviato')};
-    const iht=d.model==='iht2pb',external=iht&&layout.id!=='1';
-    return `<article data-channel="${layout.id}" class="${c.fresh?'':'stale'}"><div class="split"><h3>${e(name)}</h3><ha-icon icon="mdi:thermometer${external?'-probe':''}"></ha-icon></div><small>${e(layout.name)}</small>
-      <svg class="probe" viewBox="0 0 300 58" role="img" aria-label="${iht?this.t('One temperature sensor','Un sensore temperatura'):this.t('Food at the tip, ambient at the handle','Cuore in punta, ambiente sul manico')}"><line x1="22" y1="25" x2="280" y2="25"/><circle cx="32" cy="25" r="6"/><text x="12" y="53">${this.t('Food','Cuore')}</text>${iht?'':`<circle cx="258" cy="25" r="6"/><text x="221" y="53">${this.t('Ambient','Ambiente')}</text>`}</svg>
-      <div class="reading">${temp(c.temperature)}</div><div class="status">${statuses[c.status]||e(c.status)}${c.status==='ready'?` &middot; ${Math.min(30,Math.floor(c.ready_seconds))}/30 s`:''}</div>
-      <p class="muted">${c.fresh?this.t('Recent reading','Lettura recente'):c.temperature==null?this.t('No reading','Nessuna lettura'):this.t('Last reading, not current','Ultima lettura, non attuale')}${!iht?` &middot; ${this.t('Ambient','Ambiente')} ${temp(c.ambient)}`:''}${c.battery!==null&&c.battery!==undefined?` &middot; ${c.battery}%`:''}</p>
-      <div class="settings"><label class="field">${this.t('Food / probe name','Pietanza / nome sonda')}<input data-setting="name" value="${e(c.name===layout.name?name:c.name)}" maxlength="100"></label>
-      <select data-preset aria-label="Preset"><option value="">${this.t('Preset','Preset')}</option>${[['Beef Brisket',93],['Chicken',74],['Medium Steak',57],['Pork Ribs',90],['Salmon',52]].map(([label,value])=>`<option value="${label}|${value}">${label} &middot; ${value}\u00b0C</option>`).join('')}<option value="custom">${this.t('My preset','Il mio preset')}</option></select>
+    const iht=d.model==='iht2pb',color=probeColor(c),editing=this.customEditor?.device===d.id&&this.customEditor?.channel===layout.id;
+    const status=c.status==='cooking'&&c.fresh&&c.target>0&&c.temperature>=c.target-5?this.t('Near target','Vicino alla soglia'):statuses[c.status]||e(c.status);
+    return `<article data-channel="${layout.id}" class="probe-card ${c.fresh?'':'stale'}" style="--probe-color:${color}"><div class="split"><h3><span class="probe-tag">${iht?e(layout.name):'P'+layout.id}</span>${e(name===layout.name?'':name)}</h3><ha-icon icon="mdi:thermometer-probe"></ha-icon></div>
+      <p class="status">${status}${c.status==='ready'?` &middot; ${Math.min(30,Math.floor(c.ready_seconds))}/30 s`:''}</p>
+      <div class="instrument">${probeFigure(d.model,layout.id,color)}${dial(c,{target:this.t('target','soglia'),noTarget:this.t('No target','Nessuna soglia')})}<div class="metrics">
+      ${!iht?`<div><span>${this.t('Ambient','Ambiente')}</span><b>${temp(c.ambient)}</b></div>`:''}
+      <div><span>${this.t('HA target','Soglia HA')}</span><b>${c.target>0?temp(c.target):'\u2014'}</b></div>
+      <div><span>${this.t(iht?'Device alarm':'Station alarm',iht?'Allarme IHT':'Allarme station')}</span><b>${temp(c.device_target)}</b></div>
+      <div><span>${this.t('Battery','Batteria')}</span><b>${Number.isFinite(c.battery)?`${c.battery}%`:iht&&Number.isFinite(c.battery_raw)?`${this.t('level','livello')} ${c.battery_raw}`:'\u2014'}</b></div>
+      ${c.battery_suspect?`<small>${this.t('Suspect battery report','Dato batteria sospetto')}</small>`:''}
+      <small>${c.fresh?this.t('Recent reading','Lettura recente'):this.t('No recent reading','Nessuna lettura recente')}</small></div></div>
+      ${sparkline(d.recent||[],layout.id,color,this.t('Temperature trend','Andamento temperatura'))}
       <div class="split"><label>${this.t('HA target','Soglia HA')} <input data-setting="target" type="number" min="0" max="350" step="1" value="${c.target}" aria-label="${this.t('Target in Celsius','Soglia in gradi Celsius')}"> \u00b0C</label><label><input data-setting="armed" type="checkbox" ${c.armed?'checked':''} ${this.busy?'disabled':''}>${this.t('Alert','Avviso')}</label></div>
+      <details class="probe-settings" ${this.openCards?.has(layout.id)||editing?'open':''}><summary>${this.t('Name and presets','Nome e preset')}</summary><div class="settings"><label class="field">${this.t('Food / probe name','Pietanza / nome sonda')}<input data-setting="name" value="${e(c.name===layout.name?name:c.name)}" maxlength="100"></label>
+      <select data-preset aria-label="Preset"><option value="">${this.t('Preset','Preset')}</option>${[['Beef Brisket',93],['Chicken',74],['Medium Steak',57],['Pork Ribs',90],['Salmon',52]].map(([label,value])=>`<option value="${label}|${value}">${label} &middot; ${value}\u00b0C</option>`).join('')}<option value="custom">${this.t('My preset','Il mio preset')}</option></select>
+      ${editing?this.renderCustomPreset():''}</div></details>
       ${c.status==='notified'?`<div class="row"><button data-reminder="snooze" title="${this.t('Repeat after the snooze interval','Ripeti dopo l\'intervallo di rinvio')}"><ha-icon icon="mdi:alarm-snooze"></ha-icon> Snooze</button><button data-reminder="rest"><ha-icon icon="mdi:timer-outline"></ha-icon> ${this.t('Rest','Riposo')}</button><button class="icon" data-reminder="dismiss" title="${this.t('Cancel reminders','Annulla promemoria')}"><ha-icon icon="mdi:bell-off-outline"></ha-icon></button></div>`:''}
-      ${c.snooze||c.rest?`<small>${this.t('Reminder','Promemoria')}: ${new Date((c.snooze||c.rest)*1000).toLocaleTimeString()}</small>`:''}</div></article>`;
+      ${c.snooze||c.rest?`<small>${this.t('Reminder','Promemoria')}: ${new Date((c.snooze||c.rest)*1000).toLocaleTimeString()}</small>`:''}</article>`;
   }
+  renderCustomPreset(){const draft=this.customEditor.draft;return `<div class="custom-preset"><h3>${this.t('My preset','Il mio preset')}</h3><label class="field">${this.t('Preset name','Nome preset')}<input data-custom="name" value="${e(draft.name)}" maxlength="100"></label><label>${this.t('Temperature','Temperatura')} <input data-custom="target" type="number" min="1" max="350" step="1" value="${draft.target}"> \u00b0C</label><div class="row"><button data-custom-action="save" title="${this.t('Save preset without changing the cook','Salva il preset senza cambiare la cottura')}"><ha-icon icon="mdi:content-save-outline"></ha-icon> ${this.t('Save','Salva')}</button><button data-custom-action="apply" class="primary">${this.t('Use on this probe','Usa su questa sonda')}</button><button class="icon" data-custom-action="cancel" title="${this.t('Close without applying','Chiudi senza applicare')}"><ha-icon icon="mdi:close"></ha-icon></button></div>${this.presetSaved?`<small>${this.t('Preset saved','Preset salvato')}</small>`:''}</div>`;}
   renderHistory(){
     return `<h2 style="margin-top:20px">${this.t('Cooking history','Storico cotture')}</h2><table class="history"><thead><tr><th>${this.t('Cook','Cottura')}</th><th>${this.t('Thermometer','Termometro')}</th><th>${this.t('Started','Inizio')}</th></tr></thead><tbody>${this.data.history.map(row=>`<tr><td><button data-history="${row.id}">${e(row.name)}${row.ended?'':` &middot; ${this.t('active','in corso')}`}</button></td><td>${e(row.device_name)}</td><td>${new Date(row.started*1000).toLocaleString()}</td></tr>`).join('')}</tbody></table>
       ${this.history?`<div class="split"><h2>${e(this.history.summary.name)}</h2><div class="row"><button data-export="csv"><ha-icon icon="mdi:download"></ha-icon> CSV</button><button data-export="json" title="${this.t('Download full session','Scarica sessione completa')}">JSON</button></div></div><div class="legend">${this.history.summary.layout.map((c,i)=>`<span style="--line:${['#168b89','#e38b19','#ca4a72','#6476d2'][i]}">${e(c.name)}</span>`).join('')}</div><canvas aria-label="${this.t('Recorded temperatures in Celsius','Temperature registrate in gradi Celsius')}" role="img"></canvas><small>${this.t('Solid: food. Dotted: ambient. Gaps: no recent reading.','Linea continua: cuore. Tratteggio: ambiente. Vuoti: nessuna lettura recente.')}</small>
@@ -104,10 +122,19 @@ class CookPanel extends HTMLElement {
     const start=this.shadowRoot.querySelector('#start');if(start)start.onclick=()=>this.act('start',{device_id:d.id,name:this.shadowRoot.querySelector('#cookname').value});
     const finish=this.shadowRoot.querySelector('#finish');if(finish)finish.onclick=()=>{if(confirm(this.t('Finish this cook and switch off only its alerts?','Terminare questa cottura e spegnere solo i suoi avvisi?')))this.act('finish',{device_id:d.id});};
     this.shadowRoot.querySelectorAll('[data-setting]').forEach(el=>el.onchange=()=>{const field=el.dataset.setting;this.act('configure',{device_id:d.id,channel:el.closest('[data-channel]').dataset.channel,settings:{[field]:field==='armed'?el.checked:field==='target'?Number(el.value):el.value}});});
-    this.shadowRoot.querySelectorAll('[data-preset]').forEach(el=>el.onchange=()=>{if(!el.value)return;let [name,target]=el.value.split('|');if(el.value==='custom'){name=this._hass.states['input_text.bbq_custom_name']?.state;target=this._hass.states['input_number.bbq_custom_target']?.state;}this.act('configure',{device_id:d.id,channel:el.closest('[data-channel]').dataset.channel,settings:{name,target:Number(target)}});});
+    this.shadowRoot.querySelectorAll('[data-preset]').forEach(el=>el.onchange=()=>{if(!el.value)return;const channel=el.closest('[data-channel]').dataset.channel;if(el.value==='custom'){const stored=this._hass.states['input_text.bbq_custom_name']?.state;this.customEditor={device:d.id,channel,draft:{name:stored&&!['unknown','unavailable'].includes(stored)?stored:this.t('Custom','Personalizzato'),target:Number(this._hass.states['input_number.bbq_custom_target']?.state)||60}};this.presetSaved=false;this.render(true);return;}const [name,target]=el.value.split('|');this.act('configure',{device_id:d.id,channel,settings:{name,target:Number(target)}});});
+    this.shadowRoot.querySelectorAll('[data-custom]').forEach(el=>el.oninput=()=>{this.customEditor.draft[el.dataset.custom]=el.dataset.custom==='target'?Number(el.value):el.value;this.presetSaved=false;});
+    this.shadowRoot.querySelectorAll('[data-custom-action]').forEach(el=>el.onclick=()=>this.customPreset(el.dataset.customAction));
     this.shadowRoot.querySelectorAll('[data-reminder]').forEach(el=>el.onclick=()=>this.act(el.dataset.reminder,{device_id:d.id,channel:el.closest('[data-channel]').dataset.channel}));
     this.shadowRoot.querySelectorAll('[data-history]').forEach(el=>el.onclick=async()=>{try{this.history=await loadHistory((...args)=>this.call(...args),el.dataset.history);this.error='';}catch(err){this.error=err.message;}this.render(true);});
     this.shadowRoot.querySelectorAll('[data-export]').forEach(el=>el.onclick=()=>{const format=el.dataset.export;const blob=new Blob([format==='csv'?csv(this.history):JSON.stringify(this.history,null,2)],{type:format==='csv'?'text/csv;charset=utf-8':'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`cook-${this.history.summary.id}.${format}`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+  }
+  async customPreset(action){
+    if(action==='cancel'){this.customEditor=null;this.render(true);return;}
+    const editor=this.customEditor,draft=editor.draft,helper=this._hass.states['input_number.bbq_custom_target'];
+    if(!draft.name.trim()||draft.name.length>100||!Number.isFinite(draft.target)||draft.target<=0||draft.target>Math.min(350,helper?.attributes?.max??350)||draft.target<(helper?.attributes?.min??0)){this.error=this.t('Enter a preset name and a valid temperature.','Inserisci un nome e una temperatura valida.');this.render(true);return;}
+    if(action==='apply'){await this.act('configure',{device_id:editor.device,channel:editor.channel,settings:{name:draft.name.trim(),target:draft.target}});if(!this.error)this.customEditor=null;this.render(true);return;}
+    this.busy=true;try{await this._hass.callService('input_number','set_value',{entity_id:'input_number.bbq_custom_target',value:draft.target});await this._hass.callService('input_text','set_value',{entity_id:'input_text.bbq_custom_name',value:draft.name.trim()});this.presetSaved=true;this.error='';}catch(err){this.error=err.message||String(err);}finally{this.busy=false;this.render(true);}
   }
   draw(history){
     this.resize?.disconnect();const canvas=this.shadowRoot.querySelector('canvas');if(!canvas)return;

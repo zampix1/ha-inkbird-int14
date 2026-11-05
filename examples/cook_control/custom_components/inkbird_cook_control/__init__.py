@@ -74,6 +74,7 @@ def discover(hass):
                     "entity": entity,
                     "ambient_entity": None if iht else find(f"_probe_{index}_ambient_temp"),
                     "battery_entity": None if iht else find(f"_probe_{index}_battery"),
+                    "target_entity": find(f"_probe_{index}_target_high_temp"),
                 }
             )
         if len(layout) != (3 if iht else 4):
@@ -138,6 +139,8 @@ class Manager:
                     "temperature": temperature(self.hass, channel["entity"]),
                     "ambient": temperature(self.hass, channel["ambient_entity"]),
                     "battery": number(state_value(self.hass, channel["battery_entity"])),
+                    "device_target": temperature(self.hass, channel.get("target_entity")),
+                    "battery_raw": number(state_value(self.hass, device.get("battery_raw_entity"))),
                     "battery_suspect": (
                         self.hass.states.get(channel["battery_entity"]).attributes.get("report_suspect")
                         if self.hass.states.get(channel["battery_entity"] or "")

@@ -3,9 +3,9 @@
 One station, two handhelds, three different cooks. Each keeps its own targets and
 alerts. Switching thermometer only changes what you see.
 
-**[Download Cook Control 1.2.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11-beta.5/inkbird-cook-control-1.2.0.zip)**.
-This preview bundle is attached to the integration prerelease, but works with the
-stable thermometer drivers too. The older 1.1.0 ZIP has the single-cook design.
+**[Download Cook Control 1.2.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11/inkbird-cook-control-1.2.0.zip)**.
+This preview bundle is attached to stable integration v0.2.11 and works with
+v0.2.10 too. The older 1.1.0 ZIP has the single-cook design.
 [Guida in italiano](README.it.md).
 
 ## Install
@@ -70,6 +70,13 @@ such as "Smoker" or "Kitchen thermometer". Each channel also has a food/probe na
 Those are the names used in announcements. Alexa says "Brisket has reached
 85 degrees", not a device code or an entity ID. A channel without a food name
 uses its physical probe label and the thermometer's friendly name.
+
+The probe cards keep their illustrated probe, circular temperature gauge and
+mini-graph. **Name and presets** opens the controls below each card. Choose
+**My preset** to edit its name and temperature. **Save** stores that preset
+without changing the cook; **Use on this probe** applies it only to that channel.
+Closing the editor does neither. The live mini-graphs show up to an hour of
+recent readings; the session archive keeps the whole recorded cook.
 
 Set the HA target, then enable its alert. This also starts recording if that
 thermometer has no active cook. You can instead name a cook and start recording

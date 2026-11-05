@@ -2,13 +2,14 @@
 
 ## Cook Control 1.2.0 Preview, 2026-11-05
 
-- 315 Python tests pass, including independent three-device alert latches, per-channel edits, restart recovery, migration, history gaps, friendly spoken names, battery/stall guards and explicit Alexa group membership. These include isolated HA boundary tests, not a substitute for physical cooking tests.
+- 316 Python tests pass on the development branch and 242 on the isolated stable-release branch. They cover independent three-device alert latches, per-channel edits, restart recovery, migration, history gaps, friendly spoken names, battery/stall guards and explicit Alexa group membership. These include isolated HA boundary tests, not a substitute for physical cooking tests.
 - Node frontend contracts pass. Playwright/Edge checks at 1440px and 390px verify four INT food cards and three cards per IHT, no horizontal overflow, no JavaScript errors, and no HA write calls when switching the view.
+- Illustrated probes, circular gauges and per-channel mini-graphs are retained. The custom preset editor is tested through opening, editing, cancelling, saving without target changes, and applying only to the selected device/channel. HA target/arming state is not changed by opening or saving a preset.
 - Installed on HA 2026.11.0 after backup and one authorized restart. Backend loaded successfully and discovered one INT-14-BW and two IHT-2PB devices through stable registry identities. Existing protected helper values survived unchanged.
 - Recorded three simultaneous sessions clearly named as installation checks, then finished and exported each one. No fake temperature states, armed alerts or threshold changes were used. With thermometers not supplying recent data, the records correctly contain gaps.
 - Verified the real dashboard selector, archive and CSV download. One end-to-end notification-router test called the two explicitly configured Echos and the configured LG webOS popup service. The trace finished without errors; monitored speaker/TV volumes were unchanged. This is software-path evidence, not proof of audible or visible physical delivery.
 - The user subsequently confirmed both Echo audio and the G5 popup after checking remotely. The repeated test again targeted only the two selected Echos and the TV service; thresholds and the user's current volumes remained unchanged. No fresh real-device threshold crossing has been tested with this backend yet.
-- Integration/domain/driver code is unchanged apart from the prerelease manifest version. The canonical strategy was tested against a pre-existing cached single-cook constructor; it does not reuse it. Installation guides explicitly migrate that strategy to prevent the old reset warning.
+- The stable release branch retains the v0.2.10 integration/domain/driver code apart from the manifest version. The canonical strategy was tested against a pre-existing cached single-cook constructor; it does not reuse it. Installation guides explicitly migrate that strategy to prevent the old reset warning.
 
 ## Cook Control 1.1.0
 
@@ -113,10 +114,10 @@ metadata; it includes no live configuration or captured diagnostics.
 
 ## Publication Boundary
 
-Cook Control 1.2.0 is an optional preview bundle attached to v0.2.11-beta.5. Integration
-runtime is unchanged from beta.4 apart from the manifest version. The INT-11I-B
+Cook Control 1.2.0 is an optional preview bundle attached to stable v0.2.11. Integration
+runtime is unchanged from v0.2.10 apart from the manifest version. The INT-11I-B
 and INT-12-BW connection changes remain beta work; they are not needed for this
-dashboard. Stable integration v0.2.10 remains available.
+dashboard. The bundle can also be installed alongside v0.2.10.
 
 HACS does not automatically install the dashboard: the package requires the
 documented configuration copy and resource registration. The IHT integration

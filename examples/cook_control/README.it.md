@@ -3,9 +3,9 @@
 Station e due IHT accesi insieme? Ognuno ha le proprie soglie e i propri avvisi.
 Cambiare termometro cambia solo la vista: le altre cotture continuano.
 
-**[Scarica Cook Control 1.2.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11-beta.5/inkbird-cook-control-1.2.0.zip)**.
-Il pacchetto in anteprima e' allegato alla prerelease, ma funziona anche con i
-driver stabili. Il vecchio ZIP 1.1.0 segue ancora una cottura alla volta.
+**[Scarica Cook Control 1.2.0](https://github.com/zampix1/ha-inkbird-int14/releases/download/v0.2.11/inkbird-cook-control-1.2.0.zip)**.
+Il pacchetto in anteprima e' allegato alla stabile v0.2.11 e funziona anche con
+la v0.2.10. Il vecchio ZIP 1.1.0 segue ancora una cottura alla volta.
 [English guide](README.md).
 
 ## Installazione
@@ -67,6 +67,13 @@ Nel campo della sonda scrivi la pietanza: "Musetto", "Pollo", "Brisket".
 Alexa usera' quel nome: **"Musetto ha raggiunto 85 gradi"**. Modello e numero
 fisico della sonda restano visibili per orientarti, senza finire per forza
 nell'annuncio. Se lasci il nome generico, l'annuncio distingue sonda e termometro.
+
+Le schede mantengono sonda disegnata, quadrante circolare e mini-grafico.
+Apri **Nome e preset** sotto la scheda, poi scegli **Il mio preset**: compaiono
+nome e temperatura da modificare. **Salva** conserva il preset senza toccare
+la cottura; **Usa su questa sonda** lo applica soltanto a quel canale.
+Chiudere l'editor non fa nessuna delle due cose. I mini-grafici mostrano fino
+a un'ora di letture recenti; lo storico della sessione conserva tutta la cottura.
 
 Imposta la soglia HA e attiva l'avviso. Parte anche la registrazione della cottura.
 Puoi avviare prima lo storico, dandogli un nome, senza attivare nessun allarme.

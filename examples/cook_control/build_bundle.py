@@ -12,6 +12,7 @@ FILES = {
     "www/inkbird-int/inkbird-int-cook-control.js": "www/inkbird-int/inkbird-int-cook-control.js",
     "www/inkbird-int/inkbird-cook-panel.js": "www/inkbird-int/inkbird-cook-panel.js",
     "www/inkbird-int/inkbird-cook-session.mjs": "www/inkbird-int/inkbird-cook-session.mjs",
+    "www/inkbird-int/inkbird-cook-visuals.mjs": "www/inkbird-int/inkbird-cook-visuals.mjs",
     "custom_components/inkbird_cook_control/__init__.py": "custom_components/inkbird_cook_control/__init__.py",
     "custom_components/inkbird_cook_control/engine.py": "custom_components/inkbird_cook_control/engine.py",
     "custom_components/inkbird_cook_control/manifest.json": "custom_components/inkbird_cook_control/manifest.json",

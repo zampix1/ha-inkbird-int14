@@ -226,3 +226,12 @@ def test_stall_waits_for_history_and_45_continuous_minutes(engine):
     for now in range(1000, 1000 + 3600, 30):
         notices.extend(engine.tick(readings(now, 60), now, {"stall": True})[0])
     assert len(notices) == 1 and notices[0]["kind"] == "stall"
+
+
+def test_unarmed_device_sparkline_is_bounded_and_does_not_create_a_cook(engine):
+    for now in range(1000, 1000 + 5000, 30):
+        assert not engine.tick(readings(now, 60), now)[0]
+    snapshot = engine.snapshot(readings(6000, 60), 6000)
+    assert all(len(d["recent"]) == 120 and d["session"] is None for d in snapshot["devices"])
+    assert not engine.data["index"]
+    assert all(not c["armed"] and c["target"] == 0 for d in snapshot["devices"] for c in d["channels"].values())

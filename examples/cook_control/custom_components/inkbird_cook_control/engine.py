@@ -29,6 +29,7 @@ class Engine:
         self.data = deepcopy(data) if data else {"devices": {}, "index": {}, "migrated": False}
         self.histories = {}
         self.pending = {}
+        self.live_history = {}
 
     def discover(self, descriptors):
         for descriptor in descriptors:
@@ -146,23 +147,12 @@ class Engine:
             sid = device["session"]
             history = self.histories.get(sid)
             current = readings.get(key, {})
+            recent = self.live_history.setdefault(key, [])
+            if not recent or now - recent[-1]["at"] >= SAMPLE_SECONDS:
+                recent.append(self.sample(device, current, now))
+                self.live_history[key] = recent[-120:]
             if history and (not history["samples"] or now - history["samples"][-1]["at"] >= SAMPLE_SECONDS):
-                history["samples"].append(
-                    {
-                        "at": now,
-                        "channels": {
-                            channel: {
-                                "temperature": row.get("temperature") if fresh(row, now) else None,
-                                "ambient": row.get("ambient") if fresh(row, now) else None,
-                                "battery": row.get("battery"),
-                                "target": config["target"],
-                                "armed": config["armed"],
-                            }
-                            for channel, config in device["channels"].items()
-                            if (row := current.get(channel, {})) is not None
-                        },
-                    }
-                )
+                history["samples"].append(self.sample(device, current, now))
                 self.data["index"][sid]["sample_count"] = len(history["samples"])
                 history["summary"] = deepcopy(self.data["index"][sid])
                 changed = True
@@ -213,6 +203,23 @@ class Engine:
                     changed = True
         warnings = self.warnings(readings, now, options or {})
         return notices + warnings, changed or bool(warnings)
+
+    @staticmethod
+    def sample(device, readings, now):
+        return {
+            "at": now,
+            "channels": {
+                channel: {
+                    "temperature": row.get("temperature") if fresh(row, now) else None,
+                    "ambient": row.get("ambient") if fresh(row, now) else None,
+                    "battery": row.get("battery"),
+                    "target": config["target"],
+                    "armed": config["armed"],
+                }
+                for channel, config in device["channels"].items()
+                if (row := readings.get(channel, {})) is not None
+            },
+        }
 
     def warnings(self, readings, now, options):
         notices = []
@@ -291,7 +298,8 @@ class Engine:
                     else "cooking"
                 )
             row["cook"] = deepcopy(self.data["index"].get(row["session"]))
-            row["recent"] = deepcopy(self.histories.get(row["session"], {}).get("samples", [])[-24:])
+            recorded = self.histories.get(row["session"], {}).get("samples", [])
+            row["recent"] = deepcopy((recorded or self.live_history.get(key, []))[-120:])
             result.append(row)
         return {
             "version": "1.2.0",

@@ -1,13 +1,19 @@
 # Changelog
 
-## 0.2.11-beta.5 - Cook Control 1.2.0
+## Unreleased - 0.2.12 Development
+
+- The development branch retains the pending INT-12-BW and INT-11I-B BLE work. It is not included in stable v0.2.11, which is built from the v0.2.10 thermometer runtime.
+
+## 0.2.11 - Cook Control 1.2.0
+
+- Retain illustrated probes, circular gauges, station alarm/battery details and per-probe mini-graphs above the new independent-cook backend. Restore the custom preset editor, with separate Save and Apply commands; opening or saving it does not change a live target.
 
 - Give each INT-14-BW and IHT-2PB its own cook, targets, food names and alarm latches. The thermometer selector changes only the browser view; it never disarms another device or clears its targets.
 - Add an optional `inkbird_cook_control` backend to the separate dashboard bundle. It reads existing HA entities and stores private session archives, sampled temperatures, target changes and notification results. INT/IHT protocol drivers and integration versions are unchanged.
 - Add friendly thermometer names and food-name announcements, concurrent-cook overview, history graphs and authenticated CSV/JSON export. Preserve the existing Echo/TV router and add an explicit multi-Echo announcement destination, separate from silent TV popups.
 - Migrate the formerly selected cook once, preserve existing helper values and retire the shared single-cook automations. Targets, completed alerts and reminder deadlines persist across restarts.
 - Use the new `custom:inkbird-cook-control` strategy so cached single-cook constructors cannot bring back the old reset-on-switch dialog. Update English/Italian install and cache-recovery steps, preview images and the HACS showcase.
-- Publish the optional dashboard ZIP separately; it works with stable integration v0.2.10 too. Thermometer runtime differs from beta.4 only in the manifest version. This release does not promote the pending INT-11I-B / INT-12-BW Bluetooth work to stable.
+- Publish the optional dashboard ZIP separately; it works with stable integration v0.2.10 too. The stable release is built from v0.2.10 and changes no thermometer runtime code apart from the manifest version. Pending INT-11I-B / INT-12-BW Bluetooth work stays on the development branch.
 
 ## 0.2.11-beta.4
 

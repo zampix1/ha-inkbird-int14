@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {selectedDevice,csv,loadHistory,series,escape} from './www/inkbird-int/inkbird-cook-session.mjs';
 import {devices,channelEntity,connection,renderDiagram,devicePicker} from './www/inkbird-int/inkbird-int-cook-model.mjs';
+import {dial,probeFigure,sparkline,probeColor} from './www/inkbird-int/inkbird-cook-visuals.mjs';
 
 const oldSingleCook=class{};
 const registry=new Map([['ll-strategy-dashboard-inkbird-int-cook-control',oldSingleCook]]);
@@ -36,6 +37,14 @@ assert.equal(pages,2);assert.equal(history.samples.length,2);
 assert.deepEqual(series(history,'1').map(p=>p.y),[85,null]);
 assert.match(csv(history),/temperature_c/);assert.match(csv(history),/"85"/);
 assert.equal(escape('<img onerror="bad">'),'&lt;img onerror=&quot;bad&quot;&gt;');
+assert.match(dial({temperature:83,target:85,armed:true,fresh:true,status:'cooking'},{target:'target',noTarget:'No target'}),/stroke-dasharray|83.0/);
+assert.equal(probeColor({temperature:83,target:85,armed:true,fresh:true,status:'cooking'}),'#b85a27');
+assert.equal(probeColor({temperature:90,target:85,armed:true,fresh:false,status:'ready'}),'#88988d');
+assert.doesNotMatch(dial({temperature:null,target:0},{target:'target',noTarget:'No target'}),/NaN|target 0/);
+assert.match(probeFigure('int14_bw','1','#abc'),/wireless probe/);
+assert.match(probeFigure('iht2pb','1','#abc'),/built-in tip/);
+assert.match(probeFigure('iht2pb','3','#abc'),/external probe/);
+assert.doesNotMatch(sparkline(history.samples,'1','#abc','Trend'),/NaN|undefined/);
 
 const prefix='sensor.test_station',ip='sensor.test_handheld',second='sensor.test_handheld_two',now=Date.now();
 for(let n=1;n<=4;n++)for(const channel of ['internal','ambient'])states[`${prefix}_probe_${n}_${channel}_temperature`]={state:'22'};

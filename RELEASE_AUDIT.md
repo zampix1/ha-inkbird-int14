@@ -17,12 +17,12 @@ The integration supports local BLE, local Tuya LAN where the model and DP map ha
 
 ## Cook Control 1.2.0, 2026-11-05
 
-- Optional preview bundle attached to `v0.2.11-beta.5`. A small separate backend owns per-device cooks, target/notification latches and private archives; it reads registered INT/IHT entities and sends through the existing notification router. It never calls a thermometer write service.
+- Optional preview bundle attached to stable `v0.2.11`. A small separate backend owns per-device cooks, target/notification latches and private archives; it reads registered INT/IHT entities and sends through the existing notification router. It never calls a thermometer write service.
 - Three simultaneous sessions on one INT-14-BW and two IHT-2PB devices were recorded, finished and exported on HA 2026.11.0. Legacy helper values were preserved. The user confirmed the two selected Echo announcements and silent LG popup; a true fresh-device threshold crossing remains pending.
-- 315 Python tests cover isolation, migration, restart latches, reminders, histories, spoken food names and explicit Echo destinations. Node checks cover the canonical strategy even with a cached old constructor. Desktop/mobile preview checks verify 4/3/3 food-channel layouts, no horizontal overflow, and no HA writes on view changes.
+- The Python suites cover isolation, migration, restart latches, reminders, histories, spoken food names and explicit Echo destinations. Node checks cover the canonical strategy even with a cached old constructor. Desktop/mobile checks verify 4/3/3 layouts, illustrated probes, circular gauges, no horizontal overflow, view-only selection, and custom preset save/apply isolation.
 - Upgrade instructions replace the strategy with `custom:inkbird-cook-control`, keep one versioned module resource, and explain the obsolete 1.1.0 confirmation dialog. Images are isolated previews with declared sample data, not screenshots of a private installation.
-- The deterministic optional bundle has 17 allowlisted entries, including the backend. No private device references, captures, tools, secrets or caches belong in it. Gitleaks and TruffleHog report no secrets; detect-secrets reports no findings in Cook Control and only existing reviewed field-name/UI-label matches elsewhere.
-- Main integration runtime is unchanged from beta.4 except for its manifest version. Integration stable remains v0.2.10; users can install the dashboard ZIP without the BLE beta. Publication is gated on Tests/HACS/Hassfest for the commit/tag and a downloaded-asset hash match.
+- The deterministic optional bundle has 18 allowlisted entries, including the backend and visual module. No private device references, captures, tools, secrets or caches belong in it. Gitleaks and TruffleHog report no secrets; detect-secrets reports no findings in Cook Control and only existing reviewed field-name/UI-label matches elsewhere.
+- The stable release is prepared in an isolated branch based on v0.2.10. Its thermometer Python runtime is byte-identical to that baseline except for the manifest version. Main retains the pending BLE changes under 0.2.12 development. Publication is gated on Tests/HACS/Hassfest for the stable commit/tag and a downloaded-asset hash match.
 
 ## Cook Control 1.1.0, 2026-11-04
 
@@ -64,11 +64,11 @@ The integration supports local BLE, local Tuya LAN where the model and DP map ha
 
 ## Release State
 
-Prerelease `v0.2.11-beta.5` publishes optional Cook Control 1.2.0 with independent
+Stable `v0.2.11` publishes optional Cook Control 1.2.0 with independent
 concurrent INT/IHT cooks, food-name announcements, persistent history and an
-updated showcase. Integration runtime is unchanged from beta.4 apart from the
-manifest version. The bundle also works with the stable integration and does not
-require installing the Bluetooth beta. See [Cook Control validation](examples/cook_control/VALIDATION.md).
+updated showcase. Its integration runtime is unchanged from v0.2.10 apart from
+the manifest version. The bundle also works with v0.2.10 and does not require
+installing the Bluetooth beta. See [Cook Control validation](examples/cook_control/VALIDATION.md).
 
 Prerelease `v0.2.11-beta.3` enabled continuous read-only GATT polling for
 INT-11I-B, following @tolixx's measurements in issue #9. Its decoder, entity
@@ -77,7 +77,7 @@ profile-level change; other models retain their beta.2 behavior. The
 packaged update still needs the reporter's follow-up on real hardware.
 
 The beta also retains the INT-12-BW parser and reconnect work from beta.1
-and beta.2. Stable remains `v0.2.10`. See the dated audits below.
+and beta.2. Those changes remain outside the stable v0.2.11 branch. See the dated audits below.
 
 Release `v0.2.10` adds the optional INT-14-BW Cook Control bundle, native Alexa/TV notification routing, bilingual setup guides and real dashboard screenshots. HACS still installs only the integration; the optional ZIP is installed separately. Runtime Python files are unchanged from `v0.2.7`; only the manifest version is bumped. The release retains the model photo gallery, Options/reload fixes and existing model-support boundaries.
 

@@ -266,7 +266,7 @@ def test_bundle_is_reproducible_and_has_no_household_or_development_files(tmp_pa
     builder["build"](second)
     assert first.read_bytes() == second.read_bytes()
     with ZipFile(first) as archive:
-        assert len(archive.namelist()) == 17
+        assert len(archive.namelist()) == 18
         assert set(archive.namelist()) == set(builder["FILES"].values()) | {"cook-control/LICENSE.integration"}
         for filename in archive.namelist():
             assert ".." not in Path(filename).parts
