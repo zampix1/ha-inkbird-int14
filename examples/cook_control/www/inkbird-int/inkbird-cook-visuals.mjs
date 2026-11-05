@@ -1,5 +1,5 @@
 // Probe illustration adapted from the existing MIT-licensed Cook Control theme.
-import {escape,formatTemperature} from './inkbird-cook-session.mjs?v=1.2.0';
+import {escape,formatTemperature,displayTemperature} from './inkbird-cook-session.mjs?v=1.2.1';
 
 export function probeColor(channel){
   if(!channel.fresh||!channel.armed)return '#88988d';
@@ -17,11 +17,11 @@ export function probeFigure(model,channel,color){
   </svg>`;
 }
 
-export function dial(channel,labels){
+export function dial(channel,labels,unit='C'){
   const valid=Number.isFinite(channel.temperature),target=Number.isFinite(channel.target)&&channel.target>0;
   const progress=channel.fresh&&valid&&target?Math.max(0,Math.min(1,channel.target<=22?(channel.temperature>=channel.target?1:0):(channel.temperature-22)/(channel.target-22))):0;
   const circumference=2*Math.PI*52,arc=circumference*.75,color=probeColor(channel);
-  return `<div class="dial" role="img" aria-label="${escape(formatTemperature(channel.temperature))}; ${escape(target?formatTemperature(channel.target):labels.noTarget)}"><svg viewBox="0 0 128 128" aria-hidden="true"><g transform="rotate(135 64 64)"><circle cx="64" cy="64" r="52" fill="none" stroke="var(--divider-color,#ddd)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${arc} ${circumference}"/><circle cx="64" cy="64" r="52" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(arc*progress).toFixed(1)} ${circumference}"/></g></svg><div class="dial-label"><strong>${valid?channel.temperature.toFixed(1):'\u2014'}<small>\u00b0C</small></strong><span>${target?`${escape(labels.target)} ${channel.target}\u00b0`:escape(labels.noTarget)}</span></div></div>`;
+  return `<div class="dial" role="img" aria-label="${escape(formatTemperature(channel.temperature,unit))}; ${escape(target?formatTemperature(channel.target,unit):labels.noTarget)}"><svg viewBox="0 0 128 128" aria-hidden="true"><g transform="rotate(135 64 64)"><circle cx="64" cy="64" r="52" fill="none" stroke="var(--divider-color,#ddd)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${arc} ${circumference}"/><circle cx="64" cy="64" r="52" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(arc*progress).toFixed(1)} ${circumference}"/></g></svg><div class="dial-label"><strong>${valid?displayTemperature(channel.temperature,unit).toFixed(1):'\u2014'}<small>\u00b0${unit}</small></strong><span>${target?`${escape(labels.target)} ${displayTemperature(channel.target,unit).toFixed(1)}\u00b0`:escape(labels.noTarget)}</span></div></div>`;
 }
 
 export function sparkline(samples,channel,color,label){

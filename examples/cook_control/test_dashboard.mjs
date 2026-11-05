@@ -15,11 +15,22 @@ assert.equal(registry.get('ll-strategy-dashboard-inkbird-int-cook-control'),oldS
 const states={'input_select.bbq_language':{state:'Italiano'}};
 const copy=structuredClone(states),result=await Strategy.generate({}, {states});
 assert.deepEqual(states,copy);
-assert.deepEqual(result.views.map(v=>v.path),['cook','history','settings']);
+assert.deepEqual(result.views.map(v=>v.path),['cook','probes','history','settings']);
 assert.equal(result.views[0].cards[0].type,'custom:inkbird-cook-card');
-assert.equal(result.views[1].cards[0].history,true);
+assert.equal(result.views[2].cards[0].history,true);
 assert.ok(Strategy.shouldRegenerate({}, {states:{}}, {states}));
 assert.equal(registry.has('ll-strategy-dashboard-inkbird-bbq'),false);
+
+const panel=Object.create(registry.get('inkbird-cook-card').prototype);
+panel.language='Italiano';
+panel._hass={states:{sensor_base_battery:{state:'unavailable'}}};
+assert.doesNotMatch(panel.renderConnection({inspection:['sensor_base_battery']}),/unavailable%|NaN/);
+panel._hass.states.sensor_base_battery.state='0';
+assert.match(panel.renderConnection({inspection:['sensor_base_battery']}),/0%/);
+panel.history={summary:{layout:[{id:'1',name:'Musetto'}]}};
+assert.match(panel.eventText({kind:'finished'}),/Cottura terminata/);
+assert.match(panel.eventText({kind:'settings',channel:'1',settings:{target:85,armed:true}}),/Musetto.*85.0.*Allarme HA attivo/);
+assert.doesNotMatch(panel.eventText({kind:'settings',settings:{name:'<script>'}}),/<script>/);
 
 const list=[{id:'int',channels:{1:{target:85,armed:true}}},{id:'iht1',channels:{1:{target:60,armed:true}}},{id:'iht2',channels:{2:{target:70,armed:true}}}];
 const before=structuredClone(list);

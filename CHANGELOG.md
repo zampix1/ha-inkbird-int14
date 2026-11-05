@@ -1,10 +1,22 @@
 # Changelog
 
-## Unreleased - 0.2.12 Development
+## Unreleased - Bluetooth Development
 
 - The development branch retains the pending INT-12-BW and INT-11I-B BLE work. It is not included in stable v0.2.11, which is built from the v0.2.10 thermometer runtime.
 
+## 0.2.12-rc.1 - Cook Control 1.2.1 Preview
+
+- Withdraw the optional Cook Control 1.2.0 ZIP. The stable thermometer integration remains available and unchanged.
+- Persist per-output alarm queues and results. Run slow network calls outside the cook lock; bound retries for explicit errors and require a delivery check before retrying timeouts or interrupted sends. Accepted service calls are not labelled physical delivery.
+- Restore per-probe automatic/manual rest and configurable stall observation. Keep the three thermometers' targets, alarm state, timers and histories independent. Deduplicate a handheld's shared battery warning.
+- Restore native device controls, connection details, display preferences and live updates while editing. Save custom presets atomically and block obsolete shared-helper actions before they can write.
+- Add separate per-device TEST controls and explicit backend actions for automations. Tests do not arm cooks or change targets; notifications never alter volume, TV power or inputs.
+- Segment new archives, keep old archives readable, refresh open sessions and export a consistent snapshot. Update bilingual installation and validation notes and the HACS showcase.
+- Verified installation and preserved settings on HA 2026.11.0. Real-device threshold crossings and physical Echo/TV confirmation remain pending; this is a prerelease. Native thermometer runtime remains the stable v0.2.10 baseline, apart from version metadata.
+
 ## 0.2.11 - Cook Control 1.2.0
+
+The optional 1.2.0 dashboard ZIP was withdrawn on 2026-11-05; use the 1.2.1 preview above. The integration itself is not withdrawn.
 
 - Retain illustrated probes, circular gauges, station alarm/battery details and per-probe mini-graphs above the new independent-cook backend. Restore the custom preset editor, with separate Save and Apply commands; opening or saving it does not change a live target.
 

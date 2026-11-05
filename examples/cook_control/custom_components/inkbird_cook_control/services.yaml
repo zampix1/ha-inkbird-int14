@@ -1,0 +1,97 @@
+configure:
+  name: Configure probe
+  description: Change only the selected thermometer and probe. This never writes device settings.
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+    channel:
+      required: true
+      selector:
+        text:
+    settings:
+      required: true
+      selector:
+        object:
+start:
+  name: Start recording
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+    name:
+      selector:
+        text:
+finish:
+  name: Finish cook
+  description: Archive this cook and disarm only this thermometer. Targets are retained.
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+rename:
+  name: Rename thermometer
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+    name:
+      required: true
+      selector:
+        text:
+rest:
+  name: Start rest timer
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+    channel:
+      required: true
+      selector:
+        text:
+snooze:
+  name: Snooze probe alert
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+    channel:
+      required: true
+      selector:
+        text:
+dismiss:
+  name: Cancel probe reminders
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+    channel:
+      required: true
+      selector:
+        text:
+retry:
+  name: Retry a notification output
+  description: Check delivery before retrying an unknown result. Already accepted outputs are not repeated.
+  fields:
+    notice_id:
+      required: true
+      selector:
+        text:
+    output_id:
+      selector:
+        text:
+test:
+  name: Test notification outputs
+  description: Send a clearly labelled TEST without changing targets, alarms or sessions.
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
