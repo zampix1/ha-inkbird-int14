@@ -9,7 +9,7 @@
 - Retain illustrated probes, circular gauges, station alarm/battery details and per-probe mini-graphs above the new independent-cook backend. Restore the custom preset editor, with separate Save and Apply commands; opening or saving it does not change a live target.
 
 - Give each INT-14-BW and IHT-2PB its own cook, targets, food names and alarm latches. The thermometer selector changes only the browser view; it never disarms another device or clears its targets.
-- Add an optional `inkbird_cook_control` backend to the separate dashboard bundle. It reads existing HA entities and stores private session archives, sampled temperatures, target changes and notification results. INT/IHT protocol drivers and integration versions are unchanged.
+- Add an optional `inkbird_cook_control` backend to the separate dashboard bundle. It reads existing HA entities and stores private session archives, sampled temperatures, target changes and notification results. INT/IHT protocol drivers are unchanged; the stable INT package only advances its version metadata.
 - Add friendly thermometer names and food-name announcements, concurrent-cook overview, history graphs and authenticated CSV/JSON export. Preserve the existing Echo/TV router and add an explicit multi-Echo announcement destination, separate from silent TV popups.
 - Migrate the formerly selected cook once, preserve existing helper values and retire the shared single-cook automations. Targets, completed alerts and reminder deadlines persist across restarts.
 - Use the new `custom:inkbird-cook-control` strategy so cached single-cook constructors cannot bring back the old reset-on-switch dialog. Update English/Italian install and cache-recovery steps, preview images and the HACS showcase.
