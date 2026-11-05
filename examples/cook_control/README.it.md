@@ -14,6 +14,10 @@ Devono gia' funzionare Inkbird INT per la station INT-14-BW, oppure
 l'[integrazione IHT-2PB](https://github.com/zampix1/ha-inkbird-iht2pb-local).
 Cook Control usa le loro entita', senza cambiare come comunicano con i dispositivi.
 
+Da HA 2026.11, HACS e' integrato in **Impostazioni > Marketplace**. Non devi
+reinstallare la vecchia integrazione HACS. Cook Control resta un pacchetto
+facoltativo da installare con i passaggi qui sotto.
+
 1. Fai un backup HA. Per passare dalla 1.1.0, aspetta la fine delle cotture.
 2. Copia dal pacchetto le cartelle `custom_components`, `packages` e `www` nella
    directory di configurazione HA, normalmente `/config`. Unisci le cartelle:

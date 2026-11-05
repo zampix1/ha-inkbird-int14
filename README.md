@@ -54,7 +54,7 @@ Station temperature is additional where supported. Other profiles are **cataloge
 
 Inkbird INT is in the **default HACS catalog**. No custom repository is needed.
 
-1. Search for **Inkbird INT** in HACS and download it.
+1. Search for **Inkbird INT** in HACS and download it. On Home Assistant 2026.11 or newer, open **Settings > Marketplace** instead: HACS is built in there, with the same catalog.
 2. Restart Home Assistant when no cook depends on it.
 3. Go to **Settings > Devices & services > Add integration**, choose **Inkbird INT** and select your exact model.
 

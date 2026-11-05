@@ -15,6 +15,10 @@ First install Inkbird INT for an INT-14-BW, or the separate
 Their temperature entities must already exist. You can use multiple IHT devices.
 Cook Control reads those entities; it does not connect to the thermometers itself.
 
+On HA 2026.11 or newer, HACS lives under **Settings > Marketplace**. It is already
+built in; do not reinstall the old HACS custom integration. This does not change
+the separate Cook Control bundle installation below.
+
 1. Back up Home Assistant. Finish active cooks before upgrading from 1.1.0.
 2. Copy these folders from the matching bundle into the HA configuration folder:
    `custom_components`, `packages`, and `www`. Merge folders; do not replace your
